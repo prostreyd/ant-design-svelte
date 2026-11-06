@@ -1,6 +1,6 @@
 {
   "name": "ant-design-svelte",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "An independent UI component library for Svelte 5, inspired by Ant Design.",
   "license": "MIT",
   "type": "module",
@@ -26,6 +26,7 @@
     "package": "svelte-package",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "eslint ."
   },
@@ -37,6 +38,8 @@
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/svelte": "^5.4.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitest/coverage-v8": "^5.1.0",
     "@types/node": "^24.0.0",
     "@typescript-eslint/parser": "^8.72.1",
     "eslint": "^10.14.0",
@@ -44,6 +47,7 @@
     "jsdom": "^31.0.0",
     "svelte": "^5.57.3",
     "svelte-check": "^4.7.8",
+    "axe-core": "^4.10.3",
     "svelte-eslint-parser": "^1.10.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.1",

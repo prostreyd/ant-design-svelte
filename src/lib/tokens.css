@@ -18,11 +18,16 @@
   --ads-color-text: rgba(0, 0, 0, 0.88);
   --ads-color-text-secondary: rgba(0, 0, 0, 0.65);
   --ads-color-text-disabled: rgba(0, 0, 0, 0.25);
+  --ads-color-text-inverse: #fff;
+  --ads-color-focus-outline: rgba(22, 119, 255, 0.35);
 
   --ads-color-border: #d9d9d9;
   --ads-color-bg-container: #ffffff;
   --ads-color-bg-container-disabled: rgba(0, 0, 0, 0.04);
   --ads-color-bg-text-hover: rgba(0, 0, 0, 0.06);
+  --ads-border-width: 1px;
+  --ads-focus-outline-width: 2px;
+  --ads-focus-outline-offset: 2px;
 
   /* Radius */
   --ads-radius-sm: 4px;
@@ -33,6 +38,12 @@
   --ads-control-height: 32px;
   --ads-control-height-lg: 40px;
   --ads-control-height-sm: 24px;
+  --ads-control-gap: 8px;
+  --ads-control-padding-inline: 15px;
+  --ads-control-padding-inline-sm: 7px;
+  --ads-control-line-height: 1.5715;
+  --ads-button-loading-size: 14px;
+  --ads-button-loading-border-width: 2px;
 
   /* Typography */
   --ads-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
@@ -43,5 +54,6 @@
 
   /* Motion */
   --ads-motion-duration: 0.2s;
+  --ads-motion-duration-spinner: 1s;
   --ads-motion-ease: cubic-bezier(0.645, 0.045, 0.355, 1);
 }

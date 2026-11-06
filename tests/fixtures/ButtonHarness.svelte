@@ -2,6 +2,8 @@
   import Button from '$lib/Button/Button.svelte';
   import type {
     ButtonHTMLType,
+    ButtonIconPlacement,
+    ButtonLoading,
     ButtonShape,
     ButtonSize,
     ButtonType
@@ -12,33 +14,59 @@
     size?: ButtonSize;
     shape?: ButtonShape;
     disabled?: boolean;
-    loading?: boolean;
+    loading?: ButtonLoading;
     danger?: boolean;
     block?: boolean;
     ghost?: boolean;
     href?: string;
     target?: string;
+    rel?: string;
+    download?: string | boolean;
     htmlType?: ButtonHTMLType;
+    iconPlacement?: ButtonIconPlacement;
+    icon?: boolean;
+    ariaLabel?: string;
+    name?: string;
+    form?: string;
     onclick?: (event: MouseEvent) => void;
     label?: string;
+    showLabel?: boolean;
+    class?: string;
   }
 
   let {
-    type = 'default',
-    size = 'middle',
-    shape = 'default',
-    disabled = false,
-    loading = false,
-    danger = false,
-    block = false,
-    ghost = false,
-    href = undefined,
-    target = undefined,
-    htmlType = 'button',
+    type,
+    size,
+    shape,
+    disabled,
+    loading,
+    danger,
+    block,
+    ghost,
+    href,
+    target,
+    rel,
+    download,
+    htmlType,
+    iconPlacement,
+    icon = false,
+    ariaLabel,
+    name,
+    form,
     onclick,
-    label = ''
+    label = '',
+    showLabel = true,
+    class: className
   }: Props = $props();
 </script>
+
+{#snippet labelContent()}
+  {label}
+{/snippet}
+
+{#snippet testIcon()}
+  <svg data-testid="icon" viewBox="0 0 16 16"><path d="M1 8h14" /></svg>
+{/snippet}
 
 <Button
   {type}
@@ -51,8 +79,15 @@
   {ghost}
   {href}
   {target}
+  {rel}
+  {download}
   {htmlType}
-  {onclick}
->
-  {label}
-</Button>
+  {iconPlacement}
+  icon={icon ? testIcon : undefined}
+  aria-label={ariaLabel}
+  {name}
+  {form}
+  onclick={onclick}
+  class={className}
+  children={showLabel ? labelContent : undefined}
+/>

@@ -3,4 +3,11 @@
 export const VERSION = '0.0.1';
 
 export { default as Button } from './Button/Button.svelte';
-export type { ButtonHTMLType, ButtonShape, ButtonSize, ButtonType } from './Button/types.js';
+export type {
+  ButtonHTMLType,
+  ButtonIconPlacement,
+  ButtonLoading,
+  ButtonShape,
+  ButtonSize,
+  ButtonType
+} from './Button/types.js';

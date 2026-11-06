@@ -1,18 +1,30 @@
 <script lang="ts">
+  import type {
+    HTMLAnchorAttributes,
+    HTMLAttributes,
+    HTMLButtonAttributes
+  } from 'svelte/elements';
+  import type {
+    ButtonHTMLType,
+    ButtonIconPlacement,
+    ButtonLoading,
+    ButtonShape,
+    ButtonSize,
+    ButtonType
+  } from './types.js';
   import type { Snippet } from 'svelte';
-  import type { ButtonHTMLType, ButtonShape, ButtonSize, ButtonType } from './types.js';
 
-  interface ButtonProps {
+  type ButtonProps = Omit<HTMLAttributes<HTMLElement>, 'children' | 'class' | 'onclick'> & {
     /** Visual style of the button. */
     type?: ButtonType;
-    /** Size of the button. */
+    /** Size of the button. `middle` is a compatibility alias for `medium`. */
     size?: ButtonSize;
     /** Shape of the button. */
     shape?: ButtonShape;
     /** Whether the button is disabled. */
     disabled?: boolean;
-    /** Whether to show a loading spinner (also disables the button). */
-    loading?: boolean;
+    /** Shows a spinner immediately or after the optional delay. */
+    loading?: ButtonLoading;
     /** Danger color scheme. */
     danger?: boolean;
     /** Stretch the button to the full width of its container. */
@@ -22,20 +34,34 @@
     /** Render an anchor instead of a button. */
     href?: string;
     /** Anchor target (only used when `href` is set). */
-    target?: string;
+    target?: HTMLAnchorAttributes['target'];
+    /** Anchor relationship (only used when `href` is set). */
+    rel?: HTMLAnchorAttributes['rel'];
+    /** Anchor download attribute (only used when `href` is set). */
+    download?: string | boolean;
     /** Native `type` attribute of the `<button>` element. */
     htmlType?: ButtonHTMLType;
-    /** Leading icon snippet. */
+    /** Native button form association. */
+    form?: HTMLButtonAttributes['form'];
+    /** Native button name. */
+    name?: HTMLButtonAttributes['name'];
+    /** Native button value. */
+    value?: HTMLButtonAttributes['value'];
+    /** Icon snippet rendered before or after the label. */
     icon?: Snippet;
+    /** Placement of the icon snippet. */
+    iconPlacement?: ButtonIconPlacement;
+    /** Additional CSS class appended to the component classes. */
+    class?: string;
     /** Click handler. */
     onclick?: (event: MouseEvent) => void;
-    /** Button label (default slot). */
+    /** Button label (default content snippet). */
     children?: Snippet;
-  }
+  };
 
   let {
     type = 'default',
-    size = 'middle',
+    size = 'medium',
     shape = 'default',
     disabled = false,
     loading = false,
@@ -44,24 +70,62 @@
     ghost = false,
     href = undefined,
     target = undefined,
+    rel = undefined,
+    download = undefined,
     htmlType = 'button',
+    form = undefined,
+    name = undefined,
+    value = undefined,
     icon,
+    iconPlacement = 'start',
     onclick,
-    children
+    children,
+    class: customClass,
+    ...rest
   }: ButtonProps = $props();
 
+  let delayedLoading = $state(false);
+
+  const loadingDelay = $derived.by(() => {
+    if (typeof loading === 'boolean') return 0;
+    if (!Number.isFinite(loading.delay) || loading.delay < 0) {
+      throw new RangeError('Button loading.delay must be a non-negative finite number.');
+    }
+    return loading.delay;
+  });
+
+  $effect(() => {
+    const delay = loadingDelay;
+    if (typeof loading === 'boolean' || delay === 0) {
+      delayedLoading = false;
+      return;
+    }
+
+    delayedLoading = false;
+    const timer = setTimeout(() => {
+      delayedLoading = true;
+    }, delay);
+
+    return () => clearTimeout(timer);
+  });
+
+  const isLoading = $derived(
+    typeof loading === 'boolean' ? loading : loadingDelay === 0 || delayedLoading
+  );
+  const isDisabled = $derived(disabled || isLoading);
+
   const classes = $derived.by(() => {
-    const list: string[] = ['ads-btn', `ads-btn-${type}`, `ads-btn-${size}`];
+    const sizeClass = size === 'medium' || size === 'middle' ? 'middle' : size;
+    const list: string[] = ['ads-btn', `ads-btn-${type}`, `ads-btn-${sizeClass}`];
     if (shape !== 'default') list.push(`ads-btn-${shape}`);
     if (danger) list.push('ads-btn-danger');
     if (ghost) list.push('ads-btn-ghost');
     if (block) list.push('ads-btn-block');
-    if (loading) list.push('ads-btn-loading');
-    if (disabled || loading) list.push('ads-btn-disabled');
+    if (isLoading) list.push('ads-btn-loading');
+    if (isDisabled) list.push('ads-btn-disabled');
+    if (customClass) list.push(customClass);
     return list.join(' ');
   });
-
-  const isDisabled = $derived(disabled || loading);
 
   function handleClick(event: MouseEvent): void {
     if (isDisabled) {
@@ -72,30 +136,48 @@
   }
 </script>
 
-{#if href}
+{#if href !== undefined}
   <a
+    {...rest}
     class={classes}
     {href}
     {target}
+    {rel}
+    {download}
     aria-disabled={isDisabled || undefined}
-    tabindex={isDisabled ? -1 : 0}
+    aria-busy={isLoading || undefined}
+    tabindex={isDisabled ? -1 : undefined}
     onclick={handleClick}
   >
-    {#if loading}<span class="ads-btn-loading-icon" aria-hidden="true"></span>{/if}
-    {#if icon}<span class="ads-btn-icon">{@render icon()}</span>{/if}
+    {#if isLoading}<span class="ads-btn-loading-icon" aria-hidden="true"></span>{/if}
+    {#if icon && iconPlacement === 'start'}
+      <span class="ads-btn-icon" aria-hidden="true">{@render icon()}</span>
+    {/if}
     {#if children}<span class="ads-btn-content">{@render children()}</span>{/if}
+    {#if icon && iconPlacement === 'end'}
+      <span class="ads-btn-icon" aria-hidden="true">{@render icon()}</span>
+    {/if}
   </a>
 {:else}
   <button
+    {...rest}
     class={classes}
     type={htmlType}
     disabled={isDisabled}
-    aria-busy={loading || undefined}
+    {form}
+    {name}
+    {value}
+    aria-busy={isLoading || undefined}
     onclick={handleClick}
   >
-    {#if loading}<span class="ads-btn-loading-icon" aria-hidden="true"></span>{/if}
-    {#if icon}<span class="ads-btn-icon">{@render icon()}</span>{/if}
+    {#if isLoading}<span class="ads-btn-loading-icon" aria-hidden="true"></span>{/if}
+    {#if icon && iconPlacement === 'start'}
+      <span class="ads-btn-icon" aria-hidden="true">{@render icon()}</span>
+    {/if}
     {#if children}<span class="ads-btn-content">{@render children()}</span>{/if}
+    {#if icon && iconPlacement === 'end'}
+      <span class="ads-btn-icon" aria-hidden="true">{@render icon()}</span>
+    {/if}
   </button>
 {/if}
 
@@ -104,13 +186,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--ads-control-gap);
     height: var(--ads-control-height);
-    padding: 0 15px;
+    padding: 0 var(--ads-control-padding-inline);
     font-family: var(--ads-font-family);
     font-size: var(--ads-font-size);
-    line-height: 1.5715;
-    border: 1px solid transparent;
+    line-height: var(--ads-control-line-height);
+    border: var(--ads-border-width) solid transparent;
     border-radius: var(--ads-radius-md);
     background: transparent;
     color: var(--ads-color-text);
@@ -125,7 +207,11 @@
       border-color var(--ads-motion-duration) var(--ads-motion-ease);
   }
 
-  /* Sizes */
+  .ads-btn:focus-visible {
+    outline: var(--ads-focus-outline-width) solid var(--ads-color-focus-outline);
+    outline-offset: var(--ads-focus-outline-offset);
+  }
+
   .ads-btn-large {
     height: var(--ads-control-height-lg);
     font-size: var(--ads-font-size-lg);
@@ -133,11 +219,10 @@
 
   .ads-btn-small {
     height: var(--ads-control-height-sm);
-    padding: 0 7px;
+    padding: 0 var(--ads-control-padding-inline-sm);
     font-size: var(--ads-font-size-sm);
   }
 
-  /* Types */
   .ads-btn-default {
     background: var(--ads-color-bg-container);
     border-color: var(--ads-color-border);
@@ -145,7 +230,7 @@
 
   .ads-btn-primary {
     background: var(--ads-color-primary);
-    color: #fff;
+    color: var(--ads-color-text-inverse);
   }
 
   .ads-btn-dashed {
@@ -165,7 +250,6 @@
     color: var(--ads-color-primary);
   }
 
-  /* Hover / active (exclude disabled) */
   .ads-btn:not(.ads-btn-disabled):hover,
   .ads-btn:not(.ads-btn-disabled):focus-visible {
     color: var(--ads-color-primary);
@@ -173,12 +257,12 @@
 
   .ads-btn-primary:not(.ads-btn-disabled):hover {
     background: var(--ads-color-primary-hover);
-    color: #fff;
+    color: var(--ads-color-text-inverse);
   }
 
   .ads-btn-primary:not(.ads-btn-disabled):active {
     background: var(--ads-color-primary-active);
-    color: #fff;
+    color: var(--ads-color-text-inverse);
   }
 
   .ads-btn-default:not(.ads-btn-disabled):hover,
@@ -194,7 +278,6 @@
     color: var(--ads-color-primary-hover);
   }
 
-  /* Danger */
   .ads-btn-danger.ads-btn-primary {
     background: var(--ads-color-danger);
   }
@@ -219,14 +302,12 @@
     border-color: var(--ads-color-danger);
   }
 
-  /* Ghost */
   .ads-btn-ghost.ads-btn-primary {
     background: transparent;
     border-color: var(--ads-color-primary);
     color: var(--ads-color-primary);
   }
 
-  /* Shapes */
   .ads-btn-circle {
     min-width: var(--ads-control-height);
     padding: 0;
@@ -245,13 +326,11 @@
     border-radius: var(--ads-control-height);
   }
 
-  /* Block */
   .ads-btn-block {
     display: flex;
     width: 100%;
   }
 
-  /* Disabled */
   .ads-btn-disabled,
   .ads-btn:disabled {
     cursor: not-allowed;
@@ -267,15 +346,14 @@
     border-color: transparent;
   }
 
-  /* Loading */
   .ads-btn-loading-icon {
     display: inline-block;
-    width: 14px;
-    height: 14px;
-    border: 2px solid currentColor;
+    width: var(--ads-button-loading-size);
+    height: var(--ads-button-loading-size);
+    border: var(--ads-button-loading-border-width) solid currentColor;
     border-top-color: transparent;
     border-radius: 50%;
-    animation: ads-btn-spin 1s linear infinite;
+    animation: ads-btn-spin var(--ads-motion-duration-spinner) linear infinite;
   }
 
   @keyframes ads-btn-spin {

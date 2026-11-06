@@ -13,6 +13,15 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     include: ['tests/**/*.{test,spec}.{ts,js}'],
-    setupFiles: ['./vitest-setup.ts']
+    setupFiles: ['./vitest-setup.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/lib/Button/Button.svelte'],
+      reporter: ['text', 'lcov'],
+      thresholds: {
+        lines: 90,
+        branches: 100
+      }
+    }
   }
 });
