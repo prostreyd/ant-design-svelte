@@ -15,7 +15,7 @@ Ant Design.
 
 ## Status
 
-Early version (`0.1.0`). Available components: `Button`. More components are planned.
+Early alpha (`0.1.0-alpha.0`). Available components: `Button`. More components are planned.
 
 ## Installation
 
