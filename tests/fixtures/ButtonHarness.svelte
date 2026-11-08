@@ -34,6 +34,8 @@
     label?: string;
     showLabel?: boolean;
     class?: string;
+    /** Extra attributes forwarded to the Button, e.g. `tabindex` or `aria-*`. */
+    attrs?: Record<string, unknown>;
   }
 
   let {
@@ -60,7 +62,8 @@
     onclick,
     label = '',
     showLabel = true,
-    class: className
+    class: className,
+    attrs = {}
   }: Props = $props();
 </script>
 
@@ -95,5 +98,6 @@
   data-testid={dataTestid}
   onclick={onclick}
   class={className}
+  {...attrs}
   children={showLabel ? labelContent : undefined}
 />

@@ -13,6 +13,7 @@
     ButtonType
   } from './types.js';
   import type { Snippet } from 'svelte';
+  import { isProduction } from '../internal/env.js';
 
   type ButtonProps = Omit<HTMLAttributes<HTMLElement>, 'children' | 'class' | 'onclick'> & {
     /** Visual style of the button. */
@@ -81,6 +82,9 @@
     onclick,
     children,
     class: customClass,
+    tabindex = undefined,
+    'aria-busy': ariaBusy = undefined,
+    'aria-disabled': ariaDisabled = undefined,
     ...rest
   }: ButtonProps = $props();
 
@@ -90,19 +94,43 @@
   const BUTTON_HTML_TYPES = ['button', 'submit', 'reset'] as const;
   const BUTTON_ICON_PLACEMENTS = ['start', 'end'] as const;
 
-  /** Rejects values outside the public contract instead of rendering them silently. */
-  function assertAllowed(name: string, value: unknown, allowed: readonly unknown[]): void {
-    if (!allowed.includes(value)) {
+  /**
+   * Values outside the public contract throw a `RangeError` while developing, so the
+   * mistake is caught early. A production build falls back to the documented default
+   * instead, so a bad value (for example one coming from a CMS) cannot take down the page.
+   */
+  function resolveOption<T extends string>(
+    name: string,
+    value: unknown,
+    allowed: readonly T[],
+    fallback: T
+  ): T {
+    if (allowed.includes(value as T)) return value as T;
+    if (!isProduction()) {
       throw new RangeError(`Button ${name} must be one of: ${allowed.join(', ')}.`);
     }
+    return fallback;
   }
+
+  // One derived object, so every option is validated on each render, whichever element is used.
+  const resolved = $derived({
+    type: resolveOption('type', type, BUTTON_TYPES, 'default'),
+    size: resolveOption('size', size, BUTTON_SIZES, 'medium'),
+    shape: resolveOption('shape', shape, BUTTON_SHAPES, 'default'),
+    htmlType: resolveOption('htmlType', htmlType, BUTTON_HTML_TYPES, 'button'),
+    iconPlacement: resolveOption('iconPlacement', iconPlacement, BUTTON_ICON_PLACEMENTS, 'start')
+  });
 
   let delayedLoading = $state(false);
 
   const loadingDelay = $derived.by(() => {
     if (typeof loading === 'boolean') return 0;
     if (!Number.isFinite(loading.delay) || loading.delay < 0) {
-      throw new RangeError('Button loading.delay must be a non-negative finite number.');
+      if (!isProduction()) {
+        throw new RangeError('Button loading.delay must be a non-negative finite number.');
+      }
+      // Production fallback: the caller asked for loading, so show it immediately.
+      return 0;
     }
     return loading.delay;
   });
@@ -125,16 +153,20 @@
   );
   const isDisabled = $derived(disabled || isLoading);
 
+  // A loading button stays focusable: a natively disabled element drops focus, which
+  // would strand keyboard users the moment an action starts. Clicks are blocked in
+  // `handleClick`, and `aria-disabled` tells assistive technology it is unavailable.
+  // Attributes the consumer passes are kept unless the component's own state overrides them.
+  const busyValue = $derived(isLoading ? true : ariaBusy);
+  const buttonAriaDisabled = $derived(isLoading && !disabled ? true : ariaDisabled);
+  const anchorAriaDisabled = $derived(isDisabled ? true : ariaDisabled);
+  const anchorTabindex = $derived(isDisabled ? -1 : tabindex);
+
   const classes = $derived.by(() => {
-    assertAllowed('type', type, BUTTON_TYPES);
-    assertAllowed('size', size, BUTTON_SIZES);
-    assertAllowed('shape', shape, BUTTON_SHAPES);
-    assertAllowed('htmlType', htmlType, BUTTON_HTML_TYPES);
-    assertAllowed('iconPlacement', iconPlacement, BUTTON_ICON_PLACEMENTS);
     // `middle` is a legacy alias; it already maps to the `ads-btn-middle` class.
-    const sizeClass = size === 'medium' ? 'middle' : size;
-    const list: string[] = ['ads-btn', `ads-btn-${type}`, `ads-btn-${sizeClass}`];
-    if (shape !== 'default') list.push(`ads-btn-${shape}`);
+    const sizeClass = resolved.size === 'medium' ? 'middle' : resolved.size;
+    const list: string[] = ['ads-btn', `ads-btn-${resolved.type}`, `ads-btn-${sizeClass}`];
+    if (resolved.shape !== 'default') list.push(`ads-btn-${resolved.shape}`);
     if (danger) list.push('ads-btn-danger');
     if (ghost) list.push('ads-btn-ghost');
     if (block) list.push('ads-btn-block');
@@ -163,21 +195,22 @@
   <a
     {...rest}
     class={classes}
-    {href}
+    href={isDisabled ? undefined : href}
+    role={isDisabled ? 'link' : undefined}
     {target}
     {rel}
     download={downloadAttribute}
-    aria-disabled={isDisabled || undefined}
-    aria-busy={isLoading || undefined}
-    tabindex={isDisabled ? -1 : undefined}
+    aria-disabled={anchorAriaDisabled}
+    aria-busy={busyValue}
+    tabindex={anchorTabindex}
     onclick={handleClick}
   >
     {#if isLoading}<span class="ads-btn-loading-icon" aria-hidden="true"></span>{/if}
-    {#if icon && iconPlacement === 'start'}
+    {#if icon && resolved.iconPlacement === 'start'}
       <span class="ads-btn-icon" aria-hidden="true">{@render icon()}</span>
     {/if}
     {#if children}<span class="ads-btn-content">{@render children()}</span>{/if}
-    {#if icon && iconPlacement === 'end'}
+    {#if icon && resolved.iconPlacement === 'end'}
       <span class="ads-btn-icon" aria-hidden="true">{@render icon()}</span>
     {/if}
   </a>
@@ -185,27 +218,46 @@
   <button
     {...rest}
     class={classes}
-    type={htmlType}
-    disabled={isDisabled}
+    type={resolved.htmlType}
+    {disabled}
     {form}
     {name}
     {value}
-    aria-busy={isLoading || undefined}
+    {tabindex}
+    aria-disabled={buttonAriaDisabled}
+    aria-busy={busyValue}
     onclick={handleClick}
   >
     {#if isLoading}<span class="ads-btn-loading-icon" aria-hidden="true"></span>{/if}
-    {#if icon && iconPlacement === 'start'}
+    {#if icon && resolved.iconPlacement === 'start'}
       <span class="ads-btn-icon" aria-hidden="true">{@render icon()}</span>
     {/if}
     {#if children}<span class="ads-btn-content">{@render children()}</span>{/if}
-    {#if icon && iconPlacement === 'end'}
+    {#if icon && resolved.iconPlacement === 'end'}
       <span class="ads-btn-icon" aria-hidden="true">{@render icon()}</span>
     {/if}
   </button>
 {/if}
 
 <style>
+  /*
+   * Every variant only sets the private `--_*` colour variables below. The hover,
+   * focus-visible and active rules then read them, so type, `danger` and `ghost`
+   * combine without fighting over specificity. Solid fills use the `-solid` tokens and
+   * foreground colours on the page background use the `-text` tokens; both keep
+   * WCAG AA contrast (4.5:1) in the light and dark themes.
+   */
   .ads-btn {
+    --_fg: var(--ads-color-text);
+    --_fg-hover: var(--ads-color-primary-text-hover);
+    --_fg-active: var(--ads-color-primary-text-active);
+    --_bg: var(--ads-color-bg-container);
+    --_bg-hover: var(--_bg);
+    --_bg-active: var(--_bg);
+    --_border: var(--ads-color-border);
+    --_border-hover: var(--ads-color-primary-text-hover);
+    --_border-active: var(--ads-color-primary-text-active);
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -215,10 +267,10 @@
     font-family: var(--ads-font-family);
     font-size: var(--ads-font-size);
     line-height: var(--ads-control-line-height);
-    border: var(--ads-border-width) solid transparent;
+    border: var(--ads-border-width) solid var(--_border);
     border-radius: var(--ads-radius-md);
-    background: transparent;
-    color: var(--ads-color-text);
+    background: var(--_bg);
+    color: var(--_fg);
     cursor: pointer;
     white-space: nowrap;
     user-select: none;
@@ -246,89 +298,99 @@
     font-size: var(--ads-font-size-sm);
   }
 
-  .ads-btn-default {
-    background: var(--ads-color-bg-container);
-    border-color: var(--ads-color-border);
+  /* Danger palette for the interactive states; the types below decide what applies. */
+  .ads-btn-danger {
+    --_fg-hover: var(--ads-color-danger-text-hover);
+    --_fg-active: var(--ads-color-danger-text-active);
+    --_border-hover: var(--ads-color-danger-text-hover);
+    --_border-active: var(--ads-color-danger-text-active);
   }
 
+  /* default keeps the base variables. */
+
   .ads-btn-primary {
-    background: var(--ads-color-primary);
-    color: var(--ads-color-text-inverse);
+    --_fg: var(--ads-color-text-inverse);
+    --_fg-hover: var(--ads-color-text-inverse);
+    --_fg-active: var(--ads-color-text-inverse);
+    --_bg: var(--ads-color-primary-solid);
+    --_bg-hover: var(--ads-color-primary-solid-hover);
+    --_bg-active: var(--ads-color-primary-solid-active);
+    --_border: transparent;
+    --_border-hover: transparent;
+    --_border-active: transparent;
   }
 
   .ads-btn-dashed {
-    background: var(--ads-color-bg-container);
-    border-color: var(--ads-color-border);
     border-style: dashed;
   }
 
   .ads-btn-text {
-    background: transparent;
-    border-color: transparent;
+    --_bg: transparent;
+    --_bg-hover: var(--ads-color-bg-text-hover);
+    --_bg-active: var(--ads-color-bg-text-hover);
+    --_border: transparent;
+    --_border-hover: transparent;
+    --_border-active: transparent;
   }
 
   .ads-btn-link {
-    background: transparent;
-    border-color: transparent;
-    color: var(--ads-color-primary);
-  }
-
-  .ads-btn:not(.ads-btn-disabled):hover,
-  .ads-btn:not(.ads-btn-disabled):focus-visible {
-    color: var(--ads-color-primary);
-  }
-
-  .ads-btn-primary:not(.ads-btn-disabled):hover {
-    background: var(--ads-color-primary-hover);
-    color: var(--ads-color-text-inverse);
-  }
-
-  .ads-btn-primary:not(.ads-btn-disabled):active {
-    background: var(--ads-color-primary-active);
-    color: var(--ads-color-text-inverse);
-  }
-
-  .ads-btn-default:not(.ads-btn-disabled):hover,
-  .ads-btn-dashed:not(.ads-btn-disabled):hover {
-    border-color: var(--ads-color-primary);
-  }
-
-  .ads-btn-text:not(.ads-btn-disabled):hover {
-    background: var(--ads-color-bg-text-hover);
-  }
-
-  .ads-btn-link:not(.ads-btn-disabled):hover {
-    color: var(--ads-color-primary-hover);
-  }
-
-  .ads-btn-danger.ads-btn-primary {
-    background: var(--ads-color-danger);
-  }
-
-  .ads-btn-danger.ads-btn-primary:not(.ads-btn-disabled):hover {
-    background: var(--ads-color-danger-hover);
-  }
-
-  .ads-btn-danger.ads-btn-primary:not(.ads-btn-disabled):active {
-    background: var(--ads-color-danger-active);
+    --_fg: var(--ads-color-primary-text);
+    --_bg: transparent;
+    --_border: transparent;
+    --_border-hover: transparent;
+    --_border-active: transparent;
   }
 
   .ads-btn-danger.ads-btn-default,
   .ads-btn-danger.ads-btn-dashed,
   .ads-btn-danger.ads-btn-text,
   .ads-btn-danger.ads-btn-link {
-    color: var(--ads-color-danger);
+    --_fg: var(--ads-color-danger-text);
   }
 
-  .ads-btn-danger.ads-btn-default:not(.ads-btn-disabled):hover,
-  .ads-btn-danger.ads-btn-dashed:not(.ads-btn-disabled):hover {
-    border-color: var(--ads-color-danger);
+  .ads-btn-danger.ads-btn-primary {
+    --_bg: var(--ads-color-danger-solid);
+    --_bg-hover: var(--ads-color-danger-solid-hover);
+    --_bg-active: var(--ads-color-danger-solid-active);
+  }
+
+  /* Ghost: transparent surface; the text and border keep the button's own colours. */
+  .ads-btn-ghost.ads-btn-default,
+  .ads-btn-ghost.ads-btn-dashed,
+  .ads-btn-ghost.ads-btn-primary {
+    --_bg: transparent;
+    --_bg-hover: transparent;
+    --_bg-active: transparent;
   }
 
   .ads-btn-ghost.ads-btn-primary {
-    background: transparent;
-    border-color: var(--ads-color-primary);
-    color: var(--ads-color-primary);
+    --_fg: var(--ads-color-primary-text);
+    --_fg-hover: var(--ads-color-primary-text-hover);
+    --_fg-active: var(--ads-color-primary-text-active);
+    --_border: var(--ads-color-primary-text);
+    --_border-hover: var(--ads-color-primary-text-hover);
+    --_border-active: var(--ads-color-primary-text-active);
+  }
+
+  .ads-btn-ghost.ads-btn-primary.ads-btn-danger {
+    --_fg: var(--ads-color-danger-text);
+    --_fg-hover: var(--ads-color-danger-text-hover);
+    --_fg-active: var(--ads-color-danger-text-active);
+    --_border: var(--ads-color-danger-text);
+    --_border-hover: var(--ads-color-danger-text-hover);
+    --_border-active: var(--ads-color-danger-text-active);
+  }
+
+  .ads-btn:not(.ads-btn-disabled):is(:hover, :focus-visible) {
+    color: var(--_fg-hover);
+    background: var(--_bg-hover);
+    border-color: var(--_border-hover);
+  }
+
+  .ads-btn:not(.ads-btn-disabled):active {
+    color: var(--_fg-active);
+    background: var(--_bg-active);
+    border-color: var(--_border-active);
   }
 
   .ads-btn-circle {
@@ -382,6 +444,17 @@
   @keyframes ads-btn-spin {
     to {
       transform: rotate(360deg);
+    }
+  }
+
+  /* Honour the OS "reduce motion" setting: no colour transitions, a slower spinner. */
+  @media (prefers-reduced-motion: reduce) {
+    .ads-btn {
+      transition: none;
+    }
+
+    .ads-btn-loading-icon {
+      animation-duration: var(--ads-motion-duration-spinner-reduced);
     }
   }
 </style>

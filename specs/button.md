@@ -13,10 +13,10 @@ source code. The React documentation reported Ant Design 6.7.0 when checked on
 | `type` | `'primary' \| 'default' \| 'dashed' \| 'text' \| 'link'` | `'default'` | Selects the visual style. |
 | `size` | `'large' \| 'medium' \| 'middle' \| 'small'` | `'medium'` | `medium` follows the current React API; `middle` remains a compatibility alias. |
 | `shape` | `'default' \| 'circle' \| 'round'` | `'default'` | Controls the shape. |
-| `disabled` | `boolean` | `false` | Prevents button activation; disabled anchors also suppress navigation and leave the tab order. |
-| `loading` | `boolean \| { delay: number }` | `false` | Shows an accessible-hidden spinner immediately or after a finite, non-negative delay in milliseconds; the control is disabled once loading is shown. |
+| `disabled` | `boolean` | `false` | Prevents button activation. A disabled or loading anchor is rendered without `href`, so it cannot navigate, and leaves the tab order. |
+| `loading` | `boolean \| { delay: number }` | `false` | Shows an accessible-hidden spinner immediately or after a finite, non-negative delay in milliseconds. Once loading is shown the control ignores activation but is not natively disabled, so a focused button keeps focus. |
 | `danger` | `boolean` | `false` | Applies danger styling. |
-| `ghost` | `boolean` | `false` | Applies transparent styling. |
+| `ghost` | `boolean` | `false` | Transparent surface for `default`, `dashed`, and `primary`; text and border colors stay those of the type and `danger`. No visual change for `text` and `link`. Text contrast is guaranteed on the page background only; the surface under a ghost button is the consumer's responsibility. |
 | `block` | `boolean` | `false` | Fills the available width. |
 | `href` | `string` | — | Renders an anchor when provided, including an empty string. |
 | `target` | `string` | — | Native anchor target. |
@@ -25,10 +25,11 @@ source code. The React documentation reported Ant Design 6.7.0 when checked on
 | `iconPlacement` | `'start' \| 'end'` | `'start'` | Positions the icon snippet. |
 | `children` | `Snippet` | — | Label or other button content. |
 | `class` | `string` | — | Extra class appended to the component's classes. |
-| Native attributes | `HTMLButtonAttributes` or `HTMLAnchorAttributes` | — | Forwarded to the selected native element, including ARIA and form/link attributes. |
+| Native attributes | `HTMLButtonAttributes` or `HTMLAnchorAttributes` | — | Forwarded to the selected native element, including `tabindex`, ARIA, and form/link attributes. The component's own `loading`/`disabled` state takes priority over a consumer `aria-busy`, `aria-disabled`, or `tabindex`; otherwise the consumer value is kept. |
 | `onclick` | `(event: MouseEvent) => void` | — | Called once for an enabled click; suppressed while disabled or loading. |
 
-`loading.delay` must be a finite, non-negative number of milliseconds. A pending
+`loading.delay` must be a finite, non-negative number of milliseconds. An invalid value
+follows the invalid-option rule below (error in development, immediate loading in production). A pending
 delay remains interactive; it is cancelled when `loading` changes before it
 expires.
 
@@ -37,14 +38,21 @@ expires.
 - Without `href`, render a native `<button>` using `htmlType`.
 - With `href`, render a native `<a>` and forward anchor attributes.
 - An empty `href` still selects the anchor branch.
-- Loading renders a spinner and exposes `aria-busy`; disabled/loading anchors
-  receive `aria-disabled`, `tabindex="-1"` and click suppression.
+- Loading renders a spinner and exposes `aria-busy`. A loading button also sets
+  `aria-disabled="true"`, stays focusable, and suppresses clicks. Disabled/loading
+  anchors drop `href`, get `role="link"`, `aria-disabled`, `tabindex="-1"` and
+  click suppression.
 - Button types, sizes, shapes, danger, ghost, and block are style variants.
 - `iconPlacement` defaults to `start`; only `start` and `end` are accepted.
 - The legacy `middle` size value maps to the `medium` appearance.
 - A custom `class` is appended, not substituted for the component's classes.
-- Enum props (`type`, `size`, `shape`, `htmlType`, `iconPlacement`) reject values
-  outside their contract with a `RangeError` instead of rendering silently.
+- Enum props (`type`, `size`, `shape`, `htmlType`, `iconPlacement`) and `loading.delay`
+  reject values outside their contract. During development and in tests (anything but a
+  production build) the component throws a `RangeError`, so the mistake is found early.
+  In a production build it falls back to the documented default (`default`, `medium`,
+  `default`, `button`, `start`; an invalid `loading.delay` shows loading immediately), so a
+  bad runtime value cannot take down the page. Moving from throwing to a fallback is not
+  a breaking change; the reverse would be.
 - `download: true` renders a bare `download` attribute; `download: false` renders no
   attribute; a string value is used as the file name.
 
@@ -52,13 +60,24 @@ expires.
 
 - Use native button/link semantics rather than recreating roles or keyboard behavior.
 - A native enabled button is activated by Enter and Space.
-- Disabled/loading buttons use native `disabled`; disabled/loading anchors are
-  removed from sequential focus and cannot navigate.
+- A `disabled` button uses native `disabled`. A loading button does not: a natively
+  disabled element drops keyboard focus, so a focused button would lose its place
+  when an action starts. It uses `aria-disabled="true"` and ignores clicks, Enter,
+  and Space, including implicit form submission. With both `disabled` and `loading`
+  the native attribute applies. Disabled/loading anchors are removed from
+  sequential focus, have no `href`, and cannot navigate or open in a new tab.
 - Link anchors activate with Enter; buttons activate with Enter and Space.
 - The icon and spinner are `aria-hidden`; icon-only controls require an
   accessible name, such as `aria-label`.
 - `aria-busy` is set on either element while loading is active.
-- `:focus-visible` has a visible outline using design tokens.
+- `:focus-visible` has a visible outline using design tokens, at least 3:1 against the
+  page background.
+- Text contrast is at least 4.5:1 for every type, `danger`, and `ghost` combination in
+  the rest, hover, focus-visible, and pressed states, in both themes. Solid fills use
+  the `-solid` tokens and text on the page uses the `-text` tokens. Disabled controls
+  are exempt, as in WCAG 1.4.3.
+- `prefers-reduced-motion: reduce` disables color transitions and slows the spinner
+  (`--ads-motion-duration-spinner-reduced`).
 - Axe checks cover named button/link examples. Keyboard activation, disabled
   behavior, focus, and ARIA states have behavioral tests.
 
@@ -119,6 +138,10 @@ of the Svelte API. Native button behavior is used where the semantics match.
   render functions; mutating their generated DOM to infer text is fragile.
 - `color`, `variant`, `classNames`, and `styles` are deferred to keep v1.0
   styling scope bounded. Their names and initial contracts are reserved above.
+- `tokens.css` contains only tokens that components consume or that belong to the Ant Design
+  base scale. Tokens used only by the documentation site live in `demo/src/app.css` under
+  `--site-*`, so they are not part of the published contract. The stylesheet does not set
+  `color-scheme` on `:root`; the dark theme sets it under `[data-theme='dark']`.
 - All code is independently authored for Svelte. The comparison is based on
   public documentation; Ant Design implementation source was not used.
 
@@ -131,12 +154,21 @@ of the Svelte API. Native button behavior is used where the semantics match.
 - Click callback invocation count and payload; suppression when disabled/loading.
 - Native keyboard activation; disabled button focus/activation behavior.
 - Link Enter activation and disabled-anchor focus behavior.
-- Immediate and delayed loading, cancellation, invalid delay, spinner, and `aria-busy`.
+- Immediate and delayed loading, cancellation, invalid delay, spinner, and `aria-busy`/`aria-disabled`.
+- Loading keeps focus, stays in the Tab order, ignores Enter/Space, and does not submit a form;
+  `disabled` + `loading` stays natively disabled.
 - Anchor rendering for normal and empty `href`; `target`, `rel`, `download`, disabled/loading behavior.
+- Disabled/loading anchors have no `href` (including an empty one), get `role="link"`, and regain
+  `href` when re-enabled.
+- Consumer `tabindex`, `aria-busy`, and `aria-disabled` are forwarded; component state wins on conflict.
 - Reactive prop changes, including `onclick` replacement and button/anchor switching.
 - Native form behavior: default `type="button"`, `submit`, `reset`, disabled submit,
   `value`, and `htmlType` ignored for anchors.
-- Invalid enum values (`type`, `size`, `shape`, `htmlType`, `iconPlacement`) throw `RangeError`.
+- Invalid enum values (`type`, `size`, `shape`, `htmlType`, `iconPlacement`) throw `RangeError` outside
+  production; in production each falls back to its default, including on anchors, and an invalid
+  `loading.delay` shows loading immediately. `isProduction()` is tested for development,
+  production, and a missing `process` object. A real dev server and a production build were
+  also checked in a browser.
 - `download` boolean and string mapping; omitted anchor attributes.
 - Loading edge cases: pending delay shows no spinner, `true` replaces a pending delay,
   changing the delay restarts the timer, keyboard blocked while loading, loading link
@@ -147,10 +179,15 @@ of the Svelte API. Native button behavior is used where the semantics match.
 - Visual states (`:hover`, `:active`, `:focus-visible`, disabled, loading spinner, sizes,
   block, circle/round) are covered by Playwright e2e tests in `e2e/button.spec.ts`,
   which compare computed styles against the design tokens. Run with `npm run test:e2e`.
+- A contrast matrix (type x `danger` x `ghost` x rest/hover/focus/pressed x light/dark) checks
+  text contrast >= 4.5:1 and focus-ring contrast >= 3:1 in the browser; separate tests cover the
+  `danger` hover palette, `ghost` states, focus retention when loading starts, a disabled anchor
+  not opening on middle click, and `prefers-reduced-motion`.
 
 ## Mutation testing
 
 `npm run test:mutation` applies one mutation at a time to `Button.svelte`, runs the unit
-tests for each, and reports survivors. Current result: 99% (96 of 97 killed). The one
-survivor is equivalent: the initial value of `delayedLoading` is overwritten by the
-loading effect during mount, so no state is observable from outside the mount.
+tests for each, and reports survivors. Current result: 100% (94 of 94 killed). The score
+depends on the code around each mutation, so re-run it after editing the component; an
+earlier version of this component had one equivalent survivor (the initial value of
+`delayedLoading`, which the loading effect overwrites during mount).

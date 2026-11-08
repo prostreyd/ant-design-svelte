@@ -183,7 +183,7 @@
     padding: 7px 12px;
     border: 1px solid var(--ads-color-border-secondary);
     border-radius: 999px;
-    background: var(--ads-color-bg-subtle);
+    background: var(--site-color-bg-subtle);
     color: var(--ads-color-text-secondary);
     font-size: 12px;
     font-weight: 600;
@@ -194,8 +194,8 @@
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: var(--ads-color-success);
-    box-shadow: 0 0 0 3px var(--ads-color-success-soft);
+    background: var(--site-color-success);
+    box-shadow: 0 0 0 3px var(--site-color-success-soft);
   }
 
   h1 {
@@ -261,7 +261,7 @@
 
   .meta-check {
     margin-right: 4px;
-    color: var(--ads-color-success);
+    color: var(--site-color-success);
     font-weight: 700;
   }
 
@@ -383,9 +383,9 @@
   .preview-code {
     padding: 15px 22px;
     border-top: 1px solid var(--ads-color-border-secondary);
-    background: var(--ads-color-bg-code);
+    background: var(--site-color-bg-code);
     color: var(--ads-color-text-secondary);
-    font-family: var(--ads-font-family-code);
+    font-family: var(--site-font-family-code);
     font-size: 11px;
     line-height: 1.85;
   }
@@ -395,15 +395,15 @@
   }
 
   .code-tag {
-    color: var(--ads-color-code-blue);
+    color: var(--site-color-code-blue);
   }
 
   .code-attr {
-    color: var(--ads-color-code-purple);
+    color: var(--site-color-code-purple);
   }
 
   .code-value {
-    color: var(--ads-color-code-green);
+    color: var(--site-color-code-green);
   }
 
   .floating-note {
@@ -431,7 +431,7 @@
   .stats-strip {
     border-top: 1px solid var(--ads-color-border-secondary);
     border-bottom: 1px solid var(--ads-color-border-secondary);
-    background: var(--ads-color-bg-subtle);
+    background: var(--site-color-bg-subtle);
   }
 
   .stats-inner {
@@ -526,18 +526,18 @@
   }
 
   .principle-icon.blue {
-    background: var(--ads-color-primary-soft);
+    background: var(--site-color-primary-soft);
     color: var(--ads-color-primary);
   }
 
   .principle-icon.violet {
-    background: var(--ads-color-violet-soft);
-    color: var(--ads-color-violet);
+    background: var(--site-color-violet-soft);
+    color: var(--site-color-violet);
   }
 
   .principle-icon.mint {
-    background: var(--ads-color-success-soft);
-    color: var(--ads-color-success);
+    background: var(--site-color-success-soft);
+    color: var(--site-color-success);
   }
 
   .principle-card h3 {
@@ -558,7 +558,7 @@
     padding: 44px 0;
     background:
       radial-gradient(ellipse at 80% 10%, var(--site-color-primary-glow), transparent 35%),
-      var(--ads-color-bg-subtle);
+      var(--site-color-bg-subtle);
   }
 
   .callout-inner {

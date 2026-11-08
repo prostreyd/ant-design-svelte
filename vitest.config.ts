@@ -16,7 +16,8 @@ export default defineConfig({
     setupFiles: ['./vitest-setup.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/lib/Button/Button.svelte'],
+      include: ['src/lib/**/*.{ts,svelte}'],
+      exclude: ['src/lib/**/types.ts'],
       reporter: ['text', 'lcov'],
       thresholds: {
         lines: 90,

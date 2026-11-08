@@ -8,12 +8,12 @@ Svelte 5 API.
 Import the design tokens once in the application entry point:
 
 ```ts
-import 'ant-design-svelte/tokens.css';
+import 'svelte-ant-design/tokens.css';
 ```
 
 ```svelte
 <script lang="ts">
-  import { Button } from 'ant-design-svelte';
+  import { Button } from 'svelte-ant-design';
 
   function handleClick(event: MouseEvent) {
     console.log('clicked', event);
@@ -45,11 +45,11 @@ before or after the label:
 | `type` | `'primary' \| 'default' \| 'dashed' \| 'text' \| 'link'` | `'default'` | Visual style. |
 | `size` | `'large' \| 'medium' \| 'middle' \| 'small'` | `'medium'` | Size. `middle` is a compatibility alias for `medium`. |
 | `shape` | `'default' \| 'circle' \| 'round'` | `'default'` | Shape. |
-| `disabled` | `boolean` | `false` | Prevents activation. |
-| `loading` | `boolean \| { delay: number }` | `false` | Shows a spinner immediately or after a non-negative delay in milliseconds; the button becomes disabled when loading is shown. |
+| `disabled` | `boolean` | `false` | Prevents activation. A disabled link is rendered without `href`. |
+| `loading` | `boolean \| { delay: number }` | `false` | Shows a spinner immediately or after a non-negative delay in milliseconds; clicks are blocked once loading is shown, but the button stays focusable. |
 | `danger` | `boolean` | `false` | Danger color scheme. |
 | `block` | `boolean` | `false` | Full width. |
-| `ghost` | `boolean` | `false` | Transparent background, mainly for primary buttons on colored surfaces. |
+| `ghost` | `boolean` | `false` | Transparent background for `default`, `dashed`, and `primary`; the text and border colors come from the type and `danger`. It has no visual effect on `text` and `link`. Contrast is guaranteed on the page background only: choose a surface the button color reads on. |
 | `href` | `string` | — | Renders an `<a>` instead of a `<button>`. An empty string still renders an anchor. |
 | `target` | `string` | — | Anchor target; used only when `href` is provided. |
 | `htmlType` | `'button' \| 'submit' \| 'reset'` | `'button'` | Native button `type`; ignored for anchors. |
@@ -57,10 +57,15 @@ before or after the label:
 | `iconPlacement` | `'start' \| 'end'` | `'start'` | Position of the icon snippet. |
 | `children` | `Snippet` | — | Button label/content snippet. |
 | `class` | `string` | — | Additional CSS class appended to the component classes. |
-| Native attributes | `HTMLButtonAttributes` or `HTMLAnchorAttributes` | — | Other native attributes, including `aria-*`, `name`, `form`, `rel`, and `download`, are forwarded to the rendered element. |
+| Native attributes | `HTMLButtonAttributes` or `HTMLAnchorAttributes` | — | Other native attributes, including `tabindex`, `aria-*`, `name`, `form`, `rel`, and `download`, are forwarded to the rendered element. The `loading` and `disabled` states take priority over a consumer `aria-busy`, `aria-disabled`, or `tabindex`. |
+
+Invalid values: `type`, `size`, `shape`, `htmlType`, `iconPlacement`, and `loading.delay` are
+checked. While developing (and in tests) an invalid value throws a `RangeError`; in a production
+build the button uses the default instead (`loading.delay` falls back to showing loading
+immediately), so a bad runtime value cannot break the page.
 
 `loading.delay` must be a finite, non-negative number of milliseconds. A delayed loading state
-does not disable the control until the delay expires. Changing `loading` before
+does not block the control until the delay expires. Changing `loading` before
 the delay expires cancels the pending timer.
 
 ## Events
@@ -80,11 +85,13 @@ the delay expires cancels the pending timer.
 ## Accessibility
 
 - Uses native `<button>` and `<a>` elements and forwards their supported attributes.
-- Native buttons support keyboard activation. Disabled/loading buttons use the native `disabled` attribute.
-- Disabled/loading anchors get `aria-disabled="true"`, `tabindex="-1"` and suppress navigation.
+- Native buttons support keyboard activation. A `disabled` button uses the native `disabled` attribute.
+- A loading button is not natively disabled: it keeps keyboard focus when loading starts, exposes `aria-disabled="true"`, and ignores clicks, Enter, and Space (including form submission).
+- Disabled/loading anchors are rendered without `href`, with `role="link"`, `aria-disabled="true"`, and `tabindex="-1"`, so they cannot be opened by click, middle click, or the context menu.
 - Both element types expose `aria-busy="true"` while loading.
 - The spinner and icon snippet are hidden from assistive technology. An icon-only button must receive an accessible name, for example `aria-label="Close"`.
-- A visible `:focus-visible` outline is provided using design tokens.
+- A visible `:focus-visible` outline is provided using design tokens. The outline has at least 3:1 contrast against the page, and text in every type, `danger`, and `ghost` combination keeps at least 4.5:1 in the light and dark themes, including hover, focus, and pressed states.
+- Under `prefers-reduced-motion: reduce`, color transitions are disabled and the spinner turns more slowly.
 
 ## Scope decisions and limitations
 

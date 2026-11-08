@@ -31,6 +31,12 @@
 <Button onclick={() => (count += 1)}>
   Нажми меня · {count}
 </Button>`,
+    variants: `<Button type="primary" ghost>Primary ghost</Button>
+<Button ghost>Default ghost</Button>
+<Button type="dashed" ghost>Dashed ghost</Button>
+<Button type="primary" danger ghost>Danger ghost</Button>
+<Button danger>Danger</Button>
+<Button type="text" danger>Danger text</Button>`,
     links: `<Button href="/docs">Open documentation</Button>
 <Button type="primary" block>Continue</Button>`
   };
@@ -42,6 +48,7 @@
     sizes: false,
     icons: false,
     states: false,
+    variants: false,
     links: false
   });
   let copyStatus = $state<Partial<Record<ExampleKey, 'copied' | 'error'>>>({});
@@ -50,7 +57,7 @@
     const scriptAttribute = codeLanguage === 'typescript' ? ' lang="ts"' : '';
     const scriptLines = [
       `<script${scriptAttribute}>`,
-      `  import { Button } from 'ant-design-svelte';`,
+      `  import { Button } from 'svelte-ant-design';`,
       ...(example === 'states' ? ['', '  let count = $state(0);'] : []),
       '<\/script>',
       '',
@@ -73,8 +80,8 @@
     }
   }
 
-  const usageExample = `import 'ant-design-svelte/tokens.css';
-import { Button } from 'ant-design-svelte';
+  const usageExample = `import 'svelte-ant-design/tokens.css';
+import { Button } from 'svelte-ant-design';
 
 <Button type="primary" onclick={() => console.log('saved')}>
   Сохранить изменения
@@ -410,7 +417,7 @@ import { Button } from 'ant-design-svelte';
           <article class="example-card">
             <div class="example-description">
               <h4>Состояния и действия</h4>
-              <p>Загрузка и disabled предотвращают повторное действие. Нажмите кнопку, чтобы проверить callback.</p>
+              <p>Загрузка и disabled предотвращают повторное действие; кнопка в загрузке остаётся в Tab-порядке и не теряет фокус. Нажмите кнопку, чтобы проверить callback.</p>
             </div>
             <div class="example-demo">
               <Button type="primary" loading>Saving</Button>
@@ -436,6 +443,41 @@ import { Button } from 'ant-design-svelte';
               <div class="code-panel" id="button-states-code">
                 {@render codeLanguageControls()}
                 <pre><code>{getExampleCode('states')}</code></pre>
+              </div>
+            {/if}
+          </article>
+
+          <article class="example-card">
+            <div class="example-description">
+              <h4>Danger и ghost</h4>
+              <p>Свойство danger задаёт красную схему, а ghost делает фон прозрачным: кнопка берёт цвет поверхности под собой.</p>
+            </div>
+            <div class="example-demo example-demo-surface">
+              <Button type="primary" ghost>Primary ghost</Button>
+              <Button ghost>Default ghost</Button>
+              <Button type="dashed" ghost>Dashed ghost</Button>
+              <Button type="primary" danger ghost>Danger ghost</Button>
+              <Button danger>Danger</Button>
+              <Button type="text" danger>Danger text</Button>
+            </div>
+            <div class="example-code-toolbar">
+              <button
+                class="code-action code-toggle"
+                title={openCode.variants ? 'Скрыть код' : 'Показать код'}
+                aria-label={openCode.variants ? 'Скрыть код' : 'Показать код'}
+                aria-expanded={openCode.variants}
+                aria-controls="button-variants-code"
+                onclick={() => (openCode.variants = !openCode.variants)}
+              >{@render codeIcon(openCode.variants)}</button>
+              <button class="code-action" title={copyStatus.variants === 'copied' ? 'Скопировано' : 'Скопировать код'} aria-label={copyStatus.variants === 'copied' ? 'Скопировано' : 'Скопировать код'} onclick={() => copyExample('variants')}>
+                {#if copyStatus.variants === 'copied'}{@render copiedIcon()}{:else}{@render copyIcon()}{/if}
+              </button>
+            </div>
+            {#if copyStatus.variants === 'error'}<p class="copy-error" role="status">Не удалось скопировать. Проверьте разрешение браузера.</p>{/if}
+            {#if openCode.variants}
+              <div class="code-panel" id="button-variants-code">
+                {@render codeLanguageControls()}
+                <pre><code>{getExampleCode('variants')}</code></pre>
               </div>
             {/if}
           </article>
@@ -490,10 +532,10 @@ import { Button } from 'ant-design-svelte';
               <tr><td><code>type</code></td><td><code>primary | default | dashed | text | link</code></td><td><code>default</code></td><td>Визуальный стиль кнопки.</td></tr>
               <tr><td><code>size</code></td><td><code>large | medium | small</code></td><td><code>medium</code></td><td>Размер кнопки. <code>middle</code> принимается как совместимый алиас <code>medium</code>.</td></tr>
               <tr><td><code>shape</code></td><td><code>default | round | circle</code></td><td><code>default</code></td><td>Форма кнопки.</td></tr>
-              <tr><td><code>loading</code></td><td><code>boolean | {'{ delay: number }'}</code></td><td><code>false</code></td><td>Спиннер сразу или после задержки в миллисекундах. Отключает кнопку.</td></tr>
-              <tr><td><code>disabled</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Запрещает активацию. Отключённая ссылка также не переходит и выпадает из Tab-порядка.</td></tr>
+              <tr><td><code>loading</code></td><td><code>boolean | {'{ delay: number }'}</code></td><td><code>false</code></td><td>Спиннер сразу или после задержки в миллисекундах. Блокирует клики и выставляет <code>aria-busy</code> и <code>aria-disabled</code>, но кнопка остаётся в Tab-порядке и не теряет фокус.</td></tr>
+              <tr><td><code>disabled</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Запрещает активацию. Отключённая ссылка рендерится без <code>href</code> (не открывается ни кликом, ни средней кнопкой), с <code>role="link"</code>, <code>aria-disabled</code> и вне Tab-порядка.</td></tr>
               <tr><td><code>danger</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Опасное действие (красная цветовая схема).</td></tr>
-              <tr><td><code>ghost</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Прозрачный фон, в основном для <code>primary</code> на цветных поверхностях.</td></tr>
+              <tr><td><code>ghost</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Прозрачный фон для <code>default</code>, <code>dashed</code> и <code>primary</code>; цвета текста и рамки задают тип и <code>danger</code>. Для <code>text</code> и <code>link</code> не меняет вид. Контраст гарантирован на фоне страницы; поверхность под кнопкой выбирает разработчик.</td></tr>
               <tr><td><code>block</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Растягивает кнопку на всю ширину контейнера.</td></tr>
               <tr><td><code>href</code></td><td><code>string</code></td><td>—</td><td>Рендерит <code>&lt;a&gt;</code> вместо <code>&lt;button&gt;</code>. Пустая строка тоже выбирает ссылку.</td></tr>
               <tr><td><code>target</code>, <code>rel</code>, <code>download</code></td><td><code>string</code>, <code>string</code>, <code>string | boolean</code></td><td>—</td><td>Нативные атрибуты ссылки. Работают только вместе с <code>href</code>.</td></tr>
@@ -504,7 +546,8 @@ import { Button } from 'ant-design-svelte';
               <tr><td><code>children</code></td><td><code>Snippet</code></td><td>—</td><td>Текст или содержимое кнопки.</td></tr>
               <tr><td><code>class</code></td><td><code>string</code></td><td>—</td><td>Дополнительный CSS-класс, добавляется к классам компонента.</td></tr>
               <tr><td><code>onclick</code></td><td><code>(event: MouseEvent) =&gt; void</code></td><td>—</td><td>Вызывается один раз при активации доступной кнопки. Не вызывается при <code>disabled</code> и во время загрузки.</td></tr>
-              <tr><td>Нативные атрибуты</td><td><code>HTMLButtonAttributes</code> / <code>HTMLAnchorAttributes</code></td><td>—</td><td>Пробрасываются в выбранный нативный элемент, включая ARIA-атрибуты.</td></tr>
+              <tr><td>Некорректные значения</td><td><code>type</code>, <code>size</code>, <code>shape</code>, <code>htmlType</code>, <code>iconPlacement</code>, <code>loading.delay</code></td><td>—</td><td>В разработке и в тестах выбрасывается <code>RangeError</code>; в production-сборке используется значение по умолчанию, чтобы ошибка данных не ломала страницу.</td></tr>
+              <tr><td>Нативные атрибуты</td><td><code>HTMLButtonAttributes</code> / <code>HTMLAnchorAttributes</code></td><td>—</td><td>Пробрасываются в выбранный нативный элемент, включая <code>tabindex</code> и ARIA-атрибуты. Состояния <code>loading</code> и <code>disabled</code> имеют приоритет над одноимёнными <code>aria-busy</code>, <code>aria-disabled</code> и <code>tabindex</code>.</td></tr>
             </tbody>
           </table>
         </div>
@@ -542,7 +585,7 @@ import { Button } from 'ant-design-svelte';
     border-bottom: 1px solid var(--ads-color-border-secondary);
     background:
       radial-gradient(ellipse at 79% 50%, var(--site-color-primary-glow), transparent 28%),
-      linear-gradient(110deg, var(--ads-color-bg-subtle), var(--ads-color-bg-container) 70%);
+      linear-gradient(110deg, var(--site-color-bg-subtle), var(--ads-color-bg-container) 70%);
   }
 
   .breadcrumbs {
@@ -662,7 +705,7 @@ import { Button } from 'ant-design-svelte';
     right: 27px;
     width: 74px;
     height: 74px;
-    color: var(--ads-color-violet);
+    color: var(--site-color-violet);
     font-size: 31px;
     font-weight: 650;
     transform: rotate(9deg);
@@ -728,7 +771,7 @@ import { Button } from 'ant-design-svelte';
   .sparkle-two {
     right: 16px;
     bottom: 31px;
-    color: var(--ads-color-violet);
+    color: var(--site-color-violet);
     font-size: 23px;
   }
 
@@ -776,7 +819,7 @@ import { Button } from 'ant-design-svelte';
 
   .category-button:hover,
   .category-button.selected {
-    background: var(--ads-color-primary-soft);
+    background: var(--site-color-primary-soft);
     color: var(--ads-color-primary);
   }
 
@@ -805,7 +848,7 @@ import { Button } from 'ant-design-svelte';
     padding: 13px;
     border: 1px solid var(--ads-color-border-secondary);
     border-radius: 10px;
-    background: var(--ads-color-bg-subtle);
+    background: var(--site-color-bg-subtle);
   }
 
   .note-icon {
@@ -930,7 +973,7 @@ import { Button } from 'ant-design-svelte';
     height: 29px;
     place-items: center;
     border-radius: 8px;
-    background: var(--ads-color-primary-soft);
+    background: var(--site-color-primary-soft);
     color: var(--ads-color-primary);
     font-size: 15px;
     font-weight: 700;
@@ -941,10 +984,10 @@ import { Button } from 'ant-design-svelte';
     align-items: center;
     gap: 5px;
     padding: 4px 7px;
-    border: 1px solid var(--ads-color-success-border);
+    border: 1px solid var(--site-color-success-border);
     border-radius: 999px;
-    background: var(--ads-color-success-soft);
-    color: var(--ads-color-success);
+    background: var(--site-color-success-soft);
+    color: var(--site-color-success);
     font-size: 9px;
     font-weight: 600;
   }
@@ -953,7 +996,7 @@ import { Button } from 'ant-design-svelte';
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: var(--ads-color-success);
+    background: var(--site-color-success);
   }
 
   .component-title-row {
@@ -971,7 +1014,7 @@ import { Button } from 'ant-design-svelte';
 
   .component-title-row code {
     color: var(--ads-color-text-tertiary);
-    font-family: var(--ads-font-family-code);
+    font-family: var(--site-font-family-code);
     font-size: 9px;
   }
 
@@ -1040,7 +1083,7 @@ import { Button } from 'ant-design-svelte';
   .component-details {
     padding: 52px 0 55px;
     border-top: 1px solid var(--ads-color-border-secondary);
-    background: var(--ads-color-bg-subtle);
+    background: var(--site-color-bg-subtle);
     scroll-margin-top: 84px;
   }
 
@@ -1125,9 +1168,9 @@ import { Button } from 'ant-design-svelte';
     margin: 15px 0 0;
     padding: 15px 17px;
     border-radius: 7px;
-    background: var(--ads-color-bg-code);
+    background: var(--site-color-bg-code);
     color: var(--ads-color-text-secondary);
-    font-family: var(--ads-font-family-code);
+    font-family: var(--site-font-family-code);
     font-size: 11px;
     line-height: 1.8;
     tab-size: 2;
@@ -1217,6 +1260,12 @@ import { Button } from 'ant-design-svelte';
     flex: 0 0 auto;
   }
 
+  .example-demo-surface {
+    padding: 13px 14px;
+    border-radius: var(--ads-radius-md);
+    background: var(--site-color-primary-soft);
+  }
+
   .example-demo-align {
     align-items: flex-end;
   }
@@ -1294,7 +1343,7 @@ import { Button } from 'ant-design-svelte';
   }
 
   .code-languages button.active {
-    background: var(--ads-color-primary-soft);
+    background: var(--site-color-primary-soft);
   }
 
   .code-languages button:first-child {
@@ -1309,7 +1358,7 @@ import { Button } from 'ant-design-svelte';
     margin-top: 8px;
     padding: 8px;
     border-radius: 7px;
-    background: var(--ads-color-bg-code);
+    background: var(--site-color-bg-code);
   }
 
   .code-panel .code-languages {
@@ -1347,7 +1396,7 @@ import { Button } from 'ant-design-svelte';
   }
 
   .code-action[aria-label='Скопировано'] {
-    color: var(--ads-color-success);
+    color: var(--site-color-success);
   }
 
   .code-action:focus-visible,
@@ -1393,7 +1442,7 @@ import { Button } from 'ant-design-svelte';
   }
 
   .api-table th {
-    background: var(--ads-color-bg-subtle);
+    background: var(--site-color-bg-subtle);
     color: var(--ads-color-text);
     font-weight: 650;
     white-space: nowrap;
@@ -1404,8 +1453,8 @@ import { Button } from 'ant-design-svelte';
   }
 
   .api-table code {
-    color: var(--ads-color-violet);
-    font-family: var(--ads-font-family-code);
+    color: var(--site-color-violet);
+    font-family: var(--site-font-family-code);
     font-size: 10px;
   }
 
@@ -1431,7 +1480,7 @@ import { Button } from 'ant-design-svelte';
   .token-color {
     width: 19px;
     height: 19px;
-    border: 3px solid var(--ads-color-primary-soft);
+    border: 3px solid var(--site-color-primary-soft);
     border-radius: 6px;
     background: var(--ads-color-primary);
   }
@@ -1454,7 +1503,7 @@ import { Button } from 'ant-design-svelte';
 
   .tokens-strip code {
     color: var(--ads-color-text-secondary);
-    font-family: var(--ads-font-family-code);
+    font-family: var(--site-font-family-code);
     font-size: 8px;
   }
 

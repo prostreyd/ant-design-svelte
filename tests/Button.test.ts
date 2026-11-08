@@ -7,6 +7,7 @@ import ButtonHarness from './fixtures/ButtonHarness.svelte';
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllEnvs();
   document.querySelectorAll('form').forEach((form) => form.remove());
 });
 
@@ -177,7 +178,9 @@ describe('Button', () => {
     render(ButtonHarness, { loading: true, label: 'Loading', onclick });
     const button = screen.getByRole('button', { name: 'Loading' });
 
-    expect(button).toBeDisabled();
+    // Not natively disabled: a disabled element would drop keyboard focus.
+    expect(button).not.toBeDisabled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
     expect(button).toHaveAttribute('aria-busy', 'true');
     expect(button).toHaveClass('ads-btn-loading', 'ads-btn-disabled');
     expect(button.querySelector('.ads-btn-loading-icon')).toHaveAttribute('aria-hidden', 'true');
@@ -196,22 +199,22 @@ describe('Button', () => {
     const button = screen.getByRole('button', { name: 'Delayed' });
 
     await tick();
-    expect(button).not.toBeDisabled();
+    expect(button).not.toHaveAttribute('aria-disabled');
     expect(button).not.toHaveAttribute('aria-busy');
     await fireEvent.click(button);
     expect(onclick).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(99);
-    expect(button).not.toBeDisabled();
+    expect(button).not.toHaveAttribute('aria-disabled');
 
     await vi.advanceTimersByTimeAsync(1);
-    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
     expect(button).toHaveAttribute('aria-busy', 'true');
     await fireEvent.click(button);
     expect(onclick).toHaveBeenCalledTimes(1);
 
     rerender({ loading: false, label: 'Delayed', onclick });
     await tick();
-    expect(button).not.toBeDisabled();
+    expect(button).not.toHaveAttribute('aria-disabled');
     expect(button).not.toHaveAttribute('aria-busy');
   });
 
@@ -226,14 +229,17 @@ describe('Button', () => {
     await tick();
     await rerender({ loading: false, label: 'Cancelled' });
     await vi.advanceTimersByTimeAsync(100);
-    expect(button).not.toBeDisabled();
+    expect(button).not.toHaveAttribute('aria-disabled');
     expect(button).not.toHaveAttribute('aria-busy');
   });
 
   it('shows loading immediately when the configured delay is zero', async () => {
     render(ButtonHarness, { loading: { delay: 0 }, label: 'Immediate' });
     await tick();
-    expect(screen.getByRole('button', { name: 'Immediate' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Immediate' })).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
   });
 
   it('calls onclick once per click for rapid repeated clicks', async () => {
@@ -260,7 +266,10 @@ describe('Button', () => {
     await vi.advanceTimersByTimeAsync(60);
     await rerender({ loading: { delay: 100 }, label: 'Stable updated' });
     await vi.advanceTimersByTimeAsync(40);
-    expect(screen.getByRole('button', { name: 'Stable updated' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Stable updated' })).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
   });
 
   it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
@@ -692,7 +701,7 @@ describe('Button', () => {
     rerender({ loading: true, label: 'Promoted' });
     await tick();
     const button = screen.getByRole('button', { name: 'Promoted' });
-    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
     expect(button).toHaveAttribute('aria-busy', 'true');
   });
 
@@ -706,24 +715,135 @@ describe('Button', () => {
     rerender({ loading: { delay: 200 }, label: 'Retimed' });
     await tick();
     await vi.advanceTimersByTimeAsync(150);
-    expect(screen.getByRole('button', { name: 'Retimed' })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Retimed' })).not.toHaveAttribute('aria-disabled');
 
     await vi.advanceTimersByTimeAsync(50);
-    expect(screen.getByRole('button', { name: 'Retimed' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Retimed' })).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
   });
 
-  it('blocks keyboard activation and focus while loading', async () => {
+  it('loading: stays in the Tab order but blocks keyboard activation', async () => {
     const onclick = vi.fn();
     const user = userEvent.setup();
     render(ButtonHarness, { loading: true, label: 'Busy', onclick });
     const button = screen.getByRole('button', { name: 'Busy' });
 
     await user.tab();
-    expect(button).not.toHaveFocus();
-    button.focus();
+    expect(button).toHaveFocus();
     await user.keyboard('{Enter}');
     await user.keyboard(' ');
     expect(onclick).not.toHaveBeenCalled();
+  });
+
+  it('loading: keeps keyboard focus when loading starts on a focused button', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(ButtonHarness, { label: 'Save' });
+    const button = screen.getByRole('button', { name: 'Save' });
+
+    await user.tab();
+    expect(button).toHaveFocus();
+    rerender({ label: 'Save', loading: true });
+    await tick();
+    expect(button).toHaveFocus();
+    expect(button).not.toBeDisabled();
+  });
+
+  it('loading: a submit button does not submit its form', async () => {
+    const form = createForm('loading-form');
+    const onsubmit = vi.fn((event: Event) => event.preventDefault());
+    form.addEventListener('submit', onsubmit);
+    const user = userEvent.setup();
+    render(ButtonHarness, { htmlType: 'submit', form: 'loading-form', loading: true, label: 'Send' });
+
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    await user.tab();
+    await user.keyboard('{Enter}');
+    expect(onsubmit).not.toHaveBeenCalled();
+  });
+
+  it('disabled: a button with disabled and loading stays natively disabled', () => {
+    render(ButtonHarness, { disabled: true, loading: true, label: 'Both' });
+    const button = screen.getByRole('button', { name: 'Both' });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-busy', 'true');
+  });
+
+  // --- Disabled and loading anchors ---
+
+  it.each([
+    ['disabled', { disabled: true }],
+    ['loading', { loading: true }]
+  ])('%s anchor has no href, so it cannot be opened in a new tab', (_state, state) => {
+    render(ButtonHarness, {
+      props: { href: 'https://example.com', label: 'Blocked', ...state }
+    });
+    const link = screen.getByRole('link', { name: 'Blocked' });
+
+    expect(link.tagName).toBe('A');
+    expect(link).not.toHaveAttribute('href');
+    expect(link).toHaveAttribute('role', 'link');
+  });
+
+  it('disabled anchor: restores href and drops the explicit role when re-enabled', async () => {
+    const { rerender } = render(ButtonHarness, {
+      props: { href: 'https://example.com', disabled: true, label: 'Toggle' }
+    });
+    const link = screen.getByRole('link', { name: 'Toggle' });
+    expect(link).not.toHaveAttribute('href');
+
+    rerender({ href: 'https://example.com', disabled: false, label: 'Toggle' });
+    await tick();
+    expect(link).toHaveAttribute('href', 'https://example.com');
+    expect(link).not.toHaveAttribute('role');
+    expect(link).not.toHaveAttribute('aria-disabled');
+    expect(link).not.toHaveAttribute('tabindex');
+  });
+
+  it('disabled anchor: an empty href is also removed', () => {
+    render(ButtonHarness, { props: { href: '', disabled: true, label: 'Empty off' } });
+    expect(screen.getByRole('link', { name: 'Empty off' })).not.toHaveAttribute('href');
+  });
+
+  // --- Consumer attributes are forwarded, not swallowed ---
+
+  it('forwards a consumer tabindex to an enabled button and an enabled anchor', () => {
+    render(ButtonHarness, { label: 'Btn', attrs: { tabindex: 3 } });
+    render(ButtonHarness, { href: '#x', label: 'Lnk', attrs: { tabindex: 4 } });
+
+    expect(screen.getByRole('button', { name: 'Btn' })).toHaveAttribute('tabindex', '3');
+    expect(screen.getByRole('link', { name: 'Lnk' })).toHaveAttribute('tabindex', '4');
+  });
+
+  it('a disabled anchor forces tabindex -1 over a consumer tabindex', () => {
+    render(ButtonHarness, {
+      href: '#x',
+      disabled: true,
+      label: 'Off',
+      attrs: { tabindex: 4 }
+    });
+    expect(screen.getByRole('link', { name: 'Off' })).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('forwards a consumer aria-busy and aria-disabled when the component is idle', () => {
+    render(ButtonHarness, { label: 'Busy btn', attrs: { 'aria-busy': 'true' } });
+    render(ButtonHarness, {
+      href: '#x',
+      label: 'Off link',
+      attrs: { 'aria-disabled': 'true' }
+    });
+
+    expect(screen.getByRole('button', { name: 'Busy btn' })).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('link', { name: 'Off link' })).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
+  });
+
+  it('the loading state overrides a consumer aria-busy value', () => {
+    render(ButtonHarness, { loading: true, label: 'Own', attrs: { 'aria-busy': 'false' } });
+    expect(screen.getByRole('button', { name: 'Own' })).toHaveAttribute('aria-busy', 'true');
   });
 
   it('loading anchors do not navigate and do not call onclick', () => {
@@ -755,6 +875,78 @@ describe('Button', () => {
     }
     expect(caught).toBeInstanceOf(RangeError);
     expect((caught as Error).message).toContain(`Button ${name} must be one of`);
+  });
+
+  // --- Production builds fall back to the documented defaults instead of throwing ---
+
+  const appClasses = (element: Element | null) =>
+    [...(element?.classList ?? [])].filter((name) => name.startsWith('ads-'));
+
+  it.each([
+    ['type', { type: 'strong' }],
+    ['size', { size: 'xlarge' }],
+    ['shape', { shape: 'square' }]
+  ])('production: an invalid %s falls back to the default appearance', (_name, invalidProps) => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const { container } = render(ButtonHarness, {
+      props: { ...invalidProps, label: 'Fallback' } as never
+    });
+
+    expect(appClasses(container.querySelector('button'))).toEqual([
+      'ads-btn',
+      'ads-btn-default',
+      'ads-btn-middle'
+    ]);
+  });
+
+  it('production: an invalid htmlType falls back to button', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    render(ButtonHarness, { props: { htmlType: 'image', label: 'Plain' } as never });
+    expect(screen.getByRole('button', { name: 'Plain' })).toHaveAttribute('type', 'button');
+  });
+
+  it('production: an invalid iconPlacement falls back to start and keeps the icon', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const { container } = render(ButtonHarness, {
+      props: { iconPlacement: 'top', icon: true, label: 'Icon' } as never
+    });
+    const children = [...(container.querySelector('button')?.children ?? [])];
+
+    expect(children.map((child) => child.className.split(' ')[0])).toEqual([
+      'ads-btn-icon',
+      'ads-btn-content'
+    ]);
+  });
+
+  it('production: a valid value is still applied', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const { container } = render(ButtonHarness, { type: 'primary', size: 'small', label: 'Ok' });
+    expect(appClasses(container.querySelector('button'))).toEqual([
+      'ads-btn',
+      'ads-btn-primary',
+      'ads-btn-small'
+    ]);
+  });
+
+  it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
+    'production: an invalid loading delay %s shows loading immediately',
+    async (delay) => {
+      vi.stubEnv('NODE_ENV', 'production');
+      render(ButtonHarness, { loading: { delay }, label: 'Delay fallback' });
+      await tick();
+
+      const button = screen.getByRole('button', { name: 'Delay fallback' });
+      expect(button).toHaveAttribute('aria-busy', 'true');
+      expect(button).toHaveAttribute('aria-disabled', 'true');
+    }
+  );
+
+  it('production: an invalid option on an anchor does not throw either', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    render(ButtonHarness, {
+      props: { href: '#x', htmlType: 'image', label: 'Link fallback' } as never
+    });
+    expect(screen.getByRole('link', { name: 'Link fallback' })).toBeInTheDocument();
   });
 
   // --- Accessibility: negative and state checks ---

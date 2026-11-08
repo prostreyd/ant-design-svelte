@@ -2,6 +2,9 @@
   import { Button } from '$lib';
 
   let clicks = $state(0);
+  let busy = $state(false);
+
+  const types = ['default', 'primary', 'dashed', 'text', 'link'] as const;
 </script>
 
 <main>
@@ -21,12 +24,41 @@
   <Button data-testid="loading" loading onclick={() => clicks++}>Loading</Button>
   <Button data-testid="anchor" href="#anchor-target">Anchor</Button>
   <Button data-testid="anchor-disabled" href="#anchor-target" disabled>Disabled anchor</Button>
+  <Button data-testid="load-toggle" loading={busy} onclick={() => (busy = true)}>Start</Button>
   <a id="anchor-target" href="#anchor-target">target</a>
 </main>
+
+<!-- Every type x danger x ghost combination, used by the contrast matrix tests. -->
+<section data-testid="matrix">
+  {#each types as type (type)}
+    {#each [false, true] as danger (danger)}
+      {#each [false, true] as ghost (ghost)}
+        <Button
+          data-testid="m-{type}-{danger ? 'danger' : 'plain'}-{ghost ? 'ghost' : 'solid'}"
+          {type}
+          {danger}
+          {ghost}>{type}</Button
+        >
+      {/each}
+    {/each}
+  {/each}
+</section>
 
 <output data-testid="clicks">{clicks}</output>
 
 <style>
+  :global(body) {
+    background: var(--ads-color-bg-container);
+  }
+
+  section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 24px;
+    width: 640px;
+  }
+
   main {
     display: grid;
     justify-items: start;

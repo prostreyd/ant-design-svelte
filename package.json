@@ -1,8 +1,26 @@
 {
-  "name": "ant-design-svelte",
+  "name": "svelte-ant-design",
   "version": "0.1.0",
   "description": "An independent UI component library for Svelte 5, inspired by Ant Design.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prostreyd/ant-design-svelte.git"
+  },
+  "homepage": "https://github.com/prostreyd/ant-design-svelte#readme",
+  "bugs": {
+    "url": "https://github.com/prostreyd/ant-design-svelte/issues"
+  },
+  "keywords": [
+    "svelte",
+    "svelte5",
+    "ui",
+    "components",
+    "component-library",
+    "ant-design",
+    "typescript",
+    "accessibility"
+  ],
   "type": "module",
   "files": [
     "dist",
