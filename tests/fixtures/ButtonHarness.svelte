@@ -28,6 +28,8 @@
     ariaLabel?: string;
     name?: string;
     form?: string;
+    value?: string;
+    dataTestid?: string;
     onclick?: (event: MouseEvent) => void;
     label?: string;
     showLabel?: boolean;
@@ -53,6 +55,8 @@
     ariaLabel,
     name,
     form,
+    value,
+    dataTestid,
     onclick,
     label = '',
     showLabel = true,
@@ -87,6 +91,8 @@
   aria-label={ariaLabel}
   {name}
   {form}
+  {value}
+  data-testid={dataTestid}
   onclick={onclick}
   class={className}
   children={showLabel ? labelContent : undefined}

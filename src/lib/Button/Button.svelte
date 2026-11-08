@@ -84,6 +84,19 @@
     ...rest
   }: ButtonProps = $props();
 
+  const BUTTON_TYPES = ['primary', 'default', 'dashed', 'text', 'link'] as const;
+  const BUTTON_SIZES = ['large', 'medium', 'middle', 'small'] as const;
+  const BUTTON_SHAPES = ['default', 'circle', 'round'] as const;
+  const BUTTON_HTML_TYPES = ['button', 'submit', 'reset'] as const;
+  const BUTTON_ICON_PLACEMENTS = ['start', 'end'] as const;
+
+  /** Rejects values outside the public contract instead of rendering them silently. */
+  function assertAllowed(name: string, value: unknown, allowed: readonly unknown[]): void {
+    if (!allowed.includes(value)) {
+      throw new RangeError(`Button ${name} must be one of: ${allowed.join(', ')}.`);
+    }
+  }
+
   let delayedLoading = $state(false);
 
   const loadingDelay = $derived.by(() => {
@@ -94,13 +107,11 @@
     return loading.delay;
   });
 
+  // Depends only on the derived `loadingDelay` number, so a new `{ delay }` object
+  // with the same delay does not restart a pending timer. A zero delay fires on the
+  // next macrotask, and `isLoading` already treats zero as immediate.
   $effect(() => {
     const delay = loadingDelay;
-    if (typeof loading === 'boolean' || delay === 0) {
-      delayedLoading = false;
-      return;
-    }
-
     delayedLoading = false;
     const timer = setTimeout(() => {
       delayedLoading = true;
@@ -115,7 +126,13 @@
   const isDisabled = $derived(disabled || isLoading);
 
   const classes = $derived.by(() => {
-    const sizeClass = size === 'medium' || size === 'middle' ? 'middle' : size;
+    assertAllowed('type', type, BUTTON_TYPES);
+    assertAllowed('size', size, BUTTON_SIZES);
+    assertAllowed('shape', shape, BUTTON_SHAPES);
+    assertAllowed('htmlType', htmlType, BUTTON_HTML_TYPES);
+    assertAllowed('iconPlacement', iconPlacement, BUTTON_ICON_PLACEMENTS);
+    // `middle` is a legacy alias; it already maps to the `ads-btn-middle` class.
+    const sizeClass = size === 'medium' ? 'middle' : size;
     const list: string[] = ['ads-btn', `ads-btn-${type}`, `ads-btn-${sizeClass}`];
     if (shape !== 'default') list.push(`ads-btn-${shape}`);
     if (danger) list.push('ads-btn-danger');
@@ -126,6 +143,12 @@
     if (customClass) list.push(customClass);
     return list.join(' ');
   });
+
+  // A boolean `download` maps to the bare attribute or to no attribute at all.
+  // Any other rendering would still cause the link to download.
+  const downloadAttribute = $derived(
+    download === true ? '' : download === false ? undefined : download
+  );
 
   function handleClick(event: MouseEvent): void {
     if (isDisabled) {
@@ -143,7 +166,7 @@
     {href}
     {target}
     {rel}
-    {download}
+    download={downloadAttribute}
     aria-disabled={isDisabled || undefined}
     aria-busy={isLoading || undefined}
     tabindex={isDisabled ? -1 : undefined}

@@ -43,6 +43,10 @@ expires.
 - `iconPlacement` defaults to `start`; only `start` and `end` are accepted.
 - The legacy `middle` size value maps to the `medium` appearance.
 - A custom `class` is appended, not substituted for the component's classes.
+- Enum props (`type`, `size`, `shape`, `htmlType`, `iconPlacement`) reject values
+  outside their contract with a `RangeError` instead of rendering silently.
+- `download: true` renders a bare `download` attribute; `download: false` renders no
+  attribute; a string value is used as the file name.
 
 ## A11y
 
@@ -129,5 +133,24 @@ of the Svelte API. Native button behavior is used where the semantics match.
 - Link Enter activation and disabled-anchor focus behavior.
 - Immediate and delayed loading, cancellation, invalid delay, spinner, and `aria-busy`.
 - Anchor rendering for normal and empty `href`; `target`, `rel`, `download`, disabled/loading behavior.
-- Reactive prop changes.
-- Axe checks for accessible named controls.
+- Reactive prop changes, including `onclick` replacement and button/anchor switching.
+- Native form behavior: default `type="button"`, `submit`, `reset`, disabled submit,
+  `value`, and `htmlType` ignored for anchors.
+- Invalid enum values (`type`, `size`, `shape`, `htmlType`, `iconPlacement`) throw `RangeError`.
+- `download` boolean and string mapping; omitted anchor attributes.
+- Loading edge cases: pending delay shows no spinner, `true` replaces a pending delay,
+  changing the delay restarts the timer, keyboard blocked while loading, loading link
+  does not navigate.
+- Rapid repeated clicks; keyboard focus on an enabled button; Space does not activate a link.
+- Axe checks for accessible named controls, loading/disabled states, and a negative
+  check that an icon-only button without a name is reported.
+- Visual states (`:hover`, `:active`, `:focus-visible`, disabled, loading spinner, sizes,
+  block, circle/round) are covered by Playwright e2e tests in `e2e/button.spec.ts`,
+  which compare computed styles against the design tokens. Run with `npm run test:e2e`.
+
+## Mutation testing
+
+`npm run test:mutation` applies one mutation at a time to `Button.svelte`, runs the unit
+tests for each, and reports survivors. Current result: 99% (96 of 97 killed). The one
+survivor is equivalent: the initial value of `delayedLoading` is overwritten by the
+loading effect during mount, so no state is observable from outside the mount.
