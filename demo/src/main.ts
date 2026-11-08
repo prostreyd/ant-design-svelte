@@ -2,6 +2,9 @@ import { mount } from 'svelte';
 import '$lib/tokens.css';
 import App from './App.svelte';
 import './app.css';
+import { initializeSiteTheme } from './theme';
+
+initializeSiteTheme();
 
 const target = document.getElementById('app');
 

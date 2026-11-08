@@ -1,13 +1,55 @@
 :root {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color: #1f1f1f;
-  background-color: #f5f5f5;
+  font-family: var(--ads-font-family);
+  color: var(--ads-color-text);
+  background-color: var(--ads-color-bg-container);
+  --site-header-bg: rgb(255 255 255 / 92%);
+  --site-color-primary-glow: rgb(22 119 255 / 8%);
+  --site-color-violet-glow: rgb(128 112 255 / 12%);
+  --site-color-art-glow: rgb(91 167 255 / 20%);
+  --site-color-orbit: rgb(22 119 255 / 13%);
+  --site-shadow-card: 0 26px 70px rgb(22 46 92 / 11%), 0 5px 16px rgb(22 46 92 / 5%);
+  --site-shadow-card-hover: 0 8px 26px rgb(22 46 92 / 10%);
+  --site-shadow-component-hover: 0 8px 22px rgb(22 46 92 / 7%);
+  --site-shadow-principle-hover: 0 12px 30px rgb(22 46 92 / 7%);
+  --site-shadow-art: 0 18px 38px rgb(22 46 92 / 11%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme='dark'] {
+  --site-header-bg: rgb(20 20 20 / 92%);
+  --site-color-primary-glow: rgb(22 119 255 / 18%);
+  --site-color-violet-glow: rgb(128 112 255 / 20%);
+  --site-color-art-glow: rgb(91 167 255 / 24%);
+  --site-color-orbit: rgb(105 177 255 / 24%);
+  --site-shadow-card: 0 26px 70px rgb(0 0 0 / 38%), 0 5px 16px rgb(0 0 0 / 24%);
+  --site-shadow-card-hover: 0 8px 26px rgb(0 0 0 / 34%);
+  --site-shadow-component-hover: 0 8px 22px rgb(0 0 0 / 30%);
+  --site-shadow-principle-hover: 0 12px 30px rgb(0 0 0 / 32%);
+  --site-shadow-art: 0 18px 38px rgb(0 0 0 / 34%);
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
+  background-color: var(--ads-color-bg-container);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+::selection {
+  background: var(--ads-color-primary-soft);
+  color: var(--ads-color-primary);
 }

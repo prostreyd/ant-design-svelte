@@ -17,6 +17,12 @@ export default defineConfig({
   },
   build: {
     outDir: '../dist-demo',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./demo/index.html', import.meta.url)),
+        components: fileURLToPath(new URL('./demo/components.html', import.meta.url))
+      }
+    }
   }
 });

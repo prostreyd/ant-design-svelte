@@ -35,3 +35,9 @@ notes/
 tasks/
 prompts/
 
+
+# Playwright artifacts
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
