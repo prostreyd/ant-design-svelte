@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+tmp
 
 # Build outputs
 dist/
@@ -34,6 +35,7 @@ ai-chats/
 notes/
 tasks/
 prompts/
+svelte-demo/
 
 
 # Playwright artifacts
