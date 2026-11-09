@@ -9,6 +9,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- Documentation site, published on GitHub Pages: <https://prostreyd.github.io/ant-design-svelte/>. It has
+  a home page, a **Docs** section (getting started, theming, dark mode, accessibility, FAQ,
+  contributing) and a separate **Components** section with an overview and the Button page: eleven live
+  examples that use the real component, the code of each example, an API table, and the design
+  tokens the component reads. Three languages (English, Russian, Chinese), a light and a dark theme,
+  search, and a layout for phones. The site is a SvelteKit app in `docs/`, prerendered to static
+  files; `.github/workflows/pages.yml` builds and deploys it from `main`.
+- Tests for the site: Vitest checks that the API and token tables match `Button.svelte`,
+  `types.ts` and `tokens.css`, that every example runs, that translations are complete, and that every
+  code snippet is valid; Playwright checks all pages in three languages, two themes and three screen
+  widths (accessibility with axe-core, console errors, overflow) and the main interactions; a
+  script checks links, anchors, titles, canonical URLs, hreflang links and the sitemap in the build.
+
+### Changed
+
+- `npm run dev`, `npm run build` and `npm run preview` now run the documentation site. It replaces the
+  old demo playground (`demo/`, Russian only). The library build (`npm run package`) is unchanged.
+- `package.json` `homepage` points to the documentation site (takes effect with the next release).
+
 ## [0.1.0-alpha.1] - 2026-11-09
 
 ### Added

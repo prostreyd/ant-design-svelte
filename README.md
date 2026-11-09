@@ -3,6 +3,9 @@
 An independent UI component library for **Svelte 5**, with an API inspired by
 Ant Design.
 
+**Documentation and live examples:** <https://prostreyd.github.io/ant-design-svelte/>
+(English, Russian and Chinese).
+
 > API вдохновлён Ant Design (MIT). Реализация оригинальная для Svelte.
 >
 > *(The API is inspired by Ant Design (MIT). The implementation is original for Svelte.)*
@@ -46,7 +49,8 @@ Import components by name. The package is ESM and declares `sideEffects: ["**/*.
 bundler that supports tree shaking leaves out the components you do not use. This is checked with
 Vite in `tests/packaging`; other bundlers are not covered.
 
-See [`src/lib/Button/README.md`](./src/lib/Button/README.md) for the full Button API.
+See the [Button page](https://prostreyd.github.io/ant-design-svelte/components/button/) of the documentation
+site for examples and the API table, or [`src/lib/Button/README.md`](./src/lib/Button/README.md) in the repository.
 
 ### Dark theme
 
@@ -58,13 +62,26 @@ sets `color-scheme: dark`.
 
 ```sh
 npm install
-npm run dev        # demo playground (Vite)
-npm test           # unit and accessibility tests (Vitest)
+npm run dev        # documentation site (SvelteKit, in docs/), with live reload
+npm test           # unit and accessibility tests of the library and of the site content (Vitest)
 npm run test:coverage
-npm run check      # svelte-check (type checking)
+npm run test:e2e   # library tests in a real browser (Playwright)
+npm run check      # svelte-check (type checking of the library)
+npm run check:docs # svelte-check of the documentation site
 npm run lint       # ESLint
 npm run package    # build dist/ with svelte-package
 ```
+
+The documentation site lives in `docs/` and imports the library from `src/lib`, so its examples
+always show the code in the repository. To build it the way GitHub Pages serves it and test the result:
+
+```sh
+BASE_PATH=/ant-design-svelte npm run build   # static site in docs/build
+BASE_PATH=/ant-design-svelte npm run test:docs   # link and SEO check, then browser tests
+```
+
+(On Windows `cmd` set the variable first: `set BASE_PATH=/ant-design-svelte`.) Leave `BASE_PATH` unset to
+build and test the site at the root of a local server.
 
 ## Contributing
 

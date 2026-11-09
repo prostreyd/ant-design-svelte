@@ -139,8 +139,8 @@ of the Svelte API. Native button behavior is used where the semantics match.
 - `color`, `variant`, `classNames`, and `styles` are deferred to keep v1.0
   styling scope bounded. Their names and initial contracts are reserved above.
 - `tokens.css` contains only tokens that components consume or that belong to the Ant Design
-  base scale. Tokens used only by the documentation site live in `demo/src/app.css` under
-  `--site-*`, so they are not part of the published contract. The stylesheet does not set
+  base scale. Tokens used only by the documentation site live in `docs/src/docs/styles/site.css` under
+  `--s-*` and `--logo-*`, so they are not part of the published contract. The stylesheet does not set
   `color-scheme` on `:root`; the dark theme sets it under `[data-theme='dark']`.
 - All code is independently authored for Svelte. The comparison is based on
   public documentation; Ant Design implementation source was not used.

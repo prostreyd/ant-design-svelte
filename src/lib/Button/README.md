@@ -100,6 +100,7 @@ the delay expires cancels the pending timer.
 - `color`, `variant`, `classNames`, and `styles` are reserved for a future additive release; see [`specs/button.md`](../../../specs/button.md).
 - Loading delay is supported, but a custom loading-icon prop is not. Use an icon snippet where appropriate.
 
-## Playground
+## Live examples
 
-See `demo/src/App.svelte` for interactive examples.
+Interactive examples of every option, with their code and the API table, are on the
+[documentation site](https://prostreyd.github.io/ant-design-svelte/components/button/).
