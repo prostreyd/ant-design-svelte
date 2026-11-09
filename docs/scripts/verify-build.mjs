@@ -1,8 +1,10 @@
 // Checks the built site (docs/build) the way a visitor and a crawler would meet it:
 //   - every internal link, script, stylesheet and image points to a file that exists
 //   - every #fragment points to an element that exists on the target page
-//   - every page has a title, one <h1>, a description, a canonical URL and hreflang alternates
+//   - every page has a title, one <h1>, a description of a sensible length, a canonical URL, hreflang alternates,
+//     Open Graph locale/image tags and structured data (JSON-LD) that points to pages that exist
 //   - every language version is listed in sitemap.xml, and the sitemap lists nothing that is missing
+//   - the IndexNow key file is in the build
 // Run after `npm run build`, with the same BASE_PATH / SITE_ORIGIN the build used.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
@@ -53,6 +55,10 @@ function idsOf(file) {
   return ids;
 }
 
+/** Search engines cut titles at about 60 and descriptions at about 160 characters; Chinese characters count double. */
+const width = (text) => [...text].reduce((total, ch) => total + (/[\u2e80-\u9fff\uff00-\uffef]/.test(ch) ? 2 : 1), 0);
+const unescapeHtml = (text) => text.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+
 const attribute = /\s(href|src)=("([^"]*)"|'([^']*)')/g;
 const checked = new Set();
 
@@ -96,7 +102,10 @@ for (const page of pages) {
   // --- document structure and SEO
   const title = html.match(/<title>([^<]*)<\/title>/)?.[1]?.trim();
   if (!title) fail(name, 'no <title>');
-  if (!/<meta name="description" content="[^"]{20,}"/.test(html)) fail(name, 'no meta description (or it is very short)');
+  else if (width(unescapeHtml(title)) > 65) fail(name, `<title> is ${width(unescapeHtml(title))} wide (limit 65): "${title}"`);
+  const description = html.match(/<meta name="description" content="([^"]*)"/)?.[1];
+  if (description === undefined) fail(name, 'no meta description');
+  else if (width(unescapeHtml(description)) < 70 || width(unescapeHtml(description)) > 160) fail(name, `meta description is ${width(unescapeHtml(description))} wide (allowed 70 to 160)`);
   const h1 = (html.match(/<h1[\s>]/g) ?? []).length;
   if (h1 !== 1) fail(name, `${h1} <h1> elements (expected 1)`);
   const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1];
@@ -108,6 +117,48 @@ for (const page of pages) {
   const lang = html.match(/<html lang="([^"]+)"/)?.[1];
   const wanted = pageUrl.startsWith('/ru/') ? 'ru' : pageUrl.startsWith('/zh/') ? 'zh-CN' : 'en';
   if (lang !== wanted) fail(name, `<html lang="${lang}">, expected "${wanted}"`);
+
+  const ogLocale = html.match(/<meta property="og:locale" content="([^"]+)"/)?.[1];
+  const wantedLocale = { en: 'en_US', ru: 'ru_RU', 'zh-CN': 'zh_CN' }[wanted];
+  if (ogLocale !== wantedLocale) fail(name, `og:locale is ${ogLocale}, expected ${wantedLocale}`);
+  if ((html.match(/<meta property="og:locale:alternate"/g) ?? []).length !== 2) fail(name, 'expected two og:locale:alternate tags');
+  for (const tag of ['og:image', 'og:image:width', 'og:image:height', 'og:image:alt', 'og:title', 'og:description', 'og:url']) {
+    if (!html.includes(`<meta property="${tag}"`)) fail(name, `no ${tag} tag`);
+  }
+
+  // Structured data must parse, say what the page is, and point only to pages that exist.
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  if (blocks.length === 0) fail(name, 'no structured data (JSON-LD)');
+  const documents = [];
+  for (const block of blocks) {
+    try {
+      const json = JSON.parse(block);
+      documents.push(...(Array.isArray(json) ? json : [json]));
+    } catch (error) {
+      fail(name, `structured data is not valid JSON: ${error.message}`);
+    }
+  }
+  const types = documents.map((d) => d['@type']);
+  const isHome = pageUrl === '/' || pageUrl === '/ru/' || pageUrl === '/zh/';
+  if (isHome) {
+    for (const type of ['WebSite', 'SoftwareSourceCode']) if (!types.includes(type)) fail(name, `structured data has no ${type}`);
+  } else {
+    const crumbs = documents.find((d) => d['@type'] === 'BreadcrumbList');
+    if (!crumbs) fail(name, 'structured data has no BreadcrumbList');
+    else {
+      const items = crumbs.itemListElement ?? [];
+      if (items.length < 2) fail(name, 'the breadcrumb list has fewer than two items');
+      items.forEach((item, i) => {
+        if (item.position !== i + 1) fail(name, `breadcrumb ${i + 1} has position ${item.position}`);
+        if (!item.name) fail(name, `breadcrumb ${i + 1} has no name`);
+        const target = typeof item.item === 'string' && item.item.startsWith(siteUrl) ? fileFor(item.item.slice(siteUrl.length) || '/') : null;
+        if (!target) fail(name, `breadcrumb ${i + 1} points to ${item.item}, which does not exist`);
+      });
+      const section = ['/docs/', '/components/'].map((p) => `${siteUrl}${pageUrl.startsWith('/ru/') ? '/ru' : pageUrl.startsWith('/zh/') ? '/zh' : ''}${p}`);
+      const last = items.at(-1)?.item;
+      if (last !== expected && !section.includes(last)) fail(name, `the last breadcrumb is ${last}, expected this page`);
+    }
+  }
 
   // --- leftovers of a broken template
   const text = html.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<style[\s\S]*?<\/style>/g, '');
@@ -144,6 +195,11 @@ if (!existsSync(sitemapFile)) {
 for (const required of ['robots.txt', 'og.png', 'favicon.svg', '404.html']) {
   if (!existsSync(join(root, required))) fail(required, 'missing from the build');
 }
+
+// IndexNow: the key file (name = key, content = key) must be served from the root of the site.
+const keyFiles = readdirSync(root).filter((name) => /^[0-9a-f]{32}\.txt$/.test(name));
+if (keyFiles.length !== 1) fail('IndexNow key file', `expected exactly one <32 hex characters>.txt in the build, found ${keyFiles.length}`);
+else if (readFileSync(join(root, keyFiles[0]), 'utf8') !== keyFiles[0].slice(0, -'.txt'.length)) fail(keyFiles[0], 'must contain exactly its own name without .txt');
 
 if (errors.length) {
   console.error(`\n${errors.length} problem(s) in the built site:\n`);

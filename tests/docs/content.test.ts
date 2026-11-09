@@ -120,6 +120,47 @@ describe('page registry', () => {
     }
   });
 
+  describe('search results and link previews', () => {
+    // Search engines cut a title at about 60 characters and a description at about 160; Chinese characters are
+    // about twice as wide, so they count double.
+    const width = (text: string) => [...text].reduce((total, ch) => total + (/[\u2e80-\u9fff\uff00-\uffef]/.test(ch) ? 2 : 1), 0);
+    const homeTitleKey = allPages.find((page) => page.path === '/')!.title;
+
+    it('every page has a description of 70 to 160 characters, as plain text, in every language', () => {
+      for (const page of allPages) {
+        for (const lang of LANGS) {
+          const text = strings[page.description][lang];
+          expect(width(text), `${localize(page.path, lang)} description is ${width(text)} wide`).toBeGreaterThanOrEqual(70);
+          expect(width(text), `${localize(page.path, lang)} description is ${width(text)} wide`).toBeLessThanOrEqual(160);
+          expect(text, `${localize(page.path, lang)} description must be plain text`).not.toMatch(/[<>&]/);
+        }
+      }
+    });
+
+    it('every title fits 65 characters with the site name', () => {
+      for (const page of allPages) {
+        for (const lang of LANGS) {
+          const title = strings[page.title][lang];
+          const full = page.title === homeTitleKey ? title : `${title} · svelte-ant-design`;
+          expect(width(full), `${localize(page.path, lang)}: "${full}"`).toBeLessThanOrEqual(65);
+        }
+      }
+    });
+
+    it('no two pages share a description or a title within a language', () => {
+      for (const lang of LANGS) {
+        const descriptions = allPages.map((page) => strings[page.description][lang]);
+        const titles = allPages.map((page) => strings[page.title][lang]);
+        expect(new Set(descriptions).size, `descriptions (${lang})`).toBe(descriptions.length);
+        expect(new Set(titles).size, `titles (${lang})`).toBe(titles.length);
+      }
+    });
+
+    it('the preview image has a description in every language', () => {
+      for (const lang of LANGS) expect(strings['seo.ogalt'][lang].trim()).not.toBe('');
+    });
+  });
+
   it('builds the URL list of all languages: English at the root, the others under /ru/ and /zh/', () => {
     const urls = allEntries();
     expect(urls).toHaveLength(allPages.length * 3);

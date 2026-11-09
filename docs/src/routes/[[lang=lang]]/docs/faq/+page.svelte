@@ -9,7 +9,7 @@
   const questions = [1, 2, 3, 4, 5, 6] as const;
 </script>
 
-<Seo title={t('d.faq')} description={t('faq.lead')} path="/docs/faq/" />
+<Seo path="/docs/faq/" />
 <Crumbs items={[{ label: t('nav.docs'), href: localHref('/docs/') }, { label: t('d.faq') }]} />
 <h1><T k="d.faq" /></h1>
 <p class="lede"><T k="faq.lead" /></p>

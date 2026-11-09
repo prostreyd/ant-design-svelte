@@ -30,7 +30,7 @@
   <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" /><path d="m10.5 10.5 3 3" /></svg>
 {/snippet}
 
-<Seo title={t('home.title')} description={t('hero.lead')} path="/" home />
+<Seo path="/" />
 
 <main id="main">
   <section class="hero">

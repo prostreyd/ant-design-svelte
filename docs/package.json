@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "serve": "node scripts/serve-build.mjs",
     "verify": "node scripts/verify-build.mjs",
+    "indexnow": "node scripts/indexnow.mjs",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test:e2e": "playwright test"
   },

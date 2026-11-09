@@ -42,3 +42,18 @@ registry.
    `npm test`, `npm run check:docs`, the build and `npm run test:docs`.
 
 Texts may contain `<code>` only (they are rendered as HTML). Use `useT()` and `<T k="..." />` in components.
+
+## Search engines and link previews
+
+- `Seo.svelte` writes the title, description, canonical URL, hreflang links, Open Graph tags and JSON-LD of every
+  page. The title and the description come from the page registry (`pages.ts` -> `strings.ts`, the `seo.*` texts), so
+  a new page only needs its registry entry. Keep titles within 65 and descriptions within 70 to 160 characters
+  (Chinese characters count double); `tests/docs/content.test.ts` and `scripts/verify-build.mjs` enforce it.
+- The home page carries `WebSite` and `SoftwareSourceCode` data, every other page a `BreadcrumbList`.
+- `robots.txt` and `sitemap.xml` are generated from the registry. Crawlers read `robots.txt` only at the root of the host,
+  and `prostreyd.github.io` has no root site, so the sitemap has to be submitted in Google Search Console and Bing
+  Webmaster Tools; it is not discovered on its own.
+- `npm run indexnow -w docs` tells Bing, Yandex and the other IndexNow search engines about every URL of the live
+  sitemap (run it after a deploy that changed pages; `-- --dry-run` shows what would be sent). It needs no account:
+  the key file `static/<key>.txt` proves that the site is ours and is public on purpose. Google ignores IndexNow;
+  for Google use Search Console.

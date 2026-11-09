@@ -11,25 +11,27 @@ export interface PageDef {
   /** Path without the language prefix, with a trailing slash. */
   path: SitePath;
   section: Section;
+  /** Name of the page in menus and search, and the start of its <title>. */
   title: Key;
+  /** Text for search results and link previews (the page shows its own, longer lead). */
   description: Key;
 }
 
-export const homePage: PageDef = { path: '/', section: 'home', title: 'home.title', description: 'hero.lead' };
+export const homePage: PageDef = { path: '/', section: 'home', title: 'home.title', description: 'seo.home' };
 
 export const docsPages: PageDef[] = [
-  { path: '/docs/', section: 'docs', title: 'd.intro', description: 'intro.lead' },
-  { path: '/docs/getting-started/', section: 'docs', title: 'd.start', description: 'start.lead' },
-  { path: '/docs/theme/', section: 'docs', title: 'd.theme', description: 'theme.lead' },
-  { path: '/docs/dark-mode/', section: 'docs', title: 'd.dark', description: 'dark.lead' },
-  { path: '/docs/accessibility/', section: 'docs', title: 'd.a11y', description: 'a11y.lead' },
-  { path: '/docs/faq/', section: 'docs', title: 'd.faq', description: 'faq.lead' },
-  { path: '/docs/contributing/', section: 'docs', title: 'd.contrib', description: 'contrib.lead' }
+  { path: '/docs/', section: 'docs', title: 'd.intro', description: 'seo.docs' },
+  { path: '/docs/getting-started/', section: 'docs', title: 'd.start', description: 'seo.start' },
+  { path: '/docs/theme/', section: 'docs', title: 'd.theme', description: 'seo.theme' },
+  { path: '/docs/dark-mode/', section: 'docs', title: 'd.dark', description: 'seo.dark' },
+  { path: '/docs/accessibility/', section: 'docs', title: 'd.a11y', description: 'seo.a11y' },
+  { path: '/docs/faq/', section: 'docs', title: 'd.faq', description: 'seo.faq' },
+  { path: '/docs/contributing/', section: 'docs', title: 'd.contrib', description: 'seo.contrib' }
 ];
 
 export const componentPages: PageDef[] = [
-  { path: '/components/', section: 'components', title: 'c.overview', description: 'ov.lead' },
-  { path: '/components/button/', section: 'components', title: 'b.title', description: 'b.lead' }
+  { path: '/components/', section: 'components', title: 'c.overview', description: 'seo.components' },
+  { path: '/components/button/', section: 'components', title: 'b.title', description: 'seo.button' }
 ];
 
 export const allPages: PageDef[] = [homePage, ...docsPages, ...componentPages];

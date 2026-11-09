@@ -17,7 +17,7 @@
   const note = $derived(t('n.button'));
 </script>
 
-<Seo title={t('b.title')} description={t('b.lead')} path="/components/button/" />
+<Seo path="/components/button/" />
 <Crumbs
   items={[
     { label: t('nav.components'), href: localHref('/components/') },

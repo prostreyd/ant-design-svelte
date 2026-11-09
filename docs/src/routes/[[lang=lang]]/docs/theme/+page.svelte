@@ -19,7 +19,7 @@
   ];
 </script>
 
-<Seo title={t('d.theme')} description={t('theme.lead')} path="/docs/theme/" />
+<Seo path="/docs/theme/" />
 <Crumbs items={[{ label: t('nav.docs'), href: localHref('/docs/') }, { label: t('d.theme') }]} />
 <h1><T k="d.theme" /></h1>
 <p class="lede"><T k="theme.lead" /></p>

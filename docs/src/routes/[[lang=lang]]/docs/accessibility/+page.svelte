@@ -10,7 +10,7 @@
   const t = useT();
 </script>
 
-<Seo title={t('d.a11y')} description={t('a11y.lead')} path="/docs/accessibility/" />
+<Seo path="/docs/accessibility/" />
 <Crumbs items={[{ label: t('nav.docs'), href: localHref('/docs/') }, { label: t('d.a11y') }]} />
 <h1><T k="d.a11y" /></h1>
 <p class="lede"><T k="a11y.lead" /></p>
