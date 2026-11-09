@@ -1,0 +1,12 @@
+{
+  "extends": "$app/tsconfig",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "svelte-ant-design": ["../src/lib/index.ts"],
+      "svelte-ant-design/tokens.css": ["../src/lib/tokens.css"],
+      "#docs/*": ["./src/docs/*"]
+    }
+  },
+  "include": ["src", "e2e", "vite.config.ts", "playwright.config.ts"]
+}

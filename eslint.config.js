@@ -7,8 +7,11 @@ export default tseslint.config(
   {
     ignores: [
       'dist/**',
-      'dist-demo/**',
       'build/**',
+      // The documentation site (docs/) is linted; its build output and caches are not.
+      'docs/build/**',
+      'docs/.svelte-kit/**',
+      'docs/test-results/**',
       'coverage/**',
       'node_modules/**',
       '.svelte-kit/**',
@@ -21,6 +24,12 @@ export default tseslint.config(
   },
   ...tseslint.configs.recommended,
   ...eslintPluginSvelte.configs['flat/recommended'],
+  {
+    // This rule wants `resolve()` from SvelteKit in every link. The library renders plain anchors and must
+    // not depend on SvelteKit, and the documentation site builds its links with `href()`
+    // (docs/src/docs/href.ts), a wrapper around `resolve()` that the rule cannot see through.
+    rules: { 'svelte/no-navigation-without-resolve': 'off' }
+  },
   {
     files: ['**/*.svelte'],
     languageOptions: {

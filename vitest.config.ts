@@ -5,9 +5,11 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   plugins: [svelte({ configFile: fileURLToPath(new URL('./svelte.config.js', import.meta.url)) })],
   resolve: {
-    alias: {
-      $lib: fileURLToPath(new URL('./src/lib', import.meta.url))
-    },
+    alias: [
+      { find: '$lib', replacement: fileURLToPath(new URL('./src/lib', import.meta.url)) },
+      // The examples of the documentation site import the library by its package name.
+      { find: /^svelte-ant-design$/, replacement: fileURLToPath(new URL('./src/lib/index.ts', import.meta.url)) }
+    ],
     conditions: ['browser']
   },
   test: {

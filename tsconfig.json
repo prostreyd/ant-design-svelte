@@ -10,6 +10,7 @@
     "checkJs": false,
     "esModuleInterop": true,
     "isolatedModules": true,
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
@@ -26,9 +27,6 @@
     "src/**/*.svelte",
     "tests/**/*.ts",
     "tests/**/*.svelte",
-    "demo/**/*.ts",
-    "demo/**/*.svelte",
-    "vite.config.ts",
     "vitest.config.ts",
     "vitest-setup.ts"
   ]

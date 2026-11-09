@@ -1,0 +1,51 @@
+// Data of the Button page. The API and token tables are checked against the source by tests/docs.
+export type L10n = Record<'en' | 'ru' | 'zh', string>;
+
+export interface DemoMeta { slug: string; title: L10n; description: L10n; surface?: boolean; column?: boolean }
+export const demos: DemoMeta[] = [
+  { slug: "types", title: { en: "Types", ru: "Типы", zh: "按钮类型" }, description: { en: "Five kinds: primary, default, dashed, text and link.", ru: "Пять видов: основная, обычная, пунктирная, текстовая и ссылка.", zh: "五种按钮：主按钮、默认按钮、虚线按钮、文本按钮和链接按钮。" } },
+  { slug: "sizes", title: { en: "Sizes", ru: "Размеры", zh: "按钮尺寸" }, description: { en: "large, medium and small. The value middle is accepted as a compatibility alias of medium.", ru: "large, medium и small. Значение middle принимается как совместимый алиас medium.", zh: "large、medium 与 small 三种尺寸。middle 作为 medium 的兼容别名仍可使用。" } },
+  { slug: "shape", title: { en: "Shape", ru: "Форма", zh: "按钮形状" }, description: { en: "Round and circle buttons. A circle button with an icon needs an accessible name.", ru: "Скруглённая и круглая кнопки. Круглой с иконкой нужно доступное имя.", zh: "圆角与圆形按钮。仅含图标的圆形按钮需要可访问的名称。" } },
+  { slug: "icons", title: { en: "Icons", ru: "Иконки", zh: "图标按钮" }, description: { en: "Pass an icon as a snippet; iconPlacement puts it before or after the label.", ru: "Иконка передаётся snippet-ом; iconPlacement ставит её до или после подписи.", zh: "图标通过 snippet 传入，iconPlacement 决定它在文字之前还是之后。" } },
+  { slug: "danger", title: { en: "Danger", ru: "Danger", zh: "危险按钮" }, description: { en: "The red scheme for destructive actions works with every type.", ru: "Красная схема для необратимых действий работает со всеми типами.", zh: "用于不可逆操作的红色方案，适用于所有按钮类型。" } },
+  { slug: "ghost", title: { en: "Ghost", ru: "Ghost", zh: "幽灵按钮" }, description: { en: "A transparent background: the button takes the colour of the surface under it. Contrast is guaranteed on the page background.", ru: "Прозрачный фон: кнопка берёт цвет поверхности под собой. Контраст гарантирован на фоне страницы.", zh: "背景透明：按钮显示其下方表面的颜色。对比度仅在页面背景上有保证。" }, surface: true },
+  { slug: "loading", title: { en: "Loading", ru: "Загрузка", zh: "加载中状态" }, description: { en: "Press the first button: it goes into loading for two seconds without losing focus. The second shows the spinner at once, the third after 500 ms.", ru: "Нажмите на первую кнопку: она встаёт в загрузку на две секунды, но не теряет фокус. Вторая показывает спиннер сразу, третья — через 500 мс.", zh: "点击第一个按钮：它会进入两秒的加载状态，且不会丢失焦点。第二个按钮立即显示加载图标，第三个在 500 毫秒后显示。" } },
+  { slug: "disabled", title: { en: "Disabled", ru: "Отключённая", zh: "禁用状态" }, description: { en: "Native disabled for a button; a disabled link is rendered without href.", ru: "Нативный disabled для кнопки; отключённая ссылка рендерится без href.", zh: "按钮使用原生 disabled；禁用的链接不渲染 href。" } },
+  { slug: "link", title: { en: "Link", ru: "Ссылка", zh: "链接按钮" }, description: { en: "With href an &lt;a&gt; link is rendered, with target and rel.", ru: "С href рендерится ссылка &lt;a&gt;, с атрибутами target и rel.", zh: "设置 href 后渲染为 &lt;a&gt; 链接，并可使用 target 与 rel。" } },
+  { slug: "block", title: { en: "Block", ru: "Во всю ширину", zh: "块级按钮" }, description: { en: "The block prop stretches the button to the width of its container.", ru: "Свойство block растягивает кнопку на ширину контейнера.", zh: "block 属性让按钮撑满容器宽度。" }, column: true },
+  { slug: "native", title: { en: "Forms and native attributes", ru: "Формы и нативные атрибуты", zh: "表单与原生属性" }, description: { en: "<code>htmlType</code> for submit and reset, <code>name</code> and <code>value</code> of the pressed button, and a link that downloads a file with <code>download</code>.", ru: "<code>htmlType</code> для отправки и сброса формы, <code>name</code> и <code>value</code> нажатой кнопки и ссылка, скачивающая файл через <code>download</code>.", zh: "用 <code>htmlType</code> 提交或重置表单，用 <code>name</code> 与 <code>value</code> 标识被点击的按钮，用 <code>download</code> 下载文件。" } },
+];
+
+export interface ApiRow { name: string; description: L10n; type: string; default: string }
+export const apiRows: ApiRow[] = [
+  { name: "type", description: { en: "Visual style of the button.", ru: "Визуальный стиль кнопки.", zh: "按钮的视觉样式。" }, type: "'primary' | 'default' | 'dashed' | 'text' | 'link'", default: "'default'" },
+  { name: "size", description: { en: "Size. middle is a compatibility alias of medium.", ru: "Размер. middle — совместимый алиас medium.", zh: "尺寸。middle 为 medium 的兼容别名。" }, type: "'large' | 'medium' | 'middle' | 'small'", default: "'medium'" },
+  { name: "shape", description: { en: "Shape of the button.", ru: "Форма кнопки.", zh: "按钮形状。" }, type: "'default' | 'circle' | 'round'", default: "'default'" },
+  { name: "disabled", description: { en: "Prevents activation. A link is rendered without href.", ru: "Запрещает активацию. Ссылка рендерится без href.", zh: "禁止触发。链接将不渲染 href。" }, type: "boolean", default: "false" },
+  { name: "loading", description: { en: "A spinner at once or after a delay in milliseconds. The button keeps focus.", ru: "Спиннер сразу или после задержки в миллисекундах. Кнопка остаётся в фокусе.", zh: "立即或在延迟（毫秒）后显示加载图标，按钮保持焦点。" }, type: "boolean | { delay: number }", default: "false" },
+  { name: "danger", description: { en: "Red colour scheme.", ru: "Красная цветовая схема.", zh: "红色危险样式。" }, type: "boolean", default: "false" },
+  { name: "ghost", description: { en: "Transparent background for default, dashed and primary.", ru: "Прозрачный фон для default, dashed и primary.", zh: "为 default、dashed 与 primary 提供透明背景。" }, type: "boolean", default: "false" },
+  { name: "block", description: { en: "Stretches the button to the container width.", ru: "Растягивает кнопку на ширину контейнера.", zh: "使按钮撑满容器宽度。" }, type: "boolean", default: "false" },
+  { name: "href", description: { en: "Renders an &lt;a&gt; instead of a &lt;button&gt;. An empty string also selects a link.", ru: "Рендерит &lt;a&gt; вместо &lt;button&gt;. Пустая строка тоже выбирает ссылку.", zh: "渲染为 &lt;a&gt; 而不是 &lt;button&gt;。空字符串同样会渲染为链接。" }, type: "string", default: "—" },
+  { name: "target / rel / download", description: { en: "Native link attributes, only together with href.", ru: "Нативные атрибуты ссылки, только вместе с href.", zh: "链接的原生属性，需与 href 一起使用。" }, type: "string / string / string | boolean", default: "—" },
+  { name: "htmlType", description: { en: "Native button type; ignored for a link.", ru: "Нативный type кнопки; для ссылки игнорируется.", zh: "按钮的原生 type；对链接无效。" }, type: "'button' | 'submit' | 'reset'", default: "'button'" },
+  { name: "form / name / value", description: { en: "Native button attributes for forms.", ru: "Нативные атрибуты кнопки для форм.", zh: "用于表单的原生按钮属性。" }, type: "string", default: "—" },
+  { name: "icon", description: { en: "An icon snippet, hidden from assistive technology.", ru: "Иконка-snippet, скрыта от вспомогательных технологий.", zh: "图标 snippet，对辅助技术隐藏。" }, type: "Snippet", default: "—" },
+  { name: "iconPlacement", description: { en: "Position of the icon relative to the label.", ru: "Положение иконки относительно подписи.", zh: "图标相对于文字的位置。" }, type: "'start' | 'end'", default: "'start'" },
+  { name: "children", description: { en: "The label or content of the button.", ru: "Подпись или содержимое кнопки.", zh: "按钮的文字或内容。" }, type: "Snippet", default: "—" },
+  { name: "class", description: { en: "An additional CSS class.", ru: "Дополнительный CSS-класс.", zh: "附加的 CSS 类名。" }, type: "string", default: "—" },
+  { name: "native attributes", description: { en: "Native button or a attributes (including tabindex and aria-*) are forwarded to the element; the loading and disabled states take priority over a consumer aria-busy, aria-disabled and tabindex.", ru: "Нативные атрибуты button или a (включая tabindex и aria-*) пробрасываются в элемент; состояния loading и disabled имеют приоритет над одноимёнными aria-busy, aria-disabled и tabindex.", zh: "原生 button 或 a 的属性（包括 tabindex 与 aria-*）会透传到元素上；loading 与 disabled 状态优先于使用方传入的同名 aria-busy、aria-disabled 与 tabindex。" }, type: "HTMLButtonAttributes | HTMLAnchorAttributes", default: "—" },
+  { name: "onclick", description: { en: "Called when an enabled button is activated; not called while disabled or loading.", ru: "Вызывается при активации доступной кнопки; не вызывается при disabled и loading.", zh: "可用按钮被触发时调用；disabled 与 loading 时不调用。" }, type: "(event: MouseEvent) => void", default: "—" },
+];
+
+export interface TokenRow { name: string; description: L10n; value: string }
+export const tokenRows: TokenRow[] = [
+  { name: "--ads-control-height", description: { en: "Height of a medium button.", ru: "Высота кнопки medium.", zh: "中号按钮高度。" }, value: "32px" },
+  { name: "--ads-control-height-lg", description: { en: "Height of a large button.", ru: "Высота кнопки large.", zh: "大号按钮高度。" }, value: "40px" },
+  { name: "--ads-control-height-sm", description: { en: "Height of a small button.", ru: "Высота кнопки small.", zh: "小号按钮高度。" }, value: "24px" },
+  { name: "--ads-radius-md", description: { en: "Corner radius.", ru: "Скругление углов.", zh: "圆角半径。" }, value: "6px" },
+  { name: "--ads-color-primary-solid", description: { en: "Fill of a primary button.", ru: "Заливка основной кнопки.", zh: "主按钮的填充色。" }, value: "#1668dc" },
+  { name: "--ads-color-primary-text", description: { en: "Text colour of link and ghost.", ru: "Цвет текста ссылки и ghost.", zh: "链接与 ghost 的文字颜色。" }, value: "#1668dc" },
+  { name: "--ads-color-danger-solid", description: { en: "Fill of a danger button.", ru: "Заливка danger-кнопки.", zh: "危险按钮的填充色。" }, value: "#d9363e" },
+  { name: "--ads-color-focus-outline", description: { en: "Colour of the focus ring.", ru: "Цвет кольца фокуса.", zh: "焦点环颜色。" }, value: "#1677ff" },
+];

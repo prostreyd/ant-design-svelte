@@ -7,7 +7,7 @@
     "type": "git",
     "url": "git+https://github.com/prostreyd/ant-design-svelte.git"
   },
-  "homepage": "https://github.com/prostreyd/ant-design-svelte#readme",
+  "homepage": "https://prostreyd.github.io/ant-design-svelte/",
   "bugs": {
     "url": "https://github.com/prostreyd/ant-design-svelte/issues"
   },
@@ -25,6 +25,9 @@
   "sideEffects": [
     "**/*.css"
   ],
+  "workspaces": [
+    "docs"
+  ],
   "files": [
     "dist",
     "!dist/**/*.test.*",
@@ -41,16 +44,18 @@
     "./tokens.css": "./dist/tokens.css"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "npm run dev -w docs",
+    "build": "npm run build -w docs",
+    "preview": "npm run preview -w docs",
     "package": "svelte-package",
     "prepublishOnly": "npm run lint && npm run check && npm run test && npm run package",
     "check": "svelte-check --tsconfig ./tsconfig.json",
+    "check:docs": "npm run check -w docs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:docs": "npm run verify -w docs && npm run test:e2e -w docs",
     "test:mutation": "node scripts/mutation-test.mjs",
     "lint": "eslint ."
   },
