@@ -22,6 +22,9 @@
     "accessibility"
   ],
   "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
   "files": [
     "dist",
     "!dist/**/*.test.*",

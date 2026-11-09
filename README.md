@@ -42,6 +42,10 @@ import 'svelte-ant-design/tokens.css';
 <Button type="primary" onclick={() => console.log('clicked')}>Save</Button>
 ```
 
+Import components by name. The package is ESM and declares `sideEffects: ["**/*.css"]`, so a
+bundler that supports tree shaking leaves out the components you do not use. This is checked with
+Vite in `tests/packaging`; other bundlers are not covered.
+
 See [`src/lib/Button/README.md`](./src/lib/Button/README.md) for the full Button API.
 
 ### Dark theme

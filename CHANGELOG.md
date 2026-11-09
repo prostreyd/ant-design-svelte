@@ -11,6 +11,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Added
 
+- Packaging test (`tests/packaging/tree-shaking.test.ts`): it packages a copy of the library with
+  `svelte-package`, installs it into a throw-away app, builds the app with Vite, and checks that
+  components the app does not import are not bundled, that an app importing only `VERSION` gets no
+  Svelte runtime, and that `tokens.css` and the styles of the imported components are kept.
+
+### Changed
+
+- `package.json` declares `"sideEffects": ["**/*.css"]`, the field bundlers read to decide which
+  modules they may drop. With it, an app that imports only `VERSION` gets no component code and no
+  Svelte runtime (without it, 37 Svelte runtime modules stayed in the bundle). Unused components were
+  already left out by Vite; the packaging test covers Vite only.
+
+## [0.1.0-alpha.0] - 2026-11-08
+
+### Added
+
 - GitHub Actions workflow (`.github/workflows/ci.yml`): lint, type check, unit tests with the
   coverage thresholds, package and site builds, and the Playwright e2e tests on every push to
   `main` and every pull request.
