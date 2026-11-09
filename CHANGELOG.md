@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.1] - 2026-11-09
+
 ### Added
 
 - Packaging test (`tests/packaging/tree-shaking.test.ts`): it packages a copy of the library with
