@@ -1,0 +1,81 @@
+name: Publish to npm
+
+# Publishes the package when a version tag is pushed, for example v0.1.0-alpha.2, with npm Trusted Publishing:
+# npm trusts this workflow, so there is no token and no one-time password.
+#
+# One-time setup on npmjs.com (package svelte-ant-design -> Settings -> Trusted Publisher -> GitHub Actions):
+#   user prostreyd, repository ant-design-svelte, workflow filename publish.yml, environment npm,
+#   allowed actions: npm publish and npm dist-tag.
+# Optional, in the repository (Settings -> Environments -> npm): "Required reviewers" adds a one-click approval
+# before anything is published.
+#
+# Release: bump the version, merge the change into main, then
+#   git tag v<version> && git push origin v<version>
+# The tag must match the version in package.json and the tagged commit must be on main.
+
+on:
+  push:
+    tags: ['v*']
+
+# One publication at a time.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # lets npm verify that the publication comes from this workflow
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      # Trusted Publishing needs npm 11.5.1 or newer; Node 22 ships an older npm.
+      - name: Use npm 11
+        run: npm install -g npm@11
+
+      - run: npm ci
+
+      - name: Check the tag
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::The tag $GITHUB_REF_NAME does not match the version $VERSION in package.json"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::The tagged commit is not on main"
+            exit 1
+          fi
+
+      # `npm publish` runs prepublishOnly first: lint, type check, tests and the package build.
+      # A pre-release goes under the tag named in its version (0.1.0-alpha.2 -> alpha). While the latest tag
+      # itself points to a pre-release, it follows the new one; once a stable version is latest, it stays.
+      - name: Publish
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          NAME=$(node -p "require('./package.json').name")
+          if [[ "$VERSION" == *-* ]]; then
+            TAG="${VERSION#*-}"
+            TAG="${TAG%%.*}"
+            npm publish --tag "$TAG"
+            if [[ "$(npm view "$NAME" dist-tags.latest)" == *-* ]]; then
+              npm dist-tag add "$NAME@$VERSION" latest
+            fi
+          else
+            npm publish
+          fi
