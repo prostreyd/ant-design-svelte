@@ -1,6 +1,6 @@
 {
   "name": "svelte-ant-design",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "An independent UI component library for Svelte 5, inspired by Ant Design.",
   "license": "MIT",
   "repository": {
