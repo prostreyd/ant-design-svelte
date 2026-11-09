@@ -29,8 +29,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Type check
-        run: npm run check
+      - name: Type check (library and documentation site)
+        run: |
+          npm run check
+          npm run check:docs
 
       - name: Unit and accessibility tests with coverage thresholds
         run: npm run test:coverage
@@ -38,20 +40,30 @@ jobs:
       - name: Build the package
         run: npm run package
 
+      # The documentation site is built and tested under the base path it is deployed to.
       - name: Build the documentation site
         run: npm run build
+        env:
+          BASE_PATH: /ant-design-svelte
 
       - name: Install the browser for e2e tests
         run: npx playwright install --with-deps chromium
 
-      - name: End-to-end tests
+      - name: End-to-end tests of the library
         run: npm run test:e2e
+
+      - name: Check and test the documentation site
+        run: npm run test:docs
+        env:
+          BASE_PATH: /ant-design-svelte
 
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-test-results
-          path: test-results/
+          path: |
+            test-results/
+            docs/test-results/
           if-no-files-found: ignore
           retention-days: 7

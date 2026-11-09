@@ -1,0 +1,64 @@
+name: Documentation site
+
+# Builds the documentation site (docs/) and publishes it on GitHub Pages:
+# https://prostreyd.github.io/ant-design-svelte/
+#
+# One-time setup in the repository: Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
+# Until that is done the deploy job fails; run the workflow again afterwards ("Run workflow").
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deployment at a time; a newer run waits instead of cancelling a deployment in progress.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - uses: actions/configure-pages@v6
+
+      - name: Build the site
+        run: npm run build
+        env:
+          BASE_PATH: /ant-design-svelte
+
+      - name: Check the built site (links, titles, canonical URLs, sitemap)
+        run: npm run verify -w docs
+        env:
+          BASE_PATH: /ant-design-svelte
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs/build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
