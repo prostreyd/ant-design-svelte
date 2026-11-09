@@ -9,6 +9,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.2] - 2026-11-10
+
+The library code is unchanged since 0.1.0-alpha.1; this release brings the documentation site and the
+updated package metadata to the npm page.
+
 ### Added
 
 - Documentation site, published on GitHub Pages: <https://prostreyd.github.io/ant-design-svelte/>. It has
@@ -28,8 +33,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 - `npm run dev`, `npm run build` and `npm run preview` now run the documentation site. It replaces the
   old demo playground (`demo/`, Russian only). The library build (`npm run package`) is unchanged.
-- `package.json` `homepage` points to the documentation site, and `keywords` gained `antd`, `design-system` and
-  `ui-library` (both take effect with the next release).
+- `package.json` `homepage` points to the documentation site, so the npm page links to it, and `keywords` gained
+  `antd`, `design-system` and `ui-library`.
+- The Button README links to the live examples instead of the removed playground.
 
 ## [0.1.0-alpha.1] - 2026-11-09
 
