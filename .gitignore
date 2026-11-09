@@ -36,6 +36,7 @@ notes/
 tasks/
 prompts/
 svelte-demo/
+svelte-demo-local/
 
 
 # Playwright artifacts
