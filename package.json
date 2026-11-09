@@ -19,7 +19,10 @@
     "component-library",
     "ant-design",
     "typescript",
-    "accessibility"
+    "accessibility",
+    "antd",
+    "design-system",
+    "ui-library"
   ],
   "type": "module",
   "sideEffects": [

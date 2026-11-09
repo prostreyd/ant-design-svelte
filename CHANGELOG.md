@@ -28,7 +28,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 - `npm run dev`, `npm run build` and `npm run preview` now run the documentation site. It replaces the
   old demo playground (`demo/`, Russian only). The library build (`npm run package`) is unchanged.
-- `package.json` `homepage` points to the documentation site (takes effect with the next release).
+- `package.json` `homepage` points to the documentation site, and `keywords` gained `antd`, `design-system` and
+  `ui-library` (both take effect with the next release).
 
 ## [0.1.0-alpha.1] - 2026-11-09
 
