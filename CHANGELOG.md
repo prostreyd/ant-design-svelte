@@ -9,6 +9,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-10
+
+From this version on, releases are numbered without pre-release suffixes: a new component raises the
+minor number and a fix raises the patch number. The versions before this one were published as alpha.
+
 ### Added
 
 - `Switch` component: a native `<button role="switch">` with `bind:checked`, `onchange`, `onclick`,

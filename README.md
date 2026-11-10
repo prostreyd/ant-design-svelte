@@ -18,7 +18,7 @@ Ant Design.
 
 ## Status
 
-Early alpha (`0.1.0-alpha.2`). Available components: `Button`, `Switch`. More components are planned.
+Version `0.2.0`. Available components: `Button`, `Switch`. More components are planned.
 
 ## Installation
 
