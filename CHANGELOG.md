@@ -30,6 +30,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 - The check of enum-like props (`RangeError` in development, a fallback in production) moved from `Button`
   to a helper shared with `Switch`. The behavior of `Button` is unchanged.
+- The documentation site no longer shows alpha labels (header, menu, component pages, home page). The home
+  page roadmap lists every ready component, and the texts that said only the Button was ready were updated.
 
 ### Documentation
 
@@ -38,6 +40,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   accept text too) as a decision for the maintainer.
 - The rules for AI assistants now require checking in a browser, with contents of different widths, that
   toggling a component does not change its size or move its neighbours.
+- The rules for AI assistants now describe what the maintainer's "запуш" means for a ready or fixed
+  component: merge into `main`, bump the version (a minor for a new component, a patch for a fix, no
+  pre-releases), push the version tag (npm publication through the existing workflow) and confirm that
+  the site was updated.
 
 ## [0.1.0-alpha.2] - 2026-11-10
 
