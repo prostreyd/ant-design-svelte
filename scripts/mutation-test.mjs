@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Mutation testing for a component of src/lib (Button by default, or `--target=Switch`).
+// Mutation testing for a component of src/lib (Button by default, or `--target=Switch`). A folder may hold
+// several components: `--target=Checkbox --file=CheckboxGroup` mutates src/lib/Checkbox/CheckboxGroup.svelte.
 //
 // Stryker has no Svelte mutator, so this runner does the same job directly:
 //   1. applies one mutation at a time to the component's script and markup
@@ -11,13 +12,14 @@
 // Mutation score = killed / (killed + survived). Survivors point to behavior
 // that no test pins down.
 //
-// Usage: npm run test:mutation -- [--target=Button|Switch] [--threshold=90] [--only=<operator-id>]
+// Usage: npm run test:mutation -- [--target=Button|Switch|Checkbox] [--file=<component>] [--threshold=90] [--only=<operator-id>]
 //
 // Button runs the whole unit test suite for every mutant. Any other target runs only its own
-// test file (tests/<Target>.test.ts), which is much faster and is all the component can affect.
+// test files (tests/<Target>*.test.ts, so Checkbox also runs tests/CheckboxGroup.test.ts), which is much
+// faster and is all the component can affect.
 
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
@@ -35,11 +37,21 @@ if (!/^[A-Z][A-Za-z]*$/.test(component)) {
   console.error(`--target must be a component name such as Switch, got "${component}".`);
   process.exit(2);
 }
-const target = resolve(root, `src/lib/${component}/${component}.svelte`);
+const file = args.file ?? component;
+if (!/^[A-Z][A-Za-z]*$/.test(file)) {
+  console.error(`--file must be a component name such as CheckboxGroup, got "${file}".`);
+  process.exit(2);
+}
+const target = resolve(root, `src/lib/${component}/${file}.svelte`);
 const reportPath = resolve(
   root,
-  component === 'Button' ? 'coverage/mutation-report.json' : `coverage/mutation-report-${component.toLowerCase()}.json`
+  component === 'Button' && file === 'Button' ? 'coverage/mutation-report.json' : `coverage/mutation-report-${file.toLowerCase()}.json`
 );
+// The unit test files that can see a change of the target: tests/<Target>.test.ts and the files of the other
+// components of the folder (tests/CheckboxGroup.test.ts for Checkbox).
+const testFiles = readdirSync(resolve(root, 'tests'))
+  .filter((name) => name.startsWith(component) && name.endsWith('.test.ts'))
+  .map((name) => `tests/${name}`);
 const threshold = Number(args.threshold ?? 90);
 const onlyOperator = args.only;
 
@@ -122,7 +134,46 @@ const OPERATORS = [
   { id: 'hidden-when-checked', description: 'unchecked content is not hidden while checked', pattern: /class:ads-switch-content-hidden=\{isOn\}/g, replace: 'class:ads-switch-content-hidden={!isOn}' },
   { id: 'item-class', description: 'corrupt the content item class', pattern: /class="ads-switch-content-item"/g, replace: 'class="ads-switch-content-item-x"' },
   { id: 'busy-when-loading', description: 'loading no longer sets aria-busy', pattern: /loading \? true : ariaBusy/g, replace: 'ariaBusy' },
-  { id: 'inactive-when-loading', description: 'loading no longer sets aria-disabled', pattern: /loading && !disabled \? true : ariaDisabled/g, replace: 'ariaDisabled' }
+  { id: 'inactive-when-loading', description: 'loading no longer sets aria-disabled', pattern: /loading && !disabled \? true : ariaDisabled/g, replace: 'ariaDisabled' },
+
+  // Checkbox and CheckboxGroup
+  { id: 'cb-drop-write-checked', description: 'do not write the checked state back to the input', pattern: /target\.checked = isChecked;/g, replace: '' },
+  { id: 'cb-drop-write-indeterminate', description: 'do not write indeterminate back to the input', pattern: /target\.indeterminate = indeterminate;/g, replace: '' },
+  { id: 'cb-drop-toggle', description: 'a group item does not tell the group', pattern: /group!\.toggle\(value!, next, event\);/g, replace: '' },
+  { id: 'cb-drop-assign', description: 'a standalone checkbox does not assign checked', pattern: /checked = next;/g, replace: '' },
+  { id: 'cb-drop-onchange', description: 'do not call onchange', pattern: /onchange\?\.\(next, event\);/g, replace: '' },
+  { id: 'cb-onchange-old-value', description: 'onchange of a standalone checkbox gets the old value', pattern: /checked = next;\n\s+onchange\?\.\(next, event\);/g, replace: 'checked = next;\n      onchange?.(!next, event);' },
+  { id: 'cb-item-after-group', description: 'the item onchange runs after the group', pattern: /onchange\?\.\(next, event\);\n\s+group!\.toggle\(value!, next, event\);/g, replace: 'group!.toggle(value!, next, event);\n      onchange?.(next, event);' },
+  { id: 'cb-name-priority', description: 'the own name wins over the group name', pattern: /group\?\.name \?\? name/g, replace: 'name ?? group?.name' },
+  { id: 'cb-disabled-group', description: 'the group disabled does not apply', pattern: /disabled \|\| Boolean\(group\?\.disabled\)/g, replace: 'disabled' },
+  { id: 'cb-default-value', description: "the input has no default value", pattern: /value \?\? 'on'/g, replace: 'value' },
+  { id: 'cb-member-ignore', description: 'a checkbox with a value is not a member', pattern: /if \(value !== undefined\) return true;/g, replace: 'if (value !== undefined) return false;' },
+  { id: 'cb-throw-type', description: 'TypeError → Error', pattern: /new TypeError\(/g, replace: 'new Error(' },
+  { id: 'cb-group-checked', description: 'a member ignores the group value', pattern: /member \? group!\.isChecked\(value!\) : Boolean\(checked\)/g, replace: 'Boolean(checked)' },
+  { id: 'cb-boolean-coerce', description: 'drop Boolean(checked)', pattern: /Boolean\(checked\)/g, replace: 'checked' },
+  { id: 'cb-style-order', description: 'styles.root before style', pattern: /styleText\(group\?\.styles\?\.item, customStyle, styles\?\.root\)/g, replace: 'styleText(styles?.root, customStyle, group?.styles?.item)' },
+  { id: 'cb-style-group-item', description: 'the group item style is dropped', pattern: /styleText\(group\?\.styles\?\.item, /g, replace: 'styleText(' },
+  { id: 'cb-class-group-item', description: 'the group item class is dropped', pattern: /,\n\s+group\?\.classNames\?\.item\n/g, replace: '\n' },
+  { id: 'cb-class', description: 'corrupt a Checkbox class name', pattern: /'ads-checkbox(-[\w-]+)?'/g, replace: (m) => m[0].replace(/'$/, "-x'") },
+  { id: 'cb-type', description: 'type checkbox → radio', pattern: /type="checkbox"/g, replace: 'type="radio"' },
+  { id: 'cb-drop-focus-options', description: 'focus() ignores its options', pattern: /input\?\.focus\(options\)/g, replace: 'input?.focus()' },
+  { id: 'cb-drop-blur', description: 'blur() does nothing', pattern: /input\?\.blur\(\);/g, replace: ';' },
+  { id: 'cb-unregister', description: 'a destroyed checkbox stays registered', pattern: /registered = registered\.filter\(\(other\) => other !== read\);/g, replace: '' },
+  { id: 'cb-register-order', description: 'a mounted checkbox is registered first', pattern: /registered = \[\.\.\.registered, read\];/g, replace: 'registered = [read, ...registered];' },
+  { id: 'cb-toggle-remove', description: 'unchecking does not remove the value', pattern: /: current\.filter\(\(other\) => other !== item\);/g, replace: ': current;' },
+  { id: 'cb-toggle-dedupe', description: 'checking adds a duplicate', pattern: /current\.includes\(item\)\n\s+\? current\n\s+: \[\.\.\.current, item\]/g, replace: '[...current, item]' },
+  { id: 'cb-sort-drop', description: 'the value is not put in order', pattern: /const ordered = sorted\(next\);/g, replace: 'const ordered = next;' },
+  { id: 'cb-unknown-first', description: 'unknown values go first', pattern: /return \[\.\.\.known, \.\.\.unknown\];/g, replace: 'return [...unknown, ...known];' },
+  { id: 'cb-order-options', description: 'the order ignores the options', pattern: /if \(hasOptions\) return normalized\.findIndex\(\(option\) => option\.value === item\);/g, replace: '' },
+  { id: 'cb-drop-group-onchange', description: 'the group does not call onchange', pattern: /onchange\?\.\(ordered, event\);/g, replace: '' },
+  { id: 'cb-drop-group-assign', description: 'the group does not assign value', pattern: /value = ordered;/g, replace: '' },
+  { id: 'cb-role', description: 'role group → list', pattern: /role="group"/g, replace: 'role="list"' },
+  { id: 'cb-option-string', description: 'a plain option has no label', pattern: /label: String\(option\)/g, replace: "label: ''" },
+  { id: 'cb-reset-checked', description: 'a form reset leaves the checked state as the browser reset it', pattern: /input\.checked = isChecked;/g, replace: '' },
+  { id: 'cb-reset-listener', description: 'the reset listener is never removed', pattern: /return \(\) => form\.removeEventListener\('reset', restore\);/g, replace: '' },
+  { id: 'cb-reset-no-form', description: 'a checkbox outside a form also listens', pattern: /if \(!form\) return;/g, replace: '' },
+  { id: 'cb-reset-unmounted', description: 'restore runs on an unmounted checkbox', pattern: /if \(!input\) return;/g, replace: '' },
+  { id: 'cb-has-options', description: 'empty options also hide the children', pattern: /normalized\.length > 0/g, replace: 'options !== undefined' }
 ];
 
 function lineOf(index) {
@@ -169,7 +220,7 @@ function runUnitTests() {
       '--coverage.enabled=false',
       '--bail',
       '1',
-      ...(component === 'Button' ? [] : [`tests/${component}.test.ts`])
+      ...(component === 'Button' && file === 'Button' ? [] : testFiles)
     ],
     { cwd: root, encoding: 'utf8', timeout: 180_000 }
   );
@@ -224,7 +275,7 @@ const score = valid === 0 ? 0 : Math.round((killed / valid) * 1000) / 10;
 mkdirSync(dirname(reportPath), { recursive: true });
 writeFileSync(
   reportPath,
-  JSON.stringify({ target: `src/lib/${component}/${component}.svelte`, score, killed, survived, invalid, results }, null, 2)
+  JSON.stringify({ target: `src/lib/${component}/${file}.svelte`, score, killed, survived, invalid, results }, null, 2)
 );
 
 console.log('\nMutation summary');
