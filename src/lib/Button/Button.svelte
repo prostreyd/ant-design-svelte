@@ -14,6 +14,7 @@
   } from './types.js';
   import type { Snippet } from 'svelte';
   import { isProduction } from '../internal/env.js';
+  import { resolveOption } from '../internal/options.js';
 
   type ButtonProps = Omit<HTMLAttributes<HTMLElement>, 'children' | 'class' | 'onclick'> & {
     /** Visual style of the button. */
@@ -94,31 +95,20 @@
   const BUTTON_HTML_TYPES = ['button', 'submit', 'reset'] as const;
   const BUTTON_ICON_PLACEMENTS = ['start', 'end'] as const;
 
-  /**
-   * Values outside the public contract throw a `RangeError` while developing, so the
-   * mistake is caught early. A production build falls back to the documented default
-   * instead, so a bad value (for example one coming from a CMS) cannot take down the page.
-   */
-  function resolveOption<T extends string>(
-    name: string,
-    value: unknown,
-    allowed: readonly T[],
-    fallback: T
-  ): T {
-    if (allowed.includes(value as T)) return value as T;
-    if (!isProduction()) {
-      throw new RangeError(`Button ${name} must be one of: ${allowed.join(', ')}.`);
-    }
-    return fallback;
-  }
-
   // One derived object, so every option is validated on each render, whichever element is used.
+  // Values outside the contract throw in development and fall back to the default in production.
   const resolved = $derived({
-    type: resolveOption('type', type, BUTTON_TYPES, 'default'),
-    size: resolveOption('size', size, BUTTON_SIZES, 'medium'),
-    shape: resolveOption('shape', shape, BUTTON_SHAPES, 'default'),
-    htmlType: resolveOption('htmlType', htmlType, BUTTON_HTML_TYPES, 'button'),
-    iconPlacement: resolveOption('iconPlacement', iconPlacement, BUTTON_ICON_PLACEMENTS, 'start')
+    type: resolveOption('Button', 'type', type, BUTTON_TYPES, 'default'),
+    size: resolveOption('Button', 'size', size, BUTTON_SIZES, 'medium'),
+    shape: resolveOption('Button', 'shape', shape, BUTTON_SHAPES, 'default'),
+    htmlType: resolveOption('Button', 'htmlType', htmlType, BUTTON_HTML_TYPES, 'button'),
+    iconPlacement: resolveOption(
+      'Button',
+      'iconPlacement',
+      iconPlacement,
+      BUTTON_ICON_PLACEMENTS,
+      'start'
+    )
   });
 
   let delayedLoading = $state(false);

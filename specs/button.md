@@ -187,7 +187,8 @@ of the Svelte API. Native button behavior is used where the semantics match.
 ## Mutation testing
 
 `npm run test:mutation` applies one mutation at a time to `Button.svelte`, runs the unit
-tests for each, and reports survivors. Current result: 100% (94 of 94 killed). The score
+tests for each, and reports survivors. Current result: 100% (92 of 92 killed; the enum check
+moved to `src/lib/internal/options.ts`, shared with Switch, and is covered by `tests/internal.test.ts`). The score
 depends on the code around each mutation, so re-run it after editing the component; an
 earlier version of this component had one equivalent survivor (the initial value of
 `delayedLoading`, which the loading effect overwrites during mount).

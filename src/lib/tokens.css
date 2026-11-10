@@ -79,6 +79,38 @@
   --ads-motion-duration-spinner: 1s;
   --ads-motion-duration-spinner-reduced: 2.5s;
   --ads-motion-ease: cubic-bezier(0.645, 0.045, 0.355, 1);
+
+  /* Switch */
+  --ads-switch-height: 22px;
+  --ads-switch-height-sm: 16px;
+  --ads-switch-min-width: 44px;
+  --ads-switch-min-width-sm: 28px;
+  --ads-switch-handle-size: 18px;
+  --ads-switch-handle-size-sm: 12px;
+  --ads-switch-padding: 2px;
+  --ads-switch-content-margin-min: 9px;
+  --ads-switch-content-margin-max: 24px;
+  --ads-switch-content-margin-min-sm: 6px;
+  --ads-switch-content-margin-max-sm: 18px;
+  --ads-switch-font-size: 12px;
+  --ads-switch-font-size-sm: 10px;
+  --ads-switch-spinner-border-width: 2px;
+  --ads-switch-handle-shadow: 0 2px 4px 0 rgb(0 35 11 / 20%);
+  --ads-switch-disabled-opacity: 0.4;
+
+  /*
+   * Switch colors. Both track states keep 3:1 against the page background (WCAG 1.4.11),
+   * and the handle and the on/off text keep their contrast against the track (3:1 and 4.5:1)
+   * in every state, so the unchecked track is darker than the default Ant Design gray.
+   */
+  --ads-switch-track-off: #737373;
+  --ads-switch-track-off-hover: #666666;
+  --ads-switch-track-off-active: #595959;
+  --ads-switch-track-on: #1668dc;
+  --ads-switch-track-on-hover: #0958d9;
+  --ads-switch-track-on-active: #003eb3;
+  --ads-switch-handle-bg: #ffffff;
+  --ads-switch-content-color: #ffffff;
 }
 
 :root[data-theme='dark'] {
@@ -120,4 +152,13 @@
   --ads-color-bg-container-disabled: rgb(255 255 255 / 8%);
   --ads-color-bg-text-hover: rgb(255 255 255 / 12%);
 
+  /* In the dark theme a lighter track would lose contrast against the white handle, so hover and pressed go darker. */
+  --ads-switch-track-off: #8c8c8c;
+  --ads-switch-track-off-hover: #858585;
+  --ads-switch-track-off-active: #808080;
+  --ads-switch-track-on: #3a8aff;
+  --ads-switch-track-on-hover: #3283f5;
+  --ads-switch-track-on-active: #2f7ff0;
+  --ads-switch-handle-bg: #ffffff;
+  --ads-switch-content-color: #141414;
 }

@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { Button } from '$lib';
+  import { Button, Switch } from '$lib';
 
   let clicks = $state(0);
   let busy = $state(false);
+  let switchBusy = $state(false);
+  let switchChanges = $state(0);
 
   const types = ['default', 'primary', 'dashed', 'text', 'link'] as const;
 </script>
@@ -45,6 +47,63 @@
 </section>
 
 <output data-testid="clicks">{clicks}</output>
+
+{#snippet on()}On{/snippet}
+{#snippet off()}Off{/snippet}
+
+<!-- Switch states, used by the Switch visual and contrast tests. -->
+<section data-testid="switches">
+  <Switch data-testid="sw-off" aria-label="Off" />
+  <Switch data-testid="sw-on" aria-label="On" checked />
+  <Switch data-testid="sw-small-off" aria-label="Small off" size="small" />
+  <Switch data-testid="sw-small-on" aria-label="Small on" size="small" checked />
+  <Switch
+    data-testid="sw-text-off"
+    aria-label="Text off"
+    checkedChildren={on}
+    unCheckedChildren={off}
+  />
+  <Switch
+    data-testid="sw-text-on"
+    aria-label="Text on"
+    checked
+    checkedChildren={on}
+    unCheckedChildren={off}
+  />
+  <Switch data-testid="sw-disabled" aria-label="Disabled" disabled />
+  <Switch data-testid="sw-disabled-on" aria-label="Disabled on" disabled checked />
+  <Switch data-testid="sw-loading" aria-label="Loading" loading />
+  <Switch
+    data-testid="sw-start-loading"
+    aria-label="Start loading"
+    loading={switchBusy}
+    onchange={() => {
+      switchChanges++;
+      switchBusy = true;
+    }}
+  />
+</section>
+<output data-testid="switch-changes">{switchChanges}</output>
+
+<!--
+  Contents of different widths: toggling must not change the width or move the neighbours.
+  One pair is given as snippets, the others as plain strings.
+-->
+<section data-testid="width-demo">
+  <Switch data-testid="sw-onoff" aria-label="On or off" checkedChildren={on} unCheckedChildren={off} />
+  <Switch data-testid="sw-yesno" aria-label="Yes or no" checkedChildren="Yes" unCheckedChildren="No" />
+  <Switch data-testid="sw-happy" aria-label="Happy or sad" checkedChildren="Happy" unCheckedChildren="Sad" />
+  <Switch
+    data-testid="sw-happy-small"
+    aria-label="Small, happy or sad"
+    size="small"
+    checkedChildren="Happy"
+    unCheckedChildren="Sad"
+  />
+  <Switch data-testid="sw-only-on" aria-label="Only the on text" checkedChildren="Happy" />
+  <Switch data-testid="sw-only-off" aria-label="Only the off text" unCheckedChildren="Sad" />
+  <span data-testid="width-after">after</span>
+</section>
 
 <style>
   :global(body) {

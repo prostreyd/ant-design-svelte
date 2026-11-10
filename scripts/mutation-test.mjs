@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Mutation testing for src/lib/Button/Button.svelte.
+// Mutation testing for a component of src/lib (Button by default, or `--target=Switch`).
 //
 // Stryker has no Svelte mutator, so this runner does the same job directly:
 //   1. applies one mutation at a time to the component's script and markup
@@ -11,7 +11,10 @@
 // Mutation score = killed / (killed + survived). Survivors point to behavior
 // that no test pins down.
 //
-// Usage: npm run test:mutation -- [--threshold=90] [--only=<operator-id>]
+// Usage: npm run test:mutation -- [--target=Button|Switch] [--threshold=90] [--only=<operator-id>]
+//
+// Button runs the whole unit test suite for every mutant. Any other target runs only its own
+// test file (tests/<Target>.test.ts), which is much faster and is all the component can affect.
 
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -21,14 +24,21 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { compile, preprocess } from 'svelte/compiler';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const target = resolve(root, 'src/lib/Button/Button.svelte');
-const reportPath = resolve(root, 'coverage/mutation-report.json');
-
 const args = Object.fromEntries(
   process.argv.slice(2).map((arg) => {
     const [key, value = 'true'] = arg.replace(/^--/, '').split('=');
     return [key, value];
   })
+);
+const component = args.target ?? 'Button';
+if (!/^[A-Z][A-Za-z]*$/.test(component)) {
+  console.error(`--target must be a component name such as Switch, got "${component}".`);
+  process.exit(2);
+}
+const target = resolve(root, `src/lib/${component}/${component}.svelte`);
+const reportPath = resolve(
+  root,
+  component === 'Button' ? 'coverage/mutation-report.json' : `coverage/mutation-report-${component.toLowerCase()}.json`
 );
 const threshold = Number(args.threshold ?? 90);
 const onlyOperator = args.only;
@@ -90,7 +100,29 @@ const OPERATORS = [
   { id: 'default-placement', description: 'default iconPlacement → end', pattern: /iconPlacement = 'start'/g, replace: "iconPlacement = 'end'" },
   { id: 'download-true', description: 'download=true renders "true"', pattern: /download === true \? ''/g, replace: "download === true ? 'true'" },
   { id: 'download-false', description: 'download=false renders "false"', pattern: /download === false \? undefined/g, replace: "download === false ? ''" },
-  { id: 'href-null', description: 'href check uses null', pattern: /href !== undefined/g, replace: 'href !== null' }
+  { id: 'href-null', description: 'href check uses null', pattern: /href !== undefined/g, replace: 'href !== null' },
+
+  // Switch
+  { id: 'inactive-guard', description: 'if (isInactive) → if (false)', pattern: /if \(isInactive\)/g, replace: 'if (false)' },
+  { id: 'keep-default-prevented', description: 'ignore preventDefault() of onclick', pattern: /if \(event\.defaultPrevented\) return;/g, replace: '' },
+  { id: 'no-flip', description: 'do not flip the state', pattern: /const next = !isOn;/g, replace: 'const next = isOn;' },
+  { id: 'drop-assign', description: 'do not assign checked', pattern: /checked = next;/g, replace: '' },
+  { id: 'drop-onchange', description: 'do not call onchange', pattern: /onchange\?\.\(next, event\);/g, replace: '' },
+  { id: 'onchange-old-value', description: 'onchange gets the old value', pattern: /onchange\?\.\(next, event\)/g, replace: 'onchange?.(isOn, event)' },
+  { id: 'onchange-before-click', description: 'call onclick after the state flips', pattern: /onclick\?\.\(event\);\n\s+if \(event\.defaultPrevented\) return;/g, replace: 'if (event.defaultPrevented) return;' },
+  { id: 'small-to-medium', description: "size small renders medium", pattern: /=== 'small' \? 'small' : 'medium'/g, replace: "=== 'small' ? 'medium' : 'medium'" },
+  { id: 'boolean-coerce', description: 'drop Boolean(checked)', pattern: /Boolean\(checked\)/g, replace: 'checked' },
+  { id: 'drop-focus-options', description: 'focus() ignores its options', pattern: /element\?\.focus\(options\)/g, replace: 'element?.focus()' },
+  { id: 'drop-blur', description: 'blur() does nothing', pattern: /element\?\.blur\(\);/g, replace: ';' },
+  { id: 'html-type', description: 'type button → submit', pattern: /type="button"/g, replace: 'type="submit"' },
+  { id: 'role', description: 'role switch → button', pattern: /role="switch"/g, replace: 'role="button"' },
+  { id: 'style-order', description: 'styles.root before style', pattern: /styleText\(customStyle, styles\?\.root\)/g, replace: 'styleText(styles?.root, customStyle)' },
+  { id: 'switch-class', description: 'corrupt a Switch class name', pattern: /'ads-switch-[\w-]+'/g, replace: (m) => m[0].replace(/'$/, "-x'") },
+  { id: 'hidden-when-unchecked', description: 'checked content is not hidden while unchecked', pattern: /class:ads-switch-content-hidden=\{!isOn\}/g, replace: 'class:ads-switch-content-hidden={isOn}' },
+  { id: 'hidden-when-checked', description: 'unchecked content is not hidden while checked', pattern: /class:ads-switch-content-hidden=\{isOn\}/g, replace: 'class:ads-switch-content-hidden={!isOn}' },
+  { id: 'item-class', description: 'corrupt the content item class', pattern: /class="ads-switch-content-item"/g, replace: 'class="ads-switch-content-item-x"' },
+  { id: 'busy-when-loading', description: 'loading no longer sets aria-busy', pattern: /loading \? true : ariaBusy/g, replace: 'ariaBusy' },
+  { id: 'inactive-when-loading', description: 'loading no longer sets aria-disabled', pattern: /loading && !disabled \? true : ariaDisabled/g, replace: 'ariaDisabled' }
 ];
 
 function lineOf(index) {
@@ -131,7 +163,14 @@ async function compiles(source) {
 function runUnitTests() {
   const result = spawnSync(
     'npx',
-    ['vitest', 'run', '--coverage.enabled=false', '--bail', '1'],
+    [
+      'vitest',
+      'run',
+      '--coverage.enabled=false',
+      '--bail',
+      '1',
+      ...(component === 'Button' ? [] : [`tests/${component}.test.ts`])
+    ],
     { cwd: root, encoding: 'utf8', timeout: 180_000 }
   );
   if (result.error?.code === 'ETIMEDOUT' || result.signal) return 'timeout';
@@ -185,7 +224,7 @@ const score = valid === 0 ? 0 : Math.round((killed / valid) * 1000) / 10;
 mkdirSync(dirname(reportPath), { recursive: true });
 writeFileSync(
   reportPath,
-  JSON.stringify({ target: 'src/lib/Button/Button.svelte', score, killed, survived, invalid, results }, null, 2)
+  JSON.stringify({ target: `src/lib/${component}/${component}.svelte`, score, killed, survived, invalid, results }, null, 2)
 );
 
 console.log('\nMutation summary');
