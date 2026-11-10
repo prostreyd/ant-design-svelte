@@ -30,6 +30,7 @@
   // The properties shown as chips under a ready component.
   const highlights: Record<string, string[]> = {
     Button: ['type', 'size', 'shape', 'loading', 'danger', 'ghost', 'href'],
+    Checkbox: ['checked', 'indeterminate', 'disabled', 'value', 'options', 'classNames', 'styles'],
     Switch: ['checked', 'onchange', 'size', 'loading', 'disabled', 'classNames', 'styles']
   };
 </script>

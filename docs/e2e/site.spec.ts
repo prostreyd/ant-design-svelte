@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { expect, test, type Page } from '@playwright/test';
 import { demos } from '../src/docs/data/button.ts';
+import { demos as checkboxDemos } from '../src/docs/data/checkbox.ts';
 import { demos as switchDemos } from '../src/docs/data/switch.ts';
 import { allPages, localize, type SitePath } from '../src/docs/pages.ts';
 
@@ -45,7 +46,7 @@ async function accessibilityViolations(page: Page): Promise<Violation[]> {
         run: (context: Document | { exclude: string[][] }, options?: object) => Promise<AxeResult>;
       };
     }).axe;
-    const library = ['.ads-btn', '.ads-switch'];
+    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group'];
     const everything = await axe.run(document, { rules: { 'color-contrast': { enabled: false } } });
     const contrast = await axe.run(
       { exclude: library.map((selector) => [selector]) },
@@ -210,8 +211,10 @@ test.describe('home page', () => {
     await open(page, '');
     const now = page.locator('.road .card').first();
     await expect(now).toContainText('Button');
+    await expect(now).toContainText('Checkbox');
     await expect(now).toContainText('Switch');
     await expect(now.locator('.chips').nth(1)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(2)).toContainText('classNames');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -412,6 +415,189 @@ test.describe('Switch page', () => {
   test('is listed in the components menu', async ({ page }) => {
     await open(page, 'components/');
     await expect(page.getByRole('navigation', { name: 'Components' }).getByRole('link', { name: /^Switch/ })).toBeVisible();
+  });
+});
+
+test.describe('Checkbox page', () => {
+  /** The example section with the given title. */
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    await open(page, 'components/checkbox/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(checkboxDemos.length);
+
+    for (let i = 0; i < checkboxDemos.length; i++) {
+      const demo = examples.nth(i);
+      // The preview contains library checkboxes, not copies drawn with the same classes.
+      await expect(demo.locator('.demo-pre label.ads-checkbox').first()).toBeVisible();
+
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/checkbox/${String(i + 1).padStart(2, '0')}-${checkboxDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('basic demo: a click, a click on the text and the keyboard toggle the checkbox and report the new value', async ({ page }) => {
+    await open(page, 'components/checkbox/');
+    const demo = demoOf(page, 'Basic');
+    const box = demo.getByRole('checkbox', { name: 'Remember me' });
+    const status = demo.locator('.demo-pre').getByRole('status');
+    await expect(box).toBeChecked();
+    await box.click();
+    await expect(box).not.toBeChecked();
+    await expect(status).toHaveText('onchange(false)');
+    await expect(demo).toContainText('The box is unchecked');
+    await demo.locator('.ads-checkbox-label').click();
+    await expect(box).toBeChecked();
+    await page.keyboard.press('Space');
+    await expect(box).not.toBeChecked();
+    await expect(status).toHaveText('onchange(false)');
+  });
+
+  test('disabled demo: the checkboxes cannot be used until they are enabled', async ({ page }) => {
+    await open(page, 'components/checkbox/');
+    const demo = demoOf(page, 'Disabled');
+    const named = (name: string) => demo.getByRole('checkbox', { name, exact: true });
+    await expect(named('Checked')).toBeDisabled();
+    await expect(named('Checked')).toBeChecked();
+    await demo.getByRole('button', { name: 'Toggle disabled' }).click();
+    await expect(named('Checked')).toBeEnabled();
+    await named('Unchecked').click();
+    await expect(named('Unchecked')).toBeChecked();
+    expect(await named('Indeterminate').ariaSnapshot()).toContain('[checked=mixed]');
+  });
+
+  test('control demo: the parent refuses a change until the terms are accepted, and the box goes back', async ({ page }) => {
+    await open(page, 'components/checkbox/');
+    const demo = demoOf(page, 'Control by the parent');
+    const feature = demo.getByRole('checkbox', { name: 'Enable the feature' });
+    const lock = demo.getByRole('checkbox', { name: 'Lock the setting' });
+
+    await feature.click();
+    await lock.click();
+    await expect(feature).not.toBeChecked();
+    await expect(lock).not.toBeChecked();
+    await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText('disabled, refused 1 times');
+
+    await demo.getByRole('checkbox', { name: 'I accept the terms' }).check();
+    await feature.click();
+    await lock.click();
+    await expect(feature).toBeChecked();
+    await expect(lock).toBeChecked();
+    await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText('enabled, refused 1 times');
+  });
+
+  test('check all demo: the first control is indeterminate, checks everything, then clears everything', async ({ page }) => {
+    await open(page, 'components/checkbox/');
+    const demo = demoOf(page, 'Check all');
+    const all = demo.getByRole('checkbox', { name: 'Check all' });
+    const status = demo.locator('.demo-pre').getByRole('status');
+    expect(await all.ariaSnapshot()).toContain('[checked=mixed]');
+    await expect(status).toHaveText('Selected: Apple');
+    await all.click();
+    await expect(status).toHaveText('Selected: Apple, Pear, Orange');
+    await expect(all).toBeChecked();
+    await demo.getByRole('checkbox', { name: 'Pear' }).click();
+    await expect(status).toHaveText('Selected: Apple, Orange');
+    expect(await all.ariaSnapshot()).toContain('[checked=mixed]');
+    await all.click();
+    await all.click();
+    await expect(status).toHaveText('Selected: nothing');
+    await expect(all).not.toBeChecked();
+  });
+
+  test('group demo: a click toggles an option, the group reports the array and a disabled option stays off', async ({ page }) => {
+    await open(page, 'components/checkbox/');
+    const demo = demoOf(page, 'Checkbox group');
+    const fruits = demo.getByRole('group', { name: 'Fruits', exact: true });
+    const status = demo.locator('.demo-pre').getByRole('status');
+    await expect(fruits.getByRole('checkbox', { name: 'Apple' })).toBeChecked();
+    await fruits.getByRole('checkbox', { name: 'Orange' }).click();
+    await expect(status).toHaveText('onchange([Apple, Orange])');
+    await fruits.getByRole('checkbox', { name: 'Pear' }).click();
+    await expect(status).toHaveText('onchange([Apple, Pear, Orange])');
+
+    const extras = demo.getByRole('group', { name: 'Extras' });
+    await expect(extras.getByRole('checkbox', { name: 'Plum' })).toBeDisabled();
+    await extras.getByRole('checkbox', { name: 'Pear' }).click();
+    await expect(status).toHaveText('pear: true');
+    await expect(extras.locator('label[title="Juicy"]')).toHaveCount(1);
+    for (const input of await demo.getByRole('group', { name: 'Disabled fruits' }).getByRole('checkbox').all()) {
+      await expect(input).toBeDisabled();
+    }
+  });
+
+  test('layout demo: checkboxes in a grid share the group state', async ({ page }) => {
+    await open(page, 'components/checkbox/');
+    const demo = demoOf(page, 'Custom layout');
+    const status = demo.locator('.demo-pre').getByRole('status');
+    await expect(status).toHaveText('Selected: mon, wed');
+    await demo.getByRole('checkbox', { name: 'Tuesday' }).click();
+    await expect(status).toHaveText('Selected: mon, tue, wed');
+    await expect(demo.getByRole('checkbox', { name: 'Friday (closed)' })).toBeDisabled();
+  });
+
+  test('methods demo: the buttons move and remove focus', async ({ page }) => {
+    await open(page, 'components/checkbox/');
+    const demo = demoOf(page, 'Focus and blur');
+    const box = demo.getByRole('checkbox', { name: 'Subscribe' });
+    await demo.getByRole('button', { name: 'Focus' }).click();
+    await expect(box).toBeFocused();
+    await box.evaluate((element) => (element as HTMLElement).blur());
+    await demo.getByRole('button', { name: 'Focus' }).click();
+    await demo.getByRole('button', { name: 'Blur' }).click();
+    await expect(box).not.toBeFocused();
+  });
+
+  test('labels demo: a click on the label text or on an external label toggles the checkbox', async ({ page }) => {
+    await open(page, 'components/checkbox/');
+    const demo = demoOf(page, 'Accessible name');
+    const sound = demo.getByRole('checkbox', { name: 'Sound' });
+    await expect(sound).toBeChecked();
+    await demo.locator('label[for="sound"]').click();
+    await expect(sound).not.toBeChecked();
+    await demo.locator('.demo-pre').getByText('Wi-Fi', { exact: true }).click();
+    await expect(demo.getByRole('checkbox', { name: 'Wi-Fi' })).toBeChecked();
+    await expect(demo.getByRole('checkbox', { name: 'Bluetooth' })).toHaveAccessibleDescription('Needed for headphones');
+  });
+
+  test('forms demo: the required box blocks the submit, only the checked ones are sent, reset clears the state', async ({ page }) => {
+    await open(page, 'components/checkbox/');
+    const demo = demoOf(page, 'Forms and native attributes');
+    const result = demo.locator('.demo-pre').getByRole('status');
+    const terms = demo.getByRole('checkbox', { name: 'I accept the terms' });
+
+    await demo.getByRole('button', { name: 'Save' }).click(); // the unchecked required box blocks the submit
+    await expect(result).toHaveText('');
+    await terms.check();
+    await demo.getByRole('button', { name: 'Save' }).click();
+    await expect(result).toHaveText('Submitted: [["terms","accepted"]]');
+    await demo.getByRole('checkbox', { name: 'news' }).check();
+    await demo.getByRole('button', { name: 'Save' }).click();
+    await expect(result).toHaveText('Submitted: [["terms","accepted"],["topic","news"]]');
+
+    await demo.getByRole('button', { name: 'Reset' }).click();
+    await expect(result).toHaveText('');
+    await expect(terms).not.toBeChecked();
+    await expect(demo.getByRole('checkbox', { name: 'news' })).not.toBeChecked();
+    // The state and the view still agree after a reset: one click checks the box again.
+    await terms.click();
+    await expect(terms).toBeChecked();
+  });
+
+  test('the API tables list the properties of both components, the methods table the methods and the tokens table the design tokens', async ({ page }) => {
+    await open(page, 'components/checkbox/');
+    await expect(page.getByRole('table', { name: 'API', exact: true }).getByRole('rowheader', { name: 'indeterminate' })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'CheckboxGroup API' }).getByRole('rowheader', { name: 'options' })).toBeVisible();
+    await expect(page.getByRole('table', { name: /Methods/ }).getByRole('rowheader', { name: 'focus' })).toBeVisible();
+    await expect(page.getByRole('table', { name: /tokens/i }).getByRole('rowheader', { name: '--ads-checkbox-checked-bg', exact: true })).toBeVisible();
+  });
+
+  test('is listed in the components menu', async ({ page }) => {
+    await open(page, 'components/');
+    await expect(page.getByRole('navigation', { name: 'Components' }).getByRole('link', { name: /^Checkbox/ })).toBeVisible();
   });
 });
 
