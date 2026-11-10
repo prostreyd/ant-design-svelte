@@ -20,7 +20,7 @@
   <div class="hdr-in">
     <MobileNav />
     <a class="logo" href={localHref('/')}>
-      <Logo /><span>svelte-ant-design</span><span class="pill">alpha</span>
+      <Logo /><span>svelte-ant-design</span>
     </a>
     <Search />
     <nav class="nav" aria-label={t('hdr.nav')}>

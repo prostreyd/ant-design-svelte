@@ -8,7 +8,7 @@
   import T from '#docs/components/T.svelte';
   import { localHref } from '#docs/href';
   import { useT } from '#docs/i18n/use-t';
-  import { componentsIn } from '#docs/pages';
+  import { componentGroups, componentsIn } from '#docs/pages';
   import { REPO } from '#docs/site';
   import { quickStart } from '#docs/snippets';
 
@@ -24,6 +24,14 @@
   ];
 
   const planned = { next: componentsIn('next'), later: componentsIn('later') };
+
+  // The ready components come from the page registry, so a component that gets a page appears here by itself.
+  const ready = componentGroups.flatMap((group) => group.items).filter((item) => item.phase === 'now' && item.path);
+  // The properties shown as chips under a ready component.
+  const highlights: Record<string, string[]> = {
+    Button: ['type', 'size', 'shape', 'loading', 'danger', 'ghost', 'href'],
+    Switch: ['checked', 'onchange', 'size', 'loading', 'disabled', 'classNames', 'styles']
+  };
 </script>
 
 {#snippet searchIcon()}
@@ -36,7 +44,7 @@
   <section class="hero">
     <div class="hero-in">
       <div>
-        <p class="eyebrow"><b>alpha</b><span>{t('hero.eyebrow')} · {VERSION}</span></p>
+        <p class="eyebrow"><span>{t('hero.eyebrow')} · {VERSION}</span></p>
         <h1 class="display"><T k="hero.t1" /> <em>Svelte 5</em> <T k="hero.t2" /></h1>
         <p class="lead"><T k="hero.lead" /></p>
         <div class="cta">
@@ -118,8 +126,12 @@
       <div class="road">
         <div class="card">
           <h3><span>{t('road.now')}</span> <span class="tag ok">{t('tag.ready')}</span></h3>
-          <p>Button</p>
-          <div class="chips"><span>type</span><span>size</span><span>shape</span><span>loading</span><span>danger</span><span>ghost</span><span>href</span></div>
+          {#each ready as item (item.name)}
+            <div class="ready-item">
+              <p>{item.name}</p>
+              <div class="chips">{#each highlights[item.name] ?? [] as name (name)}<span>{name}</span>{/each}</div>
+            </div>
+          {/each}
         </div>
         <div class="card">
           <h3><span>{t('road.next')}</span> <span class="tag plan">{t('tag.plan')}</span></h3>

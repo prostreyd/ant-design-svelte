@@ -46,7 +46,6 @@ svg.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-widt
 .logo { flex: none; display: flex; align-items: center; gap: 10px; color: var(--ads-color-text); font-weight: 650; font-size: 17px; letter-spacing: -.01em; white-space: nowrap; }
 .logo:hover { color: var(--ads-color-text); }
 .logo svg { width: 34px; height: 34px; }
-.pill { font-size: 11px; line-height: 18px; padding: 0 7px; border: 1px solid color-mix(in srgb, var(--logo-red) 45%, transparent); border-radius: 10px; color: var(--logo-red); font-weight: 500; }
 .search { position: relative; flex: 0 1 300px; min-width: 120px; }
 .search-box { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 8px 0 11px; border: 1px solid var(--ads-color-border); border-radius: 8px; background: var(--s-soft); color: var(--ads-color-text-secondary); }
 .search-box:focus-within { border-color: var(--ads-color-primary); box-shadow: 0 0 0 3px var(--s-glow); }
@@ -95,8 +94,6 @@ kbd { font-size: 11px; line-height: 18px; padding: 0 6px; border: 1px solid var(
 .hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--s-border); background: radial-gradient(50% 80% at 88% 10%, var(--s-glow), transparent 70%), radial-gradient(40% 70% at 0% 100%, var(--s-glow-2), transparent 70%); }
 .hero-in { max-width: 1240px; margin: 0 auto; padding: 72px 24px 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
 .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 3px 12px 3px 4px; border: 1px solid var(--s-border); border-radius: 20px; background: var(--ads-color-bg-container); font-size: 13px; color: var(--ads-color-text-secondary); }
-.eyebrow b { background: var(--logo-red); color: #fff; border-radius: 12px; padding: 0 9px; font-weight: 500; }
-[data-theme='dark'] .eyebrow b { color: #1a0000; }
 .display { font-size: 52px; line-height: 1.12; letter-spacing: -.025em; margin: 20px 0 16px; }
 .display em { font-style: normal; white-space: nowrap; color: var(--logo-blue); position: relative; }
 .display em::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 6px; border-radius: 3px; background: var(--logo-red); opacity: .85; }
@@ -139,10 +136,10 @@ kbd { font-size: 11px; line-height: 18px; padding: 0 6px; border: 1px solid var(
 .panel-b { padding: 24px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; flex: 1; }
 .road { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .road .card h3 { display: flex; align-items: center; gap: 8px; }
+.road .ready-item + .ready-item { margin-top: 16px; }
 .tag { display: inline-block; font-size: 12px; line-height: 20px; padding: 0 8px; border-radius: 10px; border: 1px solid transparent; font-weight: 500; }
 .tag.ok { color: #237804; background: rgba(82, 196, 26, .10); border-color: rgba(82, 196, 26, .35); } [data-theme='dark'] .tag.ok { color: #95de64; }
 .tag.plan { color: var(--ads-color-text-secondary); background: var(--ads-color-bg-text-hover); }
-.tag.alpha { color: var(--logo-red); background: color-mix(in srgb, var(--logo-red) 8%, transparent); border-color: color-mix(in srgb, var(--logo-red) 40%, transparent); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .chips span { font-size: 12px; padding: 0 8px; border-radius: 6px; background: var(--ads-color-bg-text-hover); color: var(--ads-color-text-secondary); }
 .sponsor { text-align: center; }
@@ -256,7 +253,7 @@ table.api { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 
 @media (max-width: 1280px) { .doc-view { grid-template-columns: minmax(0, 1fr); } .toc { display: none; } }
 @media (max-width: 1280px) { .hdr-in { gap: 14px; } .hdr-act .ver-chip { display: none; } .star { padding: 0 10px; } .star span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .search { flex-basis: 220px; } }
-@media (max-width: 1100px) { .nav a { padding: 0 10px; } .search { flex-basis: 170px; } .search kbd { display: none; } .logo .pill { display: none; } }
+@media (max-width: 1100px) { .nav a { padding: 0 10px; } .search { flex-basis: 170px; } .search kbd { display: none; } }
 @media (max-width: 960px) {
   .hero-in, .split, .two { grid-template-columns: 1fr; }
   .art-wrap { aspect-ratio: auto; margin: 0 auto; max-width: 440px; }
@@ -275,7 +272,7 @@ table.api { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 }
 @media (max-width: 640px) {
   .demos { column-count: 1; } .cards, .road { grid-template-columns: 1fr; }
-  .logo .pill, .hdr-act .chip.ver-chip, .search kbd { display: none; }
+  .hdr-act .chip.ver-chip, .search kbd { display: none; }
   /* Dropped from the narrow layout, but still the accessible name of the link. */
   .hdr .logo span:nth-child(2) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .hdr-in { padding: 0 12px; gap: 8px; } .search { min-width: 0; flex: 1 1 0; } .display { font-size: 34px; }

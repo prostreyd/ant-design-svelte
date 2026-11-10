@@ -190,6 +190,18 @@ test.describe('mobile', () => {
   });
 });
 
+test.describe('home page', () => {
+  test('the roadmap lists every ready component, and no alpha label is left', async ({ page }) => {
+    await open(page, '');
+    const now = page.locator('.road .card').first();
+    await expect(now).toContainText('Button');
+    await expect(now).toContainText('Switch');
+    await expect(now.locator('.chips').nth(1)).toContainText('classNames');
+    // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
+    await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
+  });
+});
+
 test.describe('Button page', () => {
   test('every example is the real component and shows its own source', async ({ page }) => {
     await open(page, 'components/button/');

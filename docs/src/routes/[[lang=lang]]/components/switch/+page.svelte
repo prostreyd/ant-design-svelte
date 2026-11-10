@@ -27,7 +27,6 @@
 />
 <div class="title-row">
   <h1>Switch{#if note}<small>{note}</small>{/if}</h1>
-  <span class="tag alpha">alpha</span>
 </div>
 <p class="lede"><T k="sw.lead" /></p>
 <dl class="meta">
