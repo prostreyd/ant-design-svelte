@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-10
+
 ### Added
 
 - `svelte-ant-design/tokens-accessible.css`: an optional file, imported after `tokens.css`, with darker light-theme
