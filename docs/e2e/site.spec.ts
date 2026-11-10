@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { expect, test, type Page } from '@playwright/test';
 import { demos } from '../src/docs/data/button.ts';
+import { demos as switchDemos } from '../src/docs/data/switch.ts';
 import { allPages, localize, type SitePath } from '../src/docs/pages.ts';
 
 const axeSource = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
@@ -247,6 +248,143 @@ test.describe('Button page', () => {
     await expect(api.getByRole('rowheader', { name: 'iconPlacement' })).toBeVisible();
     const tokens = page.getByRole('table', { name: /tokens/i });
     await expect(tokens.getByRole('rowheader', { name: '--ads-control-height', exact: true })).toBeVisible();
+  });
+});
+
+
+test.describe('Switch page', () => {
+  /** The example section with the given title. */
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    await open(page, 'components/switch/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(switchDemos.length);
+
+    for (let i = 0; i < switchDemos.length; i++) {
+      const demo = examples.nth(i);
+      // The preview contains library switches, not copies drawn with the same classes.
+      await expect(demo.locator('.demo-pre button.ads-switch[role="switch"]').first()).toBeVisible();
+
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/switch/${String(i + 1).padStart(2, '0')}-${switchDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('basic demo: a click and the keyboard toggle the switch and report the new value', async ({ page }) => {
+    await open(page, 'components/switch/');
+    const demo = demoOf(page, 'Basic');
+    const toggle = demo.getByRole('switch', { name: 'Notifications' });
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText('onchange(false)');
+    await expect(demo).toContainText('Notifications are off');
+    await page.keyboard.press('Space');
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText('onchange(true)');
+  });
+
+  test('text demo: toggling a switch does not move anything around it', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await open(page, 'components/switch/');
+    const demo = demoOf(page, 'Text and icons');
+    const layout = () =>
+      demo.locator('.demo-pre > *').evaluateAll((elements) =>
+        elements.map((element) => {
+          const { x, y, width, height } = element.getBoundingClientRect();
+          return [x + scrollX, y + scrollY, width, height].map((value) => Math.round(value * 100) / 100);
+        })
+      );
+    const before = await layout();
+    expect(before).toHaveLength(7);
+    for (const name of ['Power', 'Power, off', 'Mood', 'Approved', 'Approved, off', 'Small power']) {
+      const toggle = demo.getByRole('switch', { name, exact: true });
+      const checked = await toggle.getAttribute('aria-checked');
+      await toggle.click();
+      await expect(toggle).not.toHaveAttribute('aria-checked', checked!);
+      expect(await layout(), name).toEqual(before);
+      await toggle.click();
+      expect(await layout(), `${name} back`).toEqual(before);
+    }
+  });
+
+  test('disabled demo: the switches cannot be used until they are enabled', async ({ page }) => {
+    await open(page, 'components/switch/');
+    const demo = demoOf(page, 'Disabled');
+    await expect(demo.getByRole('switch', { name: 'Disabled and on' })).toBeDisabled();
+    await demo.getByRole('button', { name: 'Toggle disabled' }).click();
+    await expect(demo.getByRole('switch', { name: 'Disabled and on' })).toBeEnabled();
+    await demo.getByRole('switch', { name: 'Disabled and off' }).click();
+    await expect(demo.getByRole('switch', { name: 'Disabled and off' })).toHaveAttribute('aria-checked', 'true');
+  });
+
+  test('loading demo: the switch keeps focus while it loads and is announced as busy', async ({ page }) => {
+    await open(page, 'components/switch/');
+    const toggle = demoOf(page, 'Loading').getByRole('switch', { name: 'Auto-save' });
+    await toggle.click();
+    await expect(toggle).toBeFocused();
+    await expect(toggle).toHaveAttribute('aria-busy', 'true');
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await page.keyboard.press('Space'); // ignored while loading
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await expect(toggle).not.toHaveAttribute('aria-busy', 'true', { timeout: 4000 });
+  });
+
+  test('control demo: the parent refuses a change until the terms are accepted', async ({ page }) => {
+    await open(page, 'components/switch/');
+    const demo = demoOf(page, 'Control by the parent');
+    const feature = demo.getByRole('switch', { name: 'Enable the feature' });
+    const lock = demo.getByRole('switch', { name: 'Lock the setting' });
+
+    await feature.click();
+    await lock.click();
+    await expect(feature).toHaveAttribute('aria-checked', 'false');
+    await expect(lock).toHaveAttribute('aria-checked', 'false');
+    await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText('disabled, refused 1 times');
+
+    await demo.getByRole('checkbox', { name: 'I accept the terms' }).check();
+    await feature.click();
+    await lock.click();
+    await expect(feature).toHaveAttribute('aria-checked', 'true');
+    await expect(lock).toHaveAttribute('aria-checked', 'true');
+    await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText('enabled, refused 1 times');
+  });
+
+  test('methods demo: the buttons move and remove focus', async ({ page }) => {
+    await open(page, 'components/switch/');
+    const demo = demoOf(page, 'Focus and blur');
+    const toggle = demo.getByRole('switch', { name: 'Power' });
+    await demo.getByRole('button', { name: 'Focus' }).click();
+    await expect(toggle).toBeFocused();
+    await toggle.evaluate((element) => (element as HTMLElement).blur());
+    await demo.getByRole('button', { name: 'Focus' }).click();
+    await demo.getByRole('button', { name: 'Blur' }).click();
+    await expect(toggle).not.toBeFocused();
+  });
+
+  test('labels demo: a click on the label text toggles its switch', async ({ page }) => {
+    await open(page, 'components/switch/');
+    const demo = demoOf(page, 'Accessible name');
+    const wifi = demo.getByRole('switch', { name: 'Wi-Fi' });
+    await expect(wifi).toHaveAttribute('aria-checked', 'true');
+    await demo.locator('label[for="wifi"]').click();
+    await expect(wifi).toHaveAttribute('aria-checked', 'false');
+    await expect(demo.getByRole('switch', { name: 'Bluetooth' })).toHaveAccessibleDescription('Needed for headphones');
+  });
+
+  test('the API table lists the properties, the methods table the methods and the tokens table the design tokens', async ({ page }) => {
+    await open(page, 'components/switch/');
+    await expect(page.getByRole('table', { name: /API/ }).getByRole('rowheader', { name: 'unCheckedChildren' })).toBeVisible();
+    await expect(page.getByRole('table', { name: /Methods/ }).getByRole('rowheader', { name: 'focus' })).toBeVisible();
+    await expect(page.getByRole('table', { name: /tokens/i }).getByRole('rowheader', { name: '--ads-switch-track-on', exact: true })).toBeVisible();
+  });
+
+  test('is listed in the components menu', async ({ page }) => {
+    await open(page, 'components/');
+    await expect(page.getByRole('navigation', { name: 'Components' }).getByRole('link', { name: /^Switch/ })).toBeVisible();
   });
 });
 

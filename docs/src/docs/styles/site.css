@@ -297,4 +297,4 @@ table.api { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .err p { color: var(--ads-color-text-secondary); margin-bottom: 24px; }
 .mnav .item.soon .pillsoon { flex: none; }
 .demo-pre form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.demo-pre input { height: var(--ads-control-height); padding: 0 11px; border: 1px solid var(--ads-color-border); border-radius: var(--ads-radius-md); background: var(--ads-color-bg-container); color: var(--ads-color-text); font: inherit; }
+.demo-pre input:not([type='checkbox']) { height: var(--ads-control-height); padding: 0 11px; border: 1px solid var(--ads-color-border); border-radius: var(--ads-radius-md); background: var(--ads-color-bg-container); color: var(--ads-color-text); font: inherit; }

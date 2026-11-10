@@ -18,7 +18,7 @@ Ant Design.
 
 ## Status
 
-Early alpha (`0.1.0-alpha.2`). Available components: `Button`. More components are planned.
+Early alpha (`0.1.0-alpha.2`). Available components: `Button`, `Switch`. More components are planned.
 
 ## Installation
 
@@ -49,8 +49,10 @@ Import components by name. The package is ESM and declares `sideEffects: ["**/*.
 bundler that supports tree shaking leaves out the components you do not use. This is checked with
 Vite in `tests/packaging`; other bundlers are not covered.
 
-See the [Button page](https://prostreyd.github.io/ant-design-svelte/components/button/) of the documentation
-site for examples and the API table, or [`src/lib/Button/README.md`](./src/lib/Button/README.md) in the repository.
+See the [Button](https://prostreyd.github.io/ant-design-svelte/components/button/) and
+[Switch](https://prostreyd.github.io/ant-design-svelte/components/switch/) pages of the documentation site for
+examples and the API tables, or [`src/lib/Button/README.md`](./src/lib/Button/README.md) and
+[`src/lib/Switch/README.md`](./src/lib/Switch/README.md) in the repository.
 
 ### Dark theme
 
