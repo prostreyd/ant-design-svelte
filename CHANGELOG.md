@@ -9,6 +9,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- `Switch` component: a native `<button role="switch">` with `bind:checked`, `onchange`, `onclick`,
+  `disabled`, `loading`, `size` (`medium`, `small`, and `default` as an alias of `medium`),
+  `checkedChildren` / `unCheckedChildren` (plain text or a snippet), `classNames` and `styles` for the parts `root`,
+  `content` and `indicator`, and the `focus()` / `blur()` methods. A parent can accept or refuse a change
+  with a function binding, or cancel it with `preventDefault()` in `onclick`. The track and the handle keep
+  3:1 contrast and the text 4.5:1 in both themes, so the off track is darker than in the Ant Design design.
+  Both on/off contents stay mounted and the switch keeps the width of the longer one, so it does not
+  change size and nothing around it moves when it toggles.
+  `--ads-switch-*` design tokens were added to `tokens.css`. The comparison with Ant Design (React, Vue,
+  Angular) and the decisions are in `specs/switch.md`.
+- Switch page on the documentation site (English, Russian and Chinese): nine live examples with their code,
+  the API, methods and design tokens tables.
+- Tests of the Switch: unit and accessibility tests, Playwright tests of the visual states, a contrast matrix
+  in both themes and right-to-left layout, and tests that keep the Switch page honest.
+
+### Changed
+
+- The check of enum-like props (`RangeError` in development, a fallback in production) moved from `Button`
+  to a helper shared with `Switch`. The behavior of `Button` is unchanged.
+
+### Documentation
+
+- The rules for AI assistants now require comparing, for every prop, the value forms that React, Vue and
+  Angular accept with the Svelte type, and treat any narrowing (for example `Snippet` only, where all three
+  accept text too) as a decision for the maintainer.
+- The rules for AI assistants now require checking in a browser, with contents of different widths, that
+  toggling a component does not change its size or move its neighbours.
+
 ## [0.1.0-alpha.2] - 2026-11-10
 
 The library code is unchanged since 0.1.0-alpha.1; this release brings the documentation site and the
