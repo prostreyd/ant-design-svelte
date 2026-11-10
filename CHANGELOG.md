@@ -9,6 +9,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Documentation
+
+- The release rules for AI assistants now require `npm publish --dry-run` in a clean clone of the release
+  commit before the version tag is pushed. The first release by tag stopped because the checks that run
+  before publishing need a file that only `svelte-kit sync` creates; `npm test` now creates it itself.
+
 ## [0.2.0] - 2026-11-10
 
 From this version on, releases are numbered without pre-release suffixes: a new component raises the
