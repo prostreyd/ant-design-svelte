@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Switch } from '$lib';
+  import { Button, Checkbox, CheckboxGroup, Switch } from '$lib';
 
   let clicks = $state(0);
   let busy = $state(false);
@@ -7,6 +7,11 @@
   let switchChanges = $state(0);
 
   const types = ['default', 'primary', 'dashed', 'text', 'link'] as const;
+
+  let boxChanges = $state(0);
+  let layoutDisabled = $state(false);
+  let layoutIndeterminate = $state(false);
+  let groupValue = $state<string[]>(['b']);
 </script>
 
 <main>
@@ -103,6 +108,46 @@
   <Switch data-testid="sw-only-on" aria-label="Only the on text" checkedChildren="Happy" />
   <Switch data-testid="sw-only-off" aria-label="Only the off text" unCheckedChildren="Sad" />
   <span data-testid="width-after">after</span>
+</section>
+
+
+<!-- Checkbox states, used by the Checkbox visual and contrast tests. -->
+<section data-testid="checkboxes">
+  <Checkbox data-testid="cb-off">Off</Checkbox>
+  <Checkbox data-testid="cb-on" checked>On</Checkbox>
+  <Checkbox data-testid="cb-indeterminate" indeterminate>Indeterminate</Checkbox>
+  <Checkbox data-testid="cb-indeterminate-on" indeterminate checked>Indeterminate and on</Checkbox>
+  <Checkbox data-testid="cb-disabled" disabled>Disabled</Checkbox>
+  <Checkbox data-testid="cb-disabled-on" disabled checked>Disabled and on</Checkbox>
+  <Checkbox data-testid="cb-disabled-indeterminate" disabled indeterminate>Disabled, indeterminate</Checkbox>
+  <Checkbox data-testid="cb-bare" aria-label="No label" />
+  <Checkbox data-testid="cb-counted" onchange={() => boxChanges++}>Counted</Checkbox>
+</section>
+<output data-testid="checkbox-changes">{boxChanges}</output>
+
+<!--
+  Labels of different widths and one without a label: toggling checked, indeterminate and disabled
+  must not change a size or move a neighbour.
+-->
+<section data-testid="checkbox-layout">
+  <Checkbox data-testid="lay-short" indeterminate={layoutIndeterminate} disabled={layoutDisabled}>Yes</Checkbox>
+  <Checkbox data-testid="lay-long" indeterminate={layoutIndeterminate} disabled={layoutDisabled}>
+    A considerably longer label than the others
+  </Checkbox>
+  <Checkbox data-testid="lay-bare" aria-label="Bare" indeterminate={layoutIndeterminate} disabled={layoutDisabled} />
+  <span data-testid="lay-after">after</span>
+  <button type="button" data-testid="lay-toggle-indeterminate" onclick={() => (layoutIndeterminate = !layoutIndeterminate)}>indeterminate</button>
+  <button type="button" data-testid="lay-toggle-disabled" onclick={() => (layoutDisabled = !layoutDisabled)}>disabled</button>
+</section>
+
+<section data-testid="checkbox-group">
+  <CheckboxGroup
+    data-testid="group"
+    aria-label="Letters"
+    bind:value={groupValue}
+    options={['a', 'b', { label: 'A much longer option', value: 'c' }]}
+  />
+  <output data-testid="group-value">{groupValue.join(',')}</output>
 </section>
 
 <style>

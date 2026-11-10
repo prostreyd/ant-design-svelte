@@ -4,6 +4,18 @@ export const VERSION = '0.2.1';
 
 export { default as Button } from './Button/Button.svelte';
 export { default as Switch } from './Switch/Switch.svelte';
+export { default as Checkbox } from './Checkbox/Checkbox.svelte';
+export { default as CheckboxGroup } from './Checkbox/CheckboxGroup.svelte';
+export type {
+  CheckboxClassNames,
+  CheckboxGroupClassNames,
+  CheckboxGroupSemanticName,
+  CheckboxGroupStyles,
+  CheckboxOption,
+  CheckboxSemanticName,
+  CheckboxStyles,
+  CheckboxValue
+} from './Checkbox/types.js';
 export type {
   SwitchClassNames,
   SwitchSemanticName,
