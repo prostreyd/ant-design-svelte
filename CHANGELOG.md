@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-10
+
 ### Added
 
 - `Checkbox` and `CheckboxGroup` components. `Checkbox` is a native `<input type="checkbox">` inside a `<label>`

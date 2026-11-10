@@ -18,7 +18,7 @@ Ant Design.
 
 ## Status
 
-Version `0.2.1`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Switch`. More components are planned.
+Version `0.3.0`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Switch`. More components are planned.
 
 ## Installation
 
