@@ -115,7 +115,31 @@ describe('default light tokens', () => {
     '--ads-switch-track-off-hover': 'rgba(0, 0, 0, 0.45)',
     '--ads-switch-handle-bg': '#ffffff',
     '--ads-switch-content-color': '#ffffff',
-    '--ads-switch-loading-opacity': '0.65'
+    '--ads-switch-loading-opacity': '0.65',
+    // Checkbox: colorBgContainer, colorBorder, colorPrimary, colorPrimaryHover, colorWhite, colorBgContainerDisabled and
+    // colorTextDisabled, and the sizes of controlInteractiveSize, borderRadiusSM, lineWidth, lineWidthBold, paddingXS,
+    // marginXS, fontSize and lineHeight.
+    '--ads-checkbox-bg': '#ffffff',
+    '--ads-checkbox-border': '#d9d9d9',
+    '--ads-checkbox-border-hover': '#1677ff',
+    '--ads-checkbox-checked-bg': '#1677ff',
+    '--ads-checkbox-checked-bg-hover': '#4096ff',
+    '--ads-checkbox-check-color': '#ffffff',
+    '--ads-checkbox-indeterminate-color': '#1677ff',
+    '--ads-checkbox-disabled-bg': 'rgba(0, 0, 0, 0.04)',
+    '--ads-checkbox-disabled-border': '#d9d9d9',
+    '--ads-checkbox-disabled-check-color': 'rgba(0, 0, 0, 0.25)',
+    '--ads-checkbox-size': '16px',
+    '--ads-checkbox-radius': '4px',
+    '--ads-checkbox-border-width': '1px',
+    '--ads-checkbox-check-width': '2px',
+    '--ads-checkbox-label-padding': '8px',
+    '--ads-checkbox-group-gap': '8px',
+    '--ads-checkbox-font-size': '14px',
+    '--ads-checkbox-line-height': '1.5714',
+    '--ads-motion-duration-fast': '0.1s',
+    '--ads-motion-duration-slow': '0.3s',
+    '--ads-motion-ease-out-back': 'cubic-bezier(0.12, 0.4, 0.29, 1.46)'
   };
 
   for (const [token, value] of Object.entries(documented)) {
@@ -123,6 +147,11 @@ describe('default light tokens', () => {
       expect(normalize(light.get(token) ?? '')).toBe(normalize(value));
     });
   }
+
+  it('checkbox: the default unchecked border is below 3:1 against the page, which is why the accessible file darkens it', () => {
+    expect(ratio(light, '--ads-checkbox-border', '--ads-color-bg-container')).toBeLessThan(3);
+    expect(ratio(light, '--ads-checkbox-checked-bg-hover', '--ads-color-bg-container')).toBeLessThan(3);
+  });
 
   it('has a pressed color for the switch that equals the hover color (the documentation names none)', () => {
     expect(light.get('--ads-switch-track-on-active')).toBe(light.get('--ads-switch-track-on-hover'));
@@ -135,8 +164,8 @@ describe('accessible tokens (tokens-accessible.css)', () => {
     for (const token of accessible.keys()) expect(light.has(token), token).toBe(true);
   });
 
-  it('changes the -solid, -text, link and switch tokens, and nothing else', () => {
-    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity)$/;
+  it('changes the -solid, -text, link, switch and checkbox tokens, and nothing else', () => {
+    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover)$/;
     for (const token of accessible.keys()) expect(token, token).toMatch(allowed);
   });
 
@@ -179,6 +208,23 @@ describe('accessible tokens (tokens-accessible.css)', () => {
   it('does not dim a loading switch', () => {
     expect(lightAccessible.get('--ads-switch-loading-opacity')).toBe('1');
   });
+
+  it('checkbox: the border and the hover border reach 3:1 against the page', () => {
+    for (const token of ['--ads-checkbox-border', '--ads-checkbox-border-hover']) {
+      expect(ratio(lightAccessible, token, '--ads-color-bg-container'), token).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('checkbox: the checked fill, also on hover, reaches 3:1 against the page and the check mark reaches 3:1 on it', () => {
+    for (const fill of ['--ads-checkbox-checked-bg', '--ads-checkbox-checked-bg-hover']) {
+      expect(ratio(lightAccessible, fill, '--ads-color-bg-container'), `${fill} on the page`).toBeGreaterThanOrEqual(3);
+      expect(ratio(lightAccessible, '--ads-checkbox-check-color', fill), `check mark on ${fill}`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('checkbox: the indeterminate bar reaches 3:1 against the box', () => {
+    expect(ratio(lightAccessible, '--ads-checkbox-indeterminate-color', '--ads-checkbox-bg')).toBeGreaterThanOrEqual(3);
+  });
 });
 
 describe('dark theme (no extra file needed)', () => {
@@ -210,5 +256,22 @@ describe('dark theme (no extra file needed)', () => {
 
   it('does not dim a loading switch', () => {
     expect(darkTheme.get('--ads-switch-loading-opacity')).toBe('1');
+  });
+
+  it('checkbox: the border and the hover border reach 3:1 against the page', () => {
+    for (const token of ['--ads-checkbox-border', '--ads-checkbox-border-hover']) {
+      expect(ratio(darkTheme, token, '--ads-color-bg-container'), token).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('checkbox: the checked fill, also on hover, reaches 3:1 against the page and the check mark reaches 3:1 on it', () => {
+    for (const fill of ['--ads-checkbox-checked-bg', '--ads-checkbox-checked-bg-hover']) {
+      expect(ratio(darkTheme, fill, '--ads-color-bg-container'), `${fill} on the page`).toBeGreaterThanOrEqual(3);
+      expect(ratio(darkTheme, '--ads-checkbox-check-color', fill), `check mark on ${fill}`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('checkbox: the indeterminate bar reaches 3:1 against the box', () => {
+    expect(ratio(darkTheme, '--ads-checkbox-indeterminate-color', '--ads-checkbox-bg')).toBeGreaterThanOrEqual(3);
   });
 });

@@ -84,9 +84,12 @@
 
   /* Motion */
   --ads-motion-duration: 0.2s;
+  --ads-motion-duration-fast: 0.1s;
+  --ads-motion-duration-slow: 0.3s;
   --ads-motion-duration-spinner: 1s;
   --ads-motion-duration-spinner-reduced: 2.5s;
   --ads-motion-ease: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --ads-motion-ease-out-back: cubic-bezier(0.12, 0.4, 0.29, 1.46);
 
   /* Switch */
   --ads-switch-height: 22px;
@@ -123,6 +126,34 @@
   --ads-switch-handle-bg: #ffffff;
   --ads-switch-content-color: #ffffff;
   --ads-switch-loading-opacity: 0.65;
+
+  /* Checkbox: the dimensions of the global tokens the Ant Design documentation lists for it. */
+  --ads-checkbox-size: 16px;
+  --ads-checkbox-radius: 4px;
+  --ads-checkbox-border-width: 1px;
+  --ads-checkbox-check-width: 2px;
+  --ads-checkbox-font-size: 14px;
+  --ads-checkbox-line-height: 1.5714;
+  --ads-checkbox-label-padding: 8px;
+  --ads-checkbox-group-gap: 8px;
+
+  /*
+   * Checkbox colors. In the light theme the values are the ones of the Ant Design token documentation.
+   * The unchecked border is 1.41:1 against a white page (3:1 is needed for a part of a control), and the
+   * hover fill `#4096ff` is 2.99:1 against the page and behind the white check mark: `tokens-accessible.css`
+   * darkens both. The checked fill (`#1677ff`) and the check mark on it are 4.10:1 already.
+   * The dark theme below keeps 3:1 without it.
+   */
+  --ads-checkbox-bg: #ffffff;
+  --ads-checkbox-border: #d9d9d9;
+  --ads-checkbox-border-hover: #1677ff;
+  --ads-checkbox-checked-bg: #1677ff;
+  --ads-checkbox-checked-bg-hover: #4096ff;
+  --ads-checkbox-check-color: #ffffff;
+  --ads-checkbox-indeterminate-color: #1677ff;
+  --ads-checkbox-disabled-bg: rgba(0, 0, 0, 0.04);
+  --ads-checkbox-disabled-border: #d9d9d9;
+  --ads-checkbox-disabled-check-color: rgba(0, 0, 0, 0.25);
 }
 
 :root[data-theme='dark'] {
@@ -179,4 +210,16 @@
   --ads-switch-handle-bg: #ffffff;
   --ads-switch-content-color: #141414;
   --ads-switch-loading-opacity: 1;
+
+  /* The checkbox keeps 3:1 for the border on the page and for the mark on the fill, as the Switch does. */
+  --ads-checkbox-bg: #141414;
+  --ads-checkbox-border: #737373;
+  --ads-checkbox-border-hover: #4096ff;
+  --ads-checkbox-checked-bg: #3a8aff;
+  --ads-checkbox-checked-bg-hover: #3283f5;
+  --ads-checkbox-check-color: #141414;
+  --ads-checkbox-indeterminate-color: #3a8aff;
+  --ads-checkbox-disabled-bg: rgb(255 255 255 / 8%);
+  --ads-checkbox-disabled-border: #424242;
+  --ads-checkbox-disabled-check-color: rgb(255 255 255 / 30%);
 }
