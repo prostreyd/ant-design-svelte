@@ -441,3 +441,48 @@ for (const theme of ['light', 'dark'] as const) {
     });
   });
 }
+
+// The default colors are Ant Design's own. The fixture loads tokens-accessible.css for the contrast tests above,
+// so these tests take it out of the page and look at what a consumer gets with tokens.css alone.
+test.describe('Switch default colors (tokens.css alone)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const removed = await page.evaluate(() => {
+      const style = document.querySelector('style[data-vite-dev-id$="tokens-accessible.css"]');
+      style?.remove();
+      return Boolean(style);
+    });
+    expect(removed, 'the accessible stylesheet was not found in the page').toBe(true);
+  });
+
+  test('on: #1677ff, #4096ff on hover', async ({ page }) => {
+    const target = page.getByTestId('sw-on');
+    expect(await computed(target, 'background-color')).toBe('rgb(22, 119, 255)');
+    await target.hover();
+    await expect.poll(() => computed(target, 'background-color')).toBe('rgb(64, 150, 255)');
+  });
+
+  test('off: rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.45) on hover and pressed', async ({ page }) => {
+    const target = page.getByTestId('sw-off');
+    expect(await computed(target, 'background-color')).toBe('rgba(0, 0, 0, 0.25)');
+    await target.hover();
+    await expect.poll(() => computed(target, 'background-color')).toBe('rgba(0, 0, 0, 0.45)');
+    await page.mouse.down();
+    await expect.poll(() => computed(target, 'background-color')).toBe('rgba(0, 0, 0, 0.45)');
+    await page.mouse.up();
+  });
+
+  test('loading: dimmed to 0.65 and the colors do not react to hover', async ({ page }) => {
+    const target = page.getByTestId('sw-loading');
+    expect(await computed(target, 'opacity')).toBe('0.65');
+    const rest = await computed(target, 'background-color');
+    await target.hover();
+    expect(await computed(target, 'background-color')).toBe(rest);
+  });
+
+  test('disabled: keeps its own opacity, not the loading one', async ({ page }) => {
+    const opacity = await resolveToken(page, 'opacity', '--ads-switch-disabled-opacity');
+    expect(await computed(page.getByTestId('sw-disabled'), 'opacity')).toBe(opacity);
+  });
+});

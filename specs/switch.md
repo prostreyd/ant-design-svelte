@@ -84,17 +84,30 @@ development and tests, and falls back to `medium` in a production build.
   `aria-hidden`, because as the name it would only repeat the state ("On"/"Off"). Provide the name
   with `aria-label`, `aria-labelledby` or `<label for={id}>` (the `id` is forwarded).
 - `:focus-visible` outline from the design tokens, at least 3:1 against the page background.
-- Non-text contrast (WCAG 1.4.11): the track in **both** states against the page background, and
-  the handle against the track, reach 3:1 in the light and dark themes, in the rest, hover and
-  pressed states. The on/off text is visible text, so it reaches 4.5:1 against the track
-  (WCAG 1.4.3) even though it is `aria-hidden`. Consequently the unchecked track is darker than in
-  Ant Design's own visual design, the same trade as the `-solid` tokens of Button, and in the dark
-  theme hover and pressed are slightly darker, not lighter: a lighter track would lose contrast
-  against the white handle. A loading switch keeps full opacity (Ant Design dims it with
-  `opacityLoading`) so the guarantee holds. Disabled switches are exempt, as in WCAG.
+- Non-text contrast (WCAG 1.4.11): with `tokens-accessible.css` in the light theme, and without it in
+  the dark theme, the track in **both** states against the page background, and the handle against
+  the track, reach 3:1 in the rest, hover and pressed states. The on/off text is visible text, so it
+  reaches 4.5:1 against the track (WCAG 1.4.3) even though it is `aria-hidden`. For that, the accessible
+  light set has a darker unchecked track and no dimming while loading, and in the dark theme hover and
+  pressed are slightly darker, not lighter: a lighter track would lose contrast against the white
+  handle. The default light set is Ant Design's own and does not reach these ratios (see "Colors").
+  Disabled switches are exempt, as in WCAG.
 - `prefers-reduced-motion: reduce` disables the handle and track transitions and slows the spinner
   (`--ads-motion-duration-spinner-reduced`).
 - Axe checks cover named switches in every state; an unnamed switch is reported (negative check).
+
+## Colors (decision of 2026-11-10)
+
+The **default** Switch tokens use the Ant Design values: track on `#1677ff` (hover `#4096ff`), track off
+`rgba(0,0,0,0.25)` (hover `rgba(0,0,0,0.45)`), white handle, white text, and a loading switch dimmed to
+the documented `opacityLoading` of `0.65`. The documentation names no separate pressed color, so
+pressed uses the hover color. These values do **not** reach the contrast the accessible set
+guarantees: the off track is 1.84:1 against a white page (3:1 is needed for a part of a control), the
+on track 4.10:1 against the white text inside it (4.5:1 is needed). The optional file
+`tokens-accessible.css` restores the previous values (`#737373` off, `#1668dc` on, no dimming while
+loading), which keep 3:1 for the tracks and the handle and 4.5:1 for the text, in every state. The dark
+theme is unchanged and keeps these ratios without the file. The disabled opacity (`0.4`) is our own;
+the documentation does not give it.
 
 ## Scope v1.0
 
@@ -141,8 +154,9 @@ development and tests, and falls back to `medium` in a production build.
 2. **`styles` keys are kebab-case with no automatic `px`**, as in a `style` attribute. This is
    the shared contract; Button follows it when its reserved `styles` is implemented. The
    alternative was React's camelCase with automatic units.
-3. **The unchecked track is darker than in Ant Design's visual design** so the 3:1 non-text
-   contrast holds (see A11y). Only that state differs.
+3. **The unchecked track is darker than in Ant Design's visual design in the accessible set only**
+   (`tokens-accessible.css`), so the 3:1 non-text contrast holds (see A11y and "Colors"). Decided
+   first for all light colors, then on 2026-11-10 narrowed: the default set is Ant Design's.
 4. Earlier choices: the Vue API was read from the docs markdown; `checked` is the only state prop
    (`$bindable`); `size` is `medium`/`small` plus the `default` alias; `classNames` and `styles`
    are in v1.0.
@@ -240,7 +254,7 @@ Each item is at least one test; the test name is the item.
 - Reactivity: changing `size`, `disabled`, `loading` and the snippets re-renders correctly.
 - Axe: a switch named with `aria-label`, `aria-labelledby` and `<label for>`; checked, unchecked,
   disabled, loading, small; a negative check that an unnamed switch is reported.
-- Visual states (`:hover`, `:active`, `:focus-visible`, disabled, loading, small, checked/unchecked,
+- Visual states (the contrast matrix runs with `tokens-accessible.css`; `:hover`, `:active`, `:focus-visible`, disabled, loading, small, checked/unchecked,
   `prefers-reduced-motion`) in Playwright (`e2e/switch.spec.ts`), comparing computed styles with the
   design tokens; a contrast matrix (state x light/dark) checks track and handle contrast >= 3:1 and
   the focus ring >= 3:1.

@@ -1,0 +1,42 @@
+/*
+ * Accessible light-theme colors (optional).
+ *
+ * tokens.css uses the values of the Ant Design token documentation, which do not reach WCAG AA for
+ * text: white on the primary fill is 4.10:1 and on the danger fill 3.27:1 (4.5:1 is needed), and the
+ * off track of a Switch is 1.84:1 against a white page (3:1 is needed). Import this file AFTER tokens.css
+ * to get darker values for the `-solid`, `-text` and link tokens and for the Switch:
+ *
+ *   import 'svelte-ant-design/tokens.css';
+ *   import 'svelte-ant-design/tokens-accessible.css';
+ *
+ * Every text pair is at least 4.5:1 and every track and handle at least 3:1, in every state. The dark
+ * theme needs no override and is not touched: the selector below does not apply when
+ * `data-theme="dark"` is set. The selector is more specific than the `:root` of tokens.css, so the
+ * order of the two imports does not matter.
+ */
+
+:root:not([data-theme='dark']) {
+  --ads-color-primary-solid: #1668dc;
+  --ads-color-primary-solid-hover: #0958d9;
+  --ads-color-primary-solid-active: #003eb3;
+  --ads-color-primary-text: #1668dc;
+  --ads-color-primary-text-hover: #0958d9;
+  --ads-color-primary-text-active: #003eb3;
+  --ads-color-danger-solid: #d9363e;
+  --ads-color-danger-solid-hover: #cf1322;
+  --ads-color-danger-solid-active: #a8071a;
+  --ads-color-danger-text: #cf1322;
+  --ads-color-danger-text-hover: #a8071a;
+  --ads-color-danger-text-active: #820014;
+  --ads-color-link: #1668dc;
+  --ads-color-link-hover: #0958d9;
+  --ads-color-link-active: #003eb3;
+
+  --ads-switch-track-off: #737373;
+  --ads-switch-track-off-hover: #666666;
+  --ads-switch-track-off-active: #595959;
+  --ads-switch-track-on: #1668dc;
+  --ads-switch-track-on-hover: #0958d9;
+  --ads-switch-track-on-active: #003eb3;
+  --ads-switch-loading-opacity: 1;
+}

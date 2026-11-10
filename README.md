@@ -54,6 +54,21 @@ See the [Button](https://prostreyd.github.io/ant-design-svelte/components/button
 examples and the API tables, or [`src/lib/Button/README.md`](./src/lib/Button/README.md) and
 [`src/lib/Switch/README.md`](./src/lib/Switch/README.md) in the repository.
 
+### Colors and contrast
+
+In the light theme the colors are the values of the Ant Design token documentation, so the components look
+like Ant Design. Those values do not reach WCAG AA for text: white on the primary fill is 4.10:1 and on the
+danger fill 3.27:1 (4.5:1 is needed), and the off track of a switch is 1.84:1 against a white page (3:1 is
+needed). For a contrast guarantee import one more file after the tokens:
+
+```ts
+import 'svelte-ant-design/tokens.css';
+import 'svelte-ant-design/tokens-accessible.css';
+```
+
+It darkens the fills, the link and text colors and the switch tracks; every text pair is then at least 4.5:1.
+The dark theme needs no extra file. The contrast tests run with the accessible file.
+
 ### Dark theme
 
 `tokens.css` does not touch the rest of your page: it sets no `color-scheme` for the light

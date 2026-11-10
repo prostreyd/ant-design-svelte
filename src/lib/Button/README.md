@@ -82,6 +82,22 @@ the delay expires cancels the pending timer.
 - States/modifiers: `disabled`, `loading`, `danger`, `block`, `ghost`.
 - Loading supports immediate and delayed presentation.
 
+## Colors
+
+In the light theme the default tokens are the values of the Ant Design token documentation, so the button
+looks like Ant Design: primary `#1677ff` (hover `#4096ff`, pressed `#0958d9`), danger `#ff4d4f`, links
+`#1677ff` (hover `#69b1ff`). A text button keeps its text color on hover and gets the background
+`rgba(0, 0, 0, 0.04)`. These colors do **not** reach WCAG AA for text: white on `#1677ff` is 4.10:1 and on the
+danger fill 3.27:1 (4.5:1 is needed). For a contrast guarantee import the optional file after the tokens:
+
+```ts
+import 'svelte-ant-design/tokens.css';
+import 'svelte-ant-design/tokens-accessible.css';
+```
+
+It darkens the `-solid`, `-text` and link tokens (white on the primary fill becomes 5.19:1). The dark theme
+needs no extra file.
+
 ## Accessibility
 
 - Uses native `<button>` and `<a>` elements and forwards their supported attributes.
@@ -90,7 +106,7 @@ the delay expires cancels the pending timer.
 - Disabled/loading anchors are rendered without `href`, with `role="link"`, `aria-disabled="true"`, and `tabindex="-1"`, so they cannot be opened by click, middle click, or the context menu.
 - Both element types expose `aria-busy="true"` while loading.
 - The spinner and icon snippet are hidden from assistive technology. An icon-only button must receive an accessible name, for example `aria-label="Close"`.
-- A visible `:focus-visible` outline is provided using design tokens. The outline has at least 3:1 contrast against the page, and text in every type, `danger`, and `ghost` combination keeps at least 4.5:1 in the light and dark themes, including hover, focus, and pressed states.
+- A visible `:focus-visible` outline is provided using design tokens. The outline has at least 3:1 contrast against the page. Text in every type, `danger`, and `ghost` combination keeps at least 4.5:1 in the dark theme, and in the light theme when `tokens-accessible.css` is imported (see Colors), including hover, focus, and pressed states.
 - Under `prefers-reduced-motion: reduce`, color transitions are disabled and the spinner turns more slowly.
 
 ## Scope decisions and limitations

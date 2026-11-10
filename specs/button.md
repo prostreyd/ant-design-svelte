@@ -73,13 +73,40 @@ expires.
 - `:focus-visible` has a visible outline using design tokens, at least 3:1 against the
   page background.
 - Text contrast is at least 4.5:1 for every type, `danger`, and `ghost` combination in
-  the rest, hover, focus-visible, and pressed states, in both themes. Solid fills use
-  the `-solid` tokens and text on the page uses the `-text` tokens. Disabled controls
-  are exempt, as in WCAG 1.4.3.
+  the rest, hover, focus-visible, and pressed states in the dark theme, and in the light theme
+  when `tokens-accessible.css` is imported. The default light tokens are Ant Design's own values
+  and do not reach 4.5:1 for solid fills, danger and link states (see "Colors"). Solid fills use the
+  `-solid` tokens and text on the page uses the `-text` and link tokens. Disabled controls are
+  exempt, as in WCAG 1.4.3.
 - `prefers-reduced-motion: reduce` disables color transitions and slows the spinner
   (`--ads-motion-duration-spinner-reduced`).
 - Axe checks cover named button/link examples. Keyboard activation, disabled
   behavior, focus, and ARIA states have behavioral tests.
+
+## Colors (decision of 2026-11-10)
+
+The **default** token set (`tokens.css`, light theme) uses the values of the Ant Design token
+documentation, checked on 2026-11-10: primary `#1677ff`, hover `#4096ff`, active `#0958d9`; link
+`#1677ff`, hover `#69b1ff`, active `#0958d9`; error `#ff4d4f`, hover `#ff7875`, active `#d9363e`;
+text `rgba(0,0,0,0.88)`, border `#d9d9d9`, white text on solid fills. Button states follow the
+documented component tokens: default and dashed buttons take `#4096ff` on hover and `#0958d9` when
+pressed (text and border); a text button keeps its text color on hover and gets the background
+`rgba(0,0,0,0.04)` (pressed: `rgba(0,0,0,0.15)`, the `colorBgTextActive` value); a link button uses
+the link colors.
+
+These values **do not reach WCAG AA** for text: white on `#1677ff` is 4.10:1 (normal text needs
+4.5:1), on the hover fill `#4096ff` 2.99:1, on the danger fill `#ff4d4f` 3.27:1; link text on hover
+is 2.25:1 and danger text 3.27:1. The optional file **`tokens-accessible.css`**, imported after
+`tokens.css`, restores darker values for the `-solid`, `-text` and link tokens (the values this
+component had before), which keep every text pair at 4.5:1 or more. Importing it is the way to get the
+contrast guarantee; without it the library looks exactly like Ant Design and has its contrast.
+
+- The contrast tests (browser matrix, unit checks of the token pairs) run with the accessible file.
+  `tests/tokens.test.ts` checks that the default values equal the documented ones.
+- The dark theme is unchanged. The documentation has no explicit dark values for the current version,
+  so the dark tokens remain our own and keep AA without the extra file.
+- Not verifiable from the documentation, kept as before: the border color of a default or dashed
+  `danger` button, the ghost palette, the focus ring color, the disabled colors.
 
 ## Scope v1.0
 
@@ -179,8 +206,8 @@ of the Svelte API. Native button behavior is used where the semantics match.
 - Visual states (`:hover`, `:active`, `:focus-visible`, disabled, loading spinner, sizes,
   block, circle/round) are covered by Playwright e2e tests in `e2e/button.spec.ts`,
   which compare computed styles against the design tokens. Run with `npm run test:e2e`.
-- A contrast matrix (type x `danger` x `ghost` x rest/hover/focus/pressed x light/dark) checks
-  text contrast >= 4.5:1 and focus-ring contrast >= 3:1 in the browser; separate tests cover the
+- A contrast matrix (type x `danger` x `ghost` x rest/hover/focus/pressed x light/dark, the light
+  theme with `tokens-accessible.css`) checks text contrast >= 4.5:1 and focus-ring contrast >= 3:1 in the browser; separate tests cover the
   `danger` hover palette, `ghost` states, focus retention when loading starts, a disabled anchor
   not opening on middle click, and `prefers-reduced-motion`.
 

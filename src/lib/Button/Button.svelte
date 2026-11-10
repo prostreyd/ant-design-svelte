@@ -314,17 +314,22 @@
     border-style: dashed;
   }
 
+  /* A text button keeps its text color on hover and pressed and only gets a background. */
   .ads-btn-text {
+    --_fg-hover: var(--ads-color-text);
+    --_fg-active: var(--ads-color-text);
     --_bg: transparent;
-    --_bg-hover: var(--ads-color-bg-text-hover);
-    --_bg-active: var(--ads-color-bg-text-hover);
+    --_bg-hover: var(--ads-button-text-hover-bg);
+    --_bg-active: var(--ads-button-text-active-bg);
     --_border: transparent;
     --_border-hover: transparent;
     --_border-active: transparent;
   }
 
   .ads-btn-link {
-    --_fg: var(--ads-color-primary-text);
+    --_fg: var(--ads-color-link);
+    --_fg-hover: var(--ads-color-link-hover);
+    --_fg-active: var(--ads-color-link-active);
     --_bg: transparent;
     --_border: transparent;
     --_border-hover: transparent;
@@ -336,6 +341,13 @@
   .ads-btn-danger.ads-btn-text,
   .ads-btn-danger.ads-btn-link {
     --_fg: var(--ads-color-danger-text);
+  }
+
+  /* More specific than the text and link rules above, so a danger one keeps its danger states. */
+  .ads-btn-danger.ads-btn-text,
+  .ads-btn-danger.ads-btn-link {
+    --_fg-hover: var(--ads-color-danger-text-hover);
+    --_fg-active: var(--ads-color-danger-text-active);
   }
 
   .ads-btn-danger.ads-btn-primary {

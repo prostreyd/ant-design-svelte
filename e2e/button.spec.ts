@@ -70,21 +70,39 @@ test.describe('Button visual states', () => {
 
   test('text: transparent at rest and tinted on hover', async ({ page }) => {
     const button = page.getByTestId('text');
-    const hover = await resolveToken(page, 'background-color', '--ads-color-bg-text-hover');
+    const hover = await resolveToken(page, 'background-color', '--ads-button-text-hover-bg');
 
     expect(TRANSPARENT).toContain(await computed(button, 'background-color'));
     await button.hover();
     await expect.poll(() => computed(button, 'background-color')).toBe(hover);
   });
 
-  test('link: text color changes to the primary hover color on hover', async ({ page }) => {
-    const button = page.getByTestId('link');
-    const primary = await resolveToken(page, 'color', '--ads-color-primary-text');
-    const primaryHover = await resolveToken(page, 'color', '--ads-color-primary-text-hover');
+  test('text: keeps its text color on hover and pressed, and is tinted while pressed', async ({ page }) => {
+    const button = page.getByTestId('text');
+    const text = await resolveToken(page, 'color', '--ads-color-text');
+    const active = await resolveToken(page, 'background-color', '--ads-button-text-active-bg');
 
-    expect(await computed(button, 'color')).toBe(primary);
+    expect(await computed(button, 'color')).toBe(text);
     await button.hover();
-    await expect.poll(() => computed(button, 'color')).toBe(primaryHover);
+    await expect.poll(() => computed(button, 'color')).toBe(text);
+    await page.mouse.down();
+    await expect.poll(() => computed(button, 'background-color')).toBe(active);
+    expect(await computed(button, 'color')).toBe(text);
+    await page.mouse.up();
+  });
+
+  test('link: text color changes to the link hover color on hover and to the link active color when pressed', async ({ page }) => {
+    const button = page.getByTestId('link');
+    const link = await resolveToken(page, 'color', '--ads-color-link');
+    const linkHover = await resolveToken(page, 'color', '--ads-color-link-hover');
+    const linkActive = await resolveToken(page, 'color', '--ads-color-link-active');
+
+    expect(await computed(button, 'color')).toBe(link);
+    await button.hover();
+    await expect.poll(() => computed(button, 'color')).toBe(linkHover);
+    await page.mouse.down();
+    await expect.poll(() => computed(button, 'color')).toBe(linkActive);
+    await page.mouse.up();
   });
 
   test('danger primary: danger, hover, and active backgrounds', async ({ page }) => {
@@ -496,5 +514,71 @@ test.describe('Button focus, links, and motion', () => {
     expect(await computed(button, 'transition-property')).toBe('none');
     expect(await computed(spinner, 'animation-duration')).toBe(slow);
     expect(slow).not.toBe(normal);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The default colors are Ant Design's own. The fixture loads tokens-accessible.css for the contrast tests above,
+// so these tests take it out of the page and look at what a consumer gets with tokens.css alone.
+// ---------------------------------------------------------------------------
+
+test.describe('Button default colors (tokens.css alone)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const removed = await page.evaluate(() => {
+      const style = document.querySelector('style[data-vite-dev-id$="tokens-accessible.css"]');
+      style?.remove();
+      return Boolean(style);
+    });
+    expect(removed, 'the accessible stylesheet was not found in the page').toBe(true);
+  });
+
+  test('primary: #1677ff, #4096ff on hover and #0958d9 when pressed', async ({ page }) => {
+    const button = page.getByTestId('primary');
+    expect(await computed(button, 'background-color')).toBe('rgb(22, 119, 255)');
+    await button.hover();
+    await expect.poll(() => computed(button, 'background-color')).toBe('rgb(64, 150, 255)');
+    await page.mouse.down();
+    await expect.poll(() => computed(button, 'background-color')).toBe('rgb(9, 88, 217)');
+    await page.mouse.up();
+  });
+
+  test('danger primary: #ff4d4f, #ff7875 on hover and #d9363e when pressed', async ({ page }) => {
+    const button = page.getByTestId('danger-primary');
+    expect(await computed(button, 'background-color')).toBe('rgb(255, 77, 79)');
+    await button.hover();
+    await expect.poll(() => computed(button, 'background-color')).toBe('rgb(255, 120, 117)');
+    await page.mouse.down();
+    await expect.poll(() => computed(button, 'background-color')).toBe('rgb(217, 54, 62)');
+    await page.mouse.up();
+  });
+
+  test('link: #1677ff, #69b1ff on hover and #0958d9 when pressed', async ({ page }) => {
+    const button = page.getByTestId('link');
+    expect(await computed(button, 'color')).toBe('rgb(22, 119, 255)');
+    await button.hover();
+    await expect.poll(() => computed(button, 'color')).toBe('rgb(105, 177, 255)');
+    await page.mouse.down();
+    await expect.poll(() => computed(button, 'color')).toBe('rgb(9, 88, 217)');
+    await page.mouse.up();
+  });
+
+  test('default: the border and the text turn #4096ff on hover and #0958d9 when pressed', async ({ page }) => {
+    const button = page.getByTestId('default');
+    await button.hover();
+    await expect.poll(() => computed(button, 'color')).toBe('rgb(64, 150, 255)');
+    expect(await computed(button, 'border-top-color')).toBe('rgb(64, 150, 255)');
+    await page.mouse.down();
+    await expect.poll(() => computed(button, 'color')).toBe('rgb(9, 88, 217)');
+    await page.mouse.up();
+  });
+
+  test('text: the background is rgba(0, 0, 0, 0.04) on hover and the text keeps its color', async ({ page }) => {
+    const button = page.getByTestId('text');
+    const color = await computed(button, 'color');
+    await button.hover();
+    await expect.poll(() => computed(button, 'background-color')).toBe('rgba(0, 0, 0, 0.04)');
+    expect(await computed(button, 'color')).toBe(color);
   });
 });

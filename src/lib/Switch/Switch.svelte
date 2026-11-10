@@ -288,6 +288,7 @@
 
   .ads-switch-loading {
     cursor: not-allowed;
+    opacity: var(--ads-switch-loading-opacity);
   }
 
   .ads-switch-disabled {

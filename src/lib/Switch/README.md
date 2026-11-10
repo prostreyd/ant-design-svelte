@@ -84,13 +84,30 @@ The parts: `root` is the `<button>`, `content` holds the on/off text, `indicator
 
 `focus(options?: FocusOptions)` and `blur()`, available through `bind:this`.
 
+## Colors
+
+In the light theme the default tokens are the values of the Ant Design token documentation: the on track
+`#1677ff` (hover `#4096ff`), the off track `rgba(0, 0, 0, 0.25)` (hover `rgba(0, 0, 0, 0.45)`), a white handle and
+a loading switch dimmed to `0.65`. The documentation names no separate pressed color, so pressed equals hover.
+These colors do **not** keep the contrast of the accessible set: the off track is 1.84:1 against a white page
+(3:1 is needed) and the white text on the on track 4.10:1 (4.5:1 is needed). For a contrast guarantee import the
+optional file after the tokens:
+
+```ts
+import 'svelte-ant-design/tokens.css';
+import 'svelte-ant-design/tokens-accessible.css';
+```
+
+It restores a darker off track (`#737373`), a darker on track (`#1668dc`) and no dimming while loading. The dark
+theme needs no extra file.
+
 ## Accessibility
 
 - A native `<button>` with `role="switch"` and `aria-checked`. Enter and Space toggle it. Arrow keys are not part of the pattern and do nothing.
 - **A switch needs an accessible name:** `aria-label`, `aria-labelledby` or a `<label for>` that points at its `id`. The on/off text is `aria-hidden`, because as a name it would only repeat the state.
 - A loading switch is not natively disabled: it keeps keyboard focus when loading starts, exposes `aria-busy="true"` and `aria-disabled="true"`, and ignores clicks, Enter and Space. A disabled switch is natively disabled.
 - A visible `:focus-visible` outline from the design tokens, at least 3:1 against the page.
-- The track and the handle keep at least 3:1 contrast, and the on/off text 4.5:1, in the light and dark themes and in the rest, hover, focus and pressed states. For that reason the off track is darker than in the Ant Design design, and a loading switch is not dimmed.
+- The track and the handle keep at least 3:1 contrast, and the on/off text 4.5:1, in every state: in the dark theme, and in the light theme when `tokens-accessible.css` is imported (see Colors). For that the accessible light set has a darker off track and does not dim a loading switch.
 - Under `prefers-reduced-motion: reduce`, transitions are disabled and the spinner turns more slowly.
 - Positions use logical properties, so the switch mirrors in right-to-left layouts.
 

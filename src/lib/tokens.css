@@ -17,21 +17,27 @@
   --ads-color-danger-active: #d9363e;
 
   /*
-   * Accessible variants. `-solid` is a fill behind `--ads-color-text-inverse`;
-   * `-text` is a foreground on the page background. All pairs reach WCAG AA (4.5:1).
+   * `-solid` is a fill behind `--ads-color-text-inverse`; `-text` and the link tokens are a foreground
+   * on the page background. In the light theme the values are the ones of the Ant Design token
+   * documentation, so the library looks like Ant Design. They do not reach WCAG AA (4.5:1) for
+   * text: import `tokens-accessible.css` after this file for values that do. The dark theme below
+   * keeps AA without it.
    */
-  --ads-color-primary-solid: #1668dc;
-  --ads-color-primary-solid-hover: #0958d9;
-  --ads-color-primary-solid-active: #003eb3;
-  --ads-color-primary-text: #1668dc;
-  --ads-color-primary-text-hover: #0958d9;
-  --ads-color-primary-text-active: #003eb3;
-  --ads-color-danger-solid: #d9363e;
-  --ads-color-danger-solid-hover: #cf1322;
-  --ads-color-danger-solid-active: #a8071a;
-  --ads-color-danger-text: #cf1322;
-  --ads-color-danger-text-hover: #a8071a;
-  --ads-color-danger-text-active: #820014;
+  --ads-color-primary-solid: #1677ff;
+  --ads-color-primary-solid-hover: #4096ff;
+  --ads-color-primary-solid-active: #0958d9;
+  --ads-color-primary-text: #1677ff;
+  --ads-color-primary-text-hover: #4096ff;
+  --ads-color-primary-text-active: #0958d9;
+  --ads-color-danger-solid: #ff4d4f;
+  --ads-color-danger-solid-hover: #ff7875;
+  --ads-color-danger-solid-active: #d9363e;
+  --ads-color-danger-text: #ff4d4f;
+  --ads-color-danger-text-hover: #ff7875;
+  --ads-color-danger-text-active: #d9363e;
+  --ads-color-link: #1677ff;
+  --ads-color-link-hover: #69b1ff;
+  --ads-color-link-active: #0958d9;
 
   --ads-color-text: rgba(0, 0, 0, 0.88);
   --ads-color-text-secondary: rgba(0, 0, 0, 0.65);
@@ -46,6 +52,8 @@
   --ads-color-bg-container: #ffffff;
   --ads-color-bg-container-disabled: rgba(0, 0, 0, 0.04);
   --ads-color-bg-text-hover: rgba(0, 0, 0, 0.06);
+  --ads-button-text-hover-bg: rgba(0, 0, 0, 0.04);
+  --ads-button-text-active-bg: rgba(0, 0, 0, 0.15);
 
   --ads-border-width: 1px;
   --ads-focus-outline-width: 2px;
@@ -99,18 +107,22 @@
   --ads-switch-disabled-opacity: 0.4;
 
   /*
-   * Switch colors. Both track states keep 3:1 against the page background (WCAG 1.4.11),
-   * and the handle and the on/off text keep their contrast against the track (3:1 and 4.5:1)
-   * in every state, so the unchecked track is darker than the default Ant Design gray.
+   * Switch colors. In the light theme the values are the ones of the Ant Design token documentation
+   * (the documentation names no separate pressed color, so pressed equals hover, and a loading switch
+   * is dimmed to `opacityLoading`). They do not keep the contrast of the accessible set: the off track
+   * is 1.84:1 against a white page and the white text on the on track 4.10:1. `tokens-accessible.css`
+   * restores a darker off track, a darker on track and no dimming, which keep 3:1 for the tracks and the
+   * handle and 4.5:1 for the text. The dark theme below keeps these ratios without it.
    */
-  --ads-switch-track-off: #737373;
-  --ads-switch-track-off-hover: #666666;
-  --ads-switch-track-off-active: #595959;
-  --ads-switch-track-on: #1668dc;
-  --ads-switch-track-on-hover: #0958d9;
-  --ads-switch-track-on-active: #003eb3;
+  --ads-switch-track-off: rgba(0, 0, 0, 0.25);
+  --ads-switch-track-off-hover: rgba(0, 0, 0, 0.45);
+  --ads-switch-track-off-active: rgba(0, 0, 0, 0.45);
+  --ads-switch-track-on: #1677ff;
+  --ads-switch-track-on-hover: #4096ff;
+  --ads-switch-track-on-active: #4096ff;
   --ads-switch-handle-bg: #ffffff;
   --ads-switch-content-color: #ffffff;
+  --ads-switch-loading-opacity: 0.65;
 }
 
 :root[data-theme='dark'] {
@@ -137,6 +149,9 @@
   --ads-color-danger-text: #ff7875;
   --ads-color-danger-text-hover: #ffa39e;
   --ads-color-danger-text-active: #ff7875;
+  --ads-color-link: #69b1ff;
+  --ads-color-link-hover: #91caff;
+  --ads-color-link-active: #69b1ff;
 
   --ads-color-text: rgb(255 255 255 / 88%);
   --ads-color-text-secondary: rgb(255 255 255 / 65%);
@@ -151,6 +166,8 @@
   --ads-color-bg-container: #141414;
   --ads-color-bg-container-disabled: rgb(255 255 255 / 8%);
   --ads-color-bg-text-hover: rgb(255 255 255 / 12%);
+  --ads-button-text-hover-bg: rgb(255 255 255 / 12%);
+  --ads-button-text-active-bg: rgb(255 255 255 / 12%);
 
   /* In the dark theme a lighter track would lose contrast against the white handle, so hover and pressed go darker. */
   --ads-switch-track-off: #8c8c8c;
@@ -161,4 +178,5 @@
   --ads-switch-track-on-active: #2f7ff0;
   --ads-switch-handle-bg: #ffffff;
   --ads-switch-content-color: #141414;
+  --ads-switch-loading-opacity: 1;
 }
