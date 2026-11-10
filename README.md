@@ -18,7 +18,7 @@ Ant Design.
 
 ## Status
 
-Version `0.2.1`. Available components: `Button`, `Switch`. More components are planned.
+Version `0.2.1`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Switch`. More components are planned.
 
 ## Installation
 
@@ -49,24 +49,26 @@ Import components by name. The package is ESM and declares `sideEffects: ["**/*.
 bundler that supports tree shaking leaves out the components you do not use. This is checked with
 Vite in `tests/packaging`; other bundlers are not covered.
 
-See the [Button](https://prostreyd.github.io/ant-design-svelte/components/button/) and
+See the [Button](https://prostreyd.github.io/ant-design-svelte/components/button/),
+[Checkbox](https://prostreyd.github.io/ant-design-svelte/components/checkbox/) and
 [Switch](https://prostreyd.github.io/ant-design-svelte/components/switch/) pages of the documentation site for
-examples and the API tables, or [`src/lib/Button/README.md`](./src/lib/Button/README.md) and
+examples and the API tables, or [`src/lib/Button/README.md`](./src/lib/Button/README.md),
+[`src/lib/Checkbox/README.md`](./src/lib/Checkbox/README.md) and
 [`src/lib/Switch/README.md`](./src/lib/Switch/README.md) in the repository.
 
 ### Colors and contrast
 
 In the light theme the colors are the values of the Ant Design token documentation, so the components look
 like Ant Design. Those values do not reach WCAG AA for text: white on the primary fill is 4.10:1 and on the
-danger fill 3.27:1 (4.5:1 is needed), and the off track of a switch is 1.84:1 against a white page (3:1 is
-needed). For a contrast guarantee import one more file after the tokens:
+danger fill 3.27:1 (4.5:1 is needed), the off track of a switch is 1.84:1 against a white page and the border of
+an unchecked checkbox 1.41:1 (3:1 is needed). For a contrast guarantee import one more file after the tokens:
 
 ```ts
 import 'svelte-ant-design/tokens.css';
 import 'svelte-ant-design/tokens-accessible.css';
 ```
 
-It darkens the fills, the link and text colors and the switch tracks; every text pair is then at least 4.5:1.
+It darkens the fills, the link and text colors, the switch tracks and the checkbox border; every text pair is then at least 4.5:1.
 The dark theme needs no extra file. The contrast tests run with the accessible file.
 
 ### Dark theme

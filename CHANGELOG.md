@@ -9,6 +9,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- `Checkbox` and `CheckboxGroup` components. `Checkbox` is a native `<input type="checkbox">` inside a `<label>`
+  with `bind:checked`, `indeterminate` (a "check all" look that is announced as mixed and changes only the
+  appearance), `disabled`, `value`, `name`, `children`, `onchange(checked, event)`, `classNames` and `styles` for the
+  parts `root`, `icon` and `label`, and the `focus()` / `blur()` methods. `CheckboxGroup` has `bind:value`, `options`
+  (strings, numbers, or objects with a text or snippet `label`, `disabled`, `title`, `class`, `style` and `onchange`),
+  custom markup with checkboxes inside, `disabled`, `name`, `onchange(value, event)` and `classNames` / `styles` for the
+  parts `root`, `item`, `itemIcon` and `itemLabel`. A parent can accept or refuse a change with a function binding, or
+  cancel it with `preventDefault()` in `onclick`. The selected values follow the order of the options. A native form
+  reset is followed by a restore of the view to the state. The unchecked border and the hover fill are darker in
+  `tokens-accessible.css`, so the border, the check mark and the focus ring keep 3:1 contrast in both themes.
+  `--ads-checkbox-*` design tokens, `--ads-motion-duration-fast`, `--ads-motion-duration-slow` and
+  `--ads-motion-ease-out-back` were added to `tokens.css`. The comparison with Ant Design (React, Vue, Angular) and the
+  decisions are in `specs/checkbox.md`.
+- Checkbox page on the documentation site (English, Russian and Chinese): ten live examples with their code, the API
+  tables of both components, the methods and the design tokens.
+- Tests of the Checkbox: unit and accessibility tests, Playwright tests of the visual states, a contrast matrix in both
+  themes, a layout test (nothing moves when a checkbox toggles) and right-to-left layout, and tests that keep the
+  Checkbox page honest.
+
+### Changed
+
+- `npm run test:mutation` accepts `--file=<component>` for a second component of a folder and runs every test file
+  of the component (`--target=Checkbox` also runs the `CheckboxGroup` tests).
+
 ## [0.2.1] - 2026-11-10
 
 ### Added
