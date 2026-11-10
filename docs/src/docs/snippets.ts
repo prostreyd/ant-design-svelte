@@ -55,6 +55,12 @@ export const themeOverride: Snippet = {
 }`
 };
 
+export const accessibleTokens: Snippet = {
+  kind: 'ts',
+  code: `import 'svelte-ant-design/tokens.css';
+import 'svelte-ant-design/tokens-accessible.css';`
+};
+
 export const darkAttribute: Snippet = {
   kind: 'svelte',
   code: `<html data-theme="dark">`

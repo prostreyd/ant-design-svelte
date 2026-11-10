@@ -7,7 +7,7 @@
   import { localHref } from '#docs/href';
   import type { Key } from '#docs/i18n';
   import { useT } from '#docs/i18n/use-t';
-  import { themeOverride } from '#docs/snippets';
+  import { accessibleTokens, themeOverride } from '#docs/snippets';
 
   const t = useT();
   const groups: { group: Key; example: string; description: Key }[] = [
@@ -45,3 +45,4 @@
 
 <h2 id="contrast"><T k="theme.h.contrast" /></h2>
 <p><T k="theme.contrast" /></p>
+<CodeBlock code={accessibleTokens.code} kind={accessibleTokens.kind} />
