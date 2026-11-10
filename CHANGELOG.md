@@ -9,6 +9,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- `svelte-ant-design/tokens-accessible.css`: an optional file, imported after `tokens.css`, with darker light-theme
+  colors for the `-solid`, `-text` and link tokens and for the Switch tracks. With it every text pair is at least
+  4.5:1 and every track and handle at least 3:1. The dark theme needs no extra file.
+- Tokens `--ads-color-link`, `--ads-color-link-hover`, `--ads-color-link-active`, `--ads-button-text-hover-bg`,
+  `--ads-button-text-active-bg` and `--ads-switch-loading-opacity`.
+
+### Changed
+
+- The default light colors of `Button` and `Switch` are now the values of the Ant Design token documentation:
+  primary `#1677ff` (hover `#4096ff`, pressed `#0958d9`), danger `#ff4d4f`, links `#1677ff` (hover `#69b1ff`), a
+  switch on `#1677ff`, off `rgba(0, 0, 0, 0.25)`. A text button now keeps its text color on hover and is tinted with
+  `rgba(0, 0, 0, 0.04)`; a link button has its own hover and pressed colors; a loading switch is dimmed to `0.65`.
+  These values are not WCAG AA for text (white on the primary fill is 4.10:1); the previous, darker values are in
+  `tokens-accessible.css`. The dark theme is unchanged.
+- The documentation site shows the default colors and checks the contrast of its own texts; the contrast of the
+  library's components is checked by the library tests with the accessible file.
+
 ### Documentation
 
 - The release rules for AI assistants now require `npm publish --dry-run` in a clean clone of the release
