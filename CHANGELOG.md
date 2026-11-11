@@ -9,6 +9,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- `Input`, `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP` components: a text field family on native
+  `<input>` and `<textarea>`. `Input` has `bind:value` (a function binding can refuse an edit), `type`, `disabled`, `readonly`,
+  `size` (`large`, `medium`, `small`; `middle` and `default` are aliases of `medium`), `variant` (`outlined`, `filled`,
+  `borderless`, `underlined`), `status` (`error` also sets `aria-invalid`), `prefix` and `suffix`, `addonBefore` and `addonAfter`
+  (text or a snippet), `allowClear` (a native button that keeps focus in the field; the object form sets the icon, the name and the tab
+  index), `showCount` and `count` (`max` as a soft limit, `strategy`, `show`, `exceedFormatter`), `maxlength`, `onchange(value, event)`
+  on every edit, `onpressenter`, `onclear`, `classNames` and `styles` for the parts `root`, `prefix`, `input`, `suffix`, `clear` and
+  `count`, and `focus({ preventScroll, cursor })` / `blur()`. `InputTextArea` adds `autoSize` (`true` or `{ minRows, maxRows }`).
+  `InputPassword` adds `bind:visible`, `onvisiblechange`, `visibilityToggle` and `iconRender`. `InputSearch` adds `enterButton`,
+  `loading`, `onsearch(value, event, { source })` and `searchIcon`. `InputOTP` has `length`, `mask`, `formatter`, `separator`,
+  `onchange` (all cells filled), `oninput`, keyboard navigation, paste and `autocomplete`. A field is one element around the
+  native control (a group element appears only with `addonBefore` / `addonAfter`), and the prefix, the suffix, the clear button
+  and the count are its siblings, so the input keeps its focus and caret when they come and go. The IME composition is respected:
+  Enter that confirms a candidate is not `onpressenter` or a search, and the text is cut by `exceedFormatter` when the composition ends.
+  A native form reset is followed by a restore of the view to the state. `--ads-input-*` design tokens were added to `tokens.css`, and
+  `tokens-accessible.css` darkens the border (3:1), the placeholder, the count and the clear icon (4.5:1 and 3:1) and the warning
+  colors; the dark theme keeps these ratios without it. The comparison with Ant Design (React, Vue, Angular) and the decisions are in
+  `specs/input.md`.
+- Input page on the documentation site (English, Russian and Chinese): 21 live examples with their code, the API tables of all
+  five components, the methods and the design tokens.
+- Tests of the input family: unit and accessibility tests, mutation tests, Playwright tests of the visual states, IME, `autoSize`,
+  layout (nothing moves when the text, the status, the visibility or the loading changes), right-to-left layout, a contrast matrix in
+  both themes and the default colors, and tests that keep the Input page honest.
+
 ## [0.3.0] - 2026-11-10
 
 ### Added
