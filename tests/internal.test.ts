@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resolveOption } from '../src/lib/internal/options';
 import { classList, styleText } from '../src/lib/internal/semantic';
@@ -71,5 +73,18 @@ describe('styleText', () => {
   it('returns undefined when there is nothing to write', () => {
     expect(styleText()).toBeUndefined();
     expect(styleText({})).toBeUndefined();
+  });
+});
+
+describe('the styles that Input and InputTextArea share', () => {
+  const read = (file: string) => readFileSync(join(import.meta.dirname, '..', 'src', 'lib', 'Input', file), 'utf8');
+  const shared = (source: string) =>
+    /\/\* shared-field-styles:begin[\s\S]*?\/\* shared-field-styles:end \*\//.exec(source)?.[0];
+
+  it('the marked block is the same in both components (a Svelte style cannot be imported, so it is copied)', () => {
+    const input = shared(read('Input.svelte'));
+    expect(input, 'no marked block in Input.svelte').toBeDefined();
+    expect(input!.length).toBeGreaterThan(500);
+    expect(shared(read('InputTextArea.svelte'))).toBe(input);
   });
 });
