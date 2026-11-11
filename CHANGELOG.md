@@ -9,6 +9,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Documentation
+
+- The rules for AI assistants now ask to check every property for deprecation before it is taken into an API: the
+  current replacement name is used, a rename chain is recorded in the specification, and the decisions of Ant Design
+  are judged only from public traces (deprecated properties, change lists, the issue tracker, package manifests).
+
 ## [0.4.0] - 2026-11-11
 
 ### Added
