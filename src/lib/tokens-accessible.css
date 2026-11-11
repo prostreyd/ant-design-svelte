@@ -3,14 +3,14 @@
  *
  * tokens.css uses the values of the Ant Design token documentation, which do not reach WCAG AA for
  * text: white on the primary fill is 4.10:1 and on the danger fill 3.27:1 (4.5:1 is needed), and the
- * off track of a Switch is 1.84:1 against a white page and the border of a Checkbox 1.41:1 (3:1 is needed).
+ * off track of a Switch is 1.84:1 against a white page and the border of a Checkbox or an Input 1.41:1 (3:1 is needed).
  * Import this file AFTER tokens.css to get darker values for the `-solid`, `-text` and link tokens, for the
- * Switch and for the Checkbox border:
+ * Switch, for the Checkbox border and for the Input (border, placeholder, count, icons, warning):
  *
  *   import 'svelte-ant-design/tokens.css';
  *   import 'svelte-ant-design/tokens-accessible.css';
  *
- * Every text pair is at least 4.5:1 and every track, handle and checkbox border at least 3:1, in every state. The dark
+ * Every text pair is at least 4.5:1 and every track, handle, checkbox border and input border at least 3:1, in every state. The dark
  * theme needs no override and is not touched: the selector below does not apply when
  * `data-theme="dark"` is set. The selector is more specific than the `:root` of tokens.css, so the
  * order of the two imports does not matter.
@@ -44,4 +44,20 @@
   --ads-checkbox-border: #737373;
   /* #4096ff is 2.99:1 against a white page and 2.99:1 behind the white check mark: just under 3:1. */
   --ads-checkbox-checked-bg-hover: #0958d9;
+
+  /*
+   * Input: the boundary of an outlined or underlined field is 4.74:1 against a white page (3:1 is needed) and
+   * stays 3:1 or more on hover and focus; the placeholder is 5.3:1 against white and 4.9:1 on the filled
+   * background (4.5:1); the count is 5.7:1; the clear icon 4.7:1 (3:1); the warning border 4.4:1.
+   */
+  --ads-input-border: #737373;
+  --ads-input-border-hover: #0958d9;
+  --ads-input-border-active: #1668dc;
+  --ads-input-placeholder: #6b6b6b;
+  --ads-input-icon-color: #737373;
+  --ads-input-icon-color-hover: #262626;
+  --ads-input-count-color: #666666;
+  --ads-input-error-hover: #d9363e;
+  --ads-input-warning: #ad6800;
+  --ads-input-warning-hover: #d46b08;
 }

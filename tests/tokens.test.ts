@@ -137,6 +137,43 @@ describe('default light tokens', () => {
     '--ads-checkbox-group-gap': '8px',
     '--ads-checkbox-font-size': '14px',
     '--ads-checkbox-line-height': '1.5714',
+    // Input: the component tokens (activeBg, activeBorderColor, activeShadow, addonBg, errorActiveShadow, hoverBg,
+    // hoverBorderColor, inputFontSize*, paddingBlock*, paddingInline*, warningActiveShadow) and the global tokens
+    // colorBorder, colorBorderDisabled, colorBgContainerDisabled, colorFillTertiary, colorError, colorErrorBg,
+    // colorWarning, colorWarningBg, borderRadius*, lineWidth, lineHeight, lineHeightLG and paddingXXS (React page, 2026-11-11).
+    '--ads-input-bg': '#ffffff',
+    '--ads-input-bg-hover': '#ffffff',
+    '--ads-input-bg-active': '#ffffff',
+    '--ads-input-border': '#d9d9d9',
+    '--ads-input-border-hover': '#4096ff',
+    '--ads-input-border-active': '#1677ff',
+    '--ads-input-shadow-active': '0 0 0 2px rgba(5, 145, 255, 0.1)',
+    '--ads-input-addon-bg': 'rgba(0, 0, 0, 0.02)',
+    '--ads-input-filled-bg': 'rgba(0, 0, 0, 0.04)',
+    '--ads-input-disabled-bg': 'rgba(0, 0, 0, 0.04)',
+    '--ads-input-disabled-border': '#d9d9d9',
+    '--ads-input-error': '#ff4d4f',
+    '--ads-input-error-shadow': '0 0 0 2px rgba(255, 38, 5, 0.06)',
+    '--ads-input-error-bg': '#fff2f0',
+    '--ads-input-warning': '#faad14',
+    '--ads-input-warning-shadow': '0 0 0 2px rgba(255, 215, 5, 0.1)',
+    '--ads-input-warning-bg': '#fffbe6',
+    '--ads-input-font-size': '14px',
+    '--ads-input-font-size-lg': '16px',
+    '--ads-input-font-size-sm': '14px',
+    '--ads-input-padding-block': '4px',
+    '--ads-input-padding-block-lg': '7px',
+    '--ads-input-padding-block-sm': '0px',
+    '--ads-input-padding-inline': '11px',
+    '--ads-input-padding-inline-lg': '11px',
+    '--ads-input-padding-inline-sm': '7px',
+    '--ads-input-radius': '6px',
+    '--ads-input-radius-lg': '8px',
+    '--ads-input-radius-sm': '4px',
+    '--ads-input-border-width': '1px',
+    '--ads-input-line-height': '1.5714285714285714',
+    '--ads-input-line-height-lg': '1.5',
+    '--ads-input-gap': '4px',
     '--ads-motion-duration-fast': '0.1s',
     '--ads-motion-duration-slow': '0.3s',
     '--ads-motion-ease-out-back': 'cubic-bezier(0.12, 0.4, 0.29, 1.46)'
@@ -164,8 +201,8 @@ describe('accessible tokens (tokens-accessible.css)', () => {
     for (const token of accessible.keys()) expect(light.has(token), token).toBe(true);
   });
 
-  it('changes the -solid, -text, link, switch and checkbox tokens, and nothing else', () => {
-    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover)$/;
+  it('changes the -solid, -text, link, switch, checkbox and input tokens, and nothing else', () => {
+    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover))$/;
     for (const token of accessible.keys()) expect(token, token).toMatch(allowed);
   });
 
@@ -273,5 +310,76 @@ describe('dark theme (no extra file needed)', () => {
 
   it('checkbox: the indeterminate bar reaches 3:1 against the box', () => {
     expect(ratio(darkTheme, '--ads-checkbox-indeterminate-color', '--ads-checkbox-bg')).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('input tokens: contrast', () => {
+  /** The page, then the translucent layers painted over it (a filled field), as the browser composites them. */
+  function surface(tokens: Map<string, string>, ...layers: string[]): Rgba {
+    return layers.reduce((below, layer) => over(parse(tokens.get(layer)!), below), over(parse(tokens.get('--ads-color-bg-container')!), { r: 255, g: 255, b: 255, a: 1 }));
+  }
+
+  function contrast(tokens: Map<string, string>, foreground: string, ...layers: string[]): number {
+    const background = surface(tokens, ...layers);
+    const color = over(parse(tokens.get(foreground)!), background);
+    const [hi, lo] = [luminance(color), luminance(background)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+
+  /** The backgrounds a field can have: the page, filled, filled on hover, and the error and warning fills. */
+  const grounds: Array<[string, string[]]> = [
+    ['the page', []],
+    ['filled', ['--ads-input-filled-bg']],
+    ['filled on hover', ['--ads-input-filled-bg-hover']],
+    ['filled error', ['--ads-input-error-bg']],
+    ['filled warning', ['--ads-input-warning-bg']]
+  ];
+
+  const boundaries = [
+    '--ads-input-border',
+    '--ads-input-border-hover',
+    '--ads-input-border-active',
+    '--ads-input-error',
+    '--ads-input-error-hover',
+    '--ads-input-warning',
+    '--ads-input-warning-hover',
+    '--ads-color-focus-outline'
+  ];
+
+  it('the default light border, hover border, warning border and placeholder are below the WCAG ratios, which is why the accessible file exists', () => {
+    expect(contrast(light, '--ads-input-border')).toBeLessThan(3);
+    expect(contrast(light, '--ads-input-border-hover')).toBeLessThan(3);
+    expect(contrast(light, '--ads-input-warning')).toBeLessThan(3);
+    expect(contrast(light, '--ads-input-placeholder')).toBeLessThan(4.5);
+    expect(contrast(light, '--ads-input-count-color')).toBeLessThan(4.5);
+  });
+
+  for (const [theme, tokens] of [['light with the accessible file', lightAccessible], ['dark', darkTheme]] as const) {
+    describe(theme, () => {
+      for (const token of boundaries) {
+        it(`${token}: the boundary reaches 3:1 against the page`, () => {
+          expect(contrast(tokens, token), token).toBeGreaterThanOrEqual(3);
+        });
+      }
+
+      for (const [name, layers] of grounds) {
+        it(`the placeholder, the count and the over-limit count reach 4.5:1 on ${name}`, () => {
+          expect(contrast(tokens, '--ads-input-placeholder', ...layers), 'placeholder').toBeGreaterThanOrEqual(4.5);
+          expect(contrast(tokens, '--ads-input-count-color', ...layers), 'count').toBeGreaterThanOrEqual(4.5);
+          expect(contrast(tokens, '--ads-color-danger-text', ...layers), 'count over the limit').toBeGreaterThanOrEqual(4.5);
+        });
+
+        it(`the clear icon, also on hover, reaches 3:1 on ${name}`, () => {
+          expect(contrast(tokens, '--ads-input-icon-color', ...layers), 'icon').toBeGreaterThanOrEqual(3);
+          expect(contrast(tokens, '--ads-input-icon-color-hover', ...layers), 'icon on hover').toBeGreaterThanOrEqual(3);
+        });
+      }
+    });
+  }
+
+  it('the dark theme defines the colours of the input again', () => {
+    for (const token of [...light.keys()].filter((name) => name.startsWith('--ads-input-') && !/(font-size|padding|radius|border-width|line-height|gap|icon-size|addon-padding|otp-gap)/.test(name))) {
+      expect(dark.has(token), token).toBe(true);
+    }
   });
 });

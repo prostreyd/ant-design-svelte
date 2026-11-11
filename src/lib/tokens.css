@@ -154,6 +154,61 @@
   --ads-checkbox-disabled-bg: rgba(0, 0, 0, 0.04);
   --ads-checkbox-disabled-border: #d9d9d9;
   --ads-checkbox-disabled-check-color: rgba(0, 0, 0, 0.25);
+
+  /* Input: the dimensions and colors of the Ant Design token tables (read 2026-11-11). */
+  --ads-input-font-size: 14px;
+  --ads-input-font-size-lg: 16px;
+  --ads-input-font-size-sm: 14px;
+  --ads-input-padding-block: 4px;
+  --ads-input-padding-block-lg: 7px;
+  --ads-input-padding-block-sm: 0px;
+  --ads-input-padding-inline: 11px;
+  --ads-input-padding-inline-lg: 11px;
+  --ads-input-padding-inline-sm: 7px;
+  --ads-input-radius: 6px;
+  --ads-input-radius-lg: 8px;
+  --ads-input-radius-sm: 4px;
+  --ads-input-border-width: 1px;
+  --ads-input-line-height: 1.5714285714285714;
+  --ads-input-line-height-lg: 1.5;
+  --ads-input-gap: 4px;
+  --ads-input-icon-size: 14px;
+  --ads-input-addon-padding-inline: 11px;
+  --ads-input-otp-gap: 8px;
+
+  /*
+   * Input colors. In the light theme the values are the ones of the Ant Design token documentation, except
+   * those the documentation does not list (the placeholder, the icons, the count, the filled hover and the
+   * warning hover), which are ours. They do not reach WCAG: the border is 1.41:1 against a white page (3:1 is
+   * needed for the boundary), the placeholder 1.83:1 (4.5:1), the count 3.4:1 (4.5:1), the warning border
+   * 1.9:1. `tokens-accessible.css` darkens them. The `filled` and `borderless` variants have no boundary by
+   * design; use `outlined` or `underlined` where the boundary has to reach 3:1. The dark theme below keeps the
+   * ratios without the file.
+   */
+  --ads-input-bg: #ffffff;
+  --ads-input-bg-hover: #ffffff;
+  --ads-input-bg-active: #ffffff;
+  --ads-input-border: #d9d9d9;
+  --ads-input-border-hover: #4096ff;
+  --ads-input-border-active: #1677ff;
+  --ads-input-shadow-active: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  --ads-input-placeholder: rgba(0, 0, 0, 0.25);
+  --ads-input-icon-color: rgba(0, 0, 0, 0.45);
+  --ads-input-icon-color-hover: rgba(0, 0, 0, 0.65);
+  --ads-input-count-color: rgba(0, 0, 0, 0.45);
+  --ads-input-addon-bg: rgba(0, 0, 0, 0.02);
+  --ads-input-filled-bg: rgba(0, 0, 0, 0.04);
+  --ads-input-filled-bg-hover: rgba(0, 0, 0, 0.06);
+  --ads-input-disabled-bg: rgba(0, 0, 0, 0.04);
+  --ads-input-disabled-border: #d9d9d9;
+  --ads-input-error: #ff4d4f;
+  --ads-input-error-hover: #ff7875;
+  --ads-input-error-shadow: 0 0 0 2px rgba(255, 38, 5, 0.06);
+  --ads-input-error-bg: #fff2f0;
+  --ads-input-warning: #faad14;
+  --ads-input-warning-hover: #ffc53d;
+  --ads-input-warning-shadow: 0 0 0 2px rgba(255, 215, 5, 0.1);
+  --ads-input-warning-bg: #fffbe6;
 }
 
 :root[data-theme='dark'] {
@@ -222,4 +277,30 @@
   --ads-checkbox-disabled-bg: rgb(255 255 255 / 8%);
   --ads-checkbox-disabled-border: #424242;
   --ads-checkbox-disabled-check-color: rgb(255 255 255 / 30%);
+
+  /* The input keeps 3:1 for the border, 4.5:1 for the placeholder and the count, 3:1 for the icons. */
+  --ads-input-bg: #141414;
+  --ads-input-bg-hover: #141414;
+  --ads-input-bg-active: #141414;
+  --ads-input-border: #737373;
+  --ads-input-border-hover: #4096ff;
+  --ads-input-border-active: #4096ff;
+  --ads-input-shadow-active: 0 0 0 2px rgba(64, 150, 255, 0.2);
+  --ads-input-placeholder: rgba(255, 255, 255, 0.55);
+  --ads-input-icon-color: rgba(255, 255, 255, 0.55);
+  --ads-input-icon-color-hover: rgba(255, 255, 255, 0.88);
+  --ads-input-count-color: rgba(255, 255, 255, 0.55);
+  --ads-input-addon-bg: rgba(255, 255, 255, 0.04);
+  --ads-input-filled-bg: rgba(255, 255, 255, 0.08);
+  --ads-input-filled-bg-hover: rgba(255, 255, 255, 0.12);
+  --ads-input-disabled-bg: rgba(255, 255, 255, 0.08);
+  --ads-input-disabled-border: #424242;
+  --ads-input-error: #ff7875;
+  --ads-input-error-hover: #ff9c99;
+  --ads-input-error-shadow: 0 0 0 2px rgba(255, 120, 117, 0.2);
+  --ads-input-error-bg: #2a1215;
+  --ads-input-warning: #faad14;
+  --ads-input-warning-hover: #ffc53d;
+  --ads-input-warning-shadow: 0 0 0 2px rgba(250, 173, 20, 0.2);
+  --ads-input-warning-bg: #2b2111;
 }
