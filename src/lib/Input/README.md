@@ -31,7 +31,9 @@ import 'svelte-ant-design/tokens.css';
 A field has no label of its own: name it with an external `<label for>` (and the `id` of the field), `aria-label`
 or `aria-labelledby`.
 
-`onchange` is called on every edit with the new text and the native `input` event, as `onChange` in React:
+`onchange` is called on every edit with the new text and the event of the edit, as `onChange` in React: the native
+`input` event, or `compositionend` when a browser (Firefox, for one) ends an IME composition before its last `input`
+event. The text and the number of calls are the same either way.
 
 ```svelte
 <Input onchange={(value, event) => console.log(value, event.type)} aria-label="Query" />

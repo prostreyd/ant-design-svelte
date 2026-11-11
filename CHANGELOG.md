@@ -11,6 +11,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Documentation
 
+- `Input`: the documentation of `onchange` now says which event it receives. It is the native `input` event, or `compositionend`
+  when a browser (Firefox, for one) ends an IME composition before its last `input` event. The text and the number of calls
+  are the same; only `event.type` differs. The behavior of the component did not change.
 - The rules for AI assistants now ask to check every property for deprecation before it is taken into an API: the
   current replacement name is used, a rename chain is recorded in the specification, and the decisions of Ant Design
   are judged only from public traces (deprecated properties, change lists, the issue tracker, package manifests).

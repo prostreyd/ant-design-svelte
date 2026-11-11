@@ -910,3 +910,31 @@ describe('Input', () => {
     expect(document.activeElement).toBe(clearButton());
   });
 });
+
+describe('Input: the event that onchange receives in an IME composition', () => {
+  // Chromium fires the last `input` before `compositionend`, Firefox fires `compositionend` first. Either way the
+  // text is taken once and `onchange` is called once per edit; only the event it gets differs.
+  it('the last input comes before compositionend: onchange gets the input events, and compositionend adds nothing', async () => {
+    const onchange = vi.fn();
+    render(Input, { props: { ...named, onchange } });
+    await fireEvent.compositionStart(field());
+    await fireEvent.input(field(), { target: { value: 'a' } });
+    await fireEvent.input(field(), { target: { value: 'ab' } });
+    await fireEvent.compositionEnd(field());
+    expect(onchange).toHaveBeenCalledTimes(2);
+    expect(onchange.mock.calls.map(([value]) => value)).toEqual(['a', 'ab']);
+    expect(onchange.mock.calls.map(([, event]) => (event as Event).type)).toEqual(['input', 'input']);
+  });
+
+  it('compositionend comes before the last input (Firefox): onchange is called once, with the compositionend event', async () => {
+    const onchange = vi.fn();
+    render(Input, { props: { ...named, onchange } });
+    await fireEvent.compositionStart(field());
+    field().value = 'Ada';
+    await fireEvent.compositionEnd(field());
+    await fireEvent.input(field());
+    expect(onchange).toHaveBeenCalledTimes(1);
+    expect(onchange).toHaveBeenCalledWith('Ada', expect.objectContaining({ type: 'compositionend' }));
+    expect(field().value).toBe('Ada');
+  });
+});

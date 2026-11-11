@@ -85,7 +85,10 @@ interface FieldProps {
   showCount?: boolean | { formatter: (info: CountInfo) => string };
   /** Character counting configuration (a soft limit, a custom count, cutting). */
   count?: CountConfig;
-  /** Called once per user edit, with the new text and the native `input` event. */
+  /**
+   * Called once per user edit, with the new text and the event of the edit: the native `input` event, or
+   * `compositionend` when the browser ends an IME composition before its last `input` event (Firefox does).
+   */
   onchange?: (value: string, event: Event) => void;
   /** Called when the clear button emptied the text. */
   onclear?: (event: MouseEvent) => void;

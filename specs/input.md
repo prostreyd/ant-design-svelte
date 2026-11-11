@@ -107,7 +107,7 @@ not the Ant Design icon paths.
 | `showCount` | `boolean \| { formatter: (info: CountInfo) => string }` | `false` | Shows the length of the value in the `count` part. `CountInfo = { value: string; count: number; maxLength?: number }`. Default text is `count` or `count / max` (open point 6 for the formatter type). |
 | `count` | `{ max?: number; strategy?: (value: string) => number; show?: boolean \| ((info: CountInfo) => string); exceedFormatter?: (value: string, config: { max: number }) => string }` | — | Custom counting (open point 5). `max` is a soft limit: past it the count turns red and `aria-invalid` is set, the text is not cut. `strategy` replaces the length function (for example one emoji counts 1). `exceedFormatter` cuts the value when it passes `max`; without it nothing is cut. |
 | `maxlength` | `number` | — | The native attribute (React `maxLength`, Vue `maxlength`): the browser stops the input at the limit. For a limit that only warns use `count.max`. |
-| `onchange` | `(value: string, event: Event) => void` | — | Called once per user edit with the new text and the native `input` event (open point 1). Not called for a change of `value` made by the parent. Not called while disabled. |
+| `onchange` | `(value: string, event: Event) => void` | — | Called once per user edit with the new text and the event of the edit: the native `input` event, or `compositionend` when the browser ends an IME composition before its last `input` event (see "IME composition") (open point 1). Not called for a change of `value` made by the parent. Not called while disabled. |
 | `onpressenter` | `(event: KeyboardEvent) => void` | — | Called on Enter (`keydown`), not while an IME composition is open. |
 | `onclear` | `(event: MouseEvent) => void` | — | Called after the clear button emptied the value (React 5.20.0, Angular `nzClear`). The click event is passed (React and Angular pass nothing: a function that takes no arguments still fits); `InputSearch` needs it for `onsearch`. |
 | `classNames` | `Partial<Record<'root' \| 'prefix' \| 'input' \| 'suffix' \| 'clear' \| 'count', string>>` | — | Classes appended to the part (open point 9). |
@@ -187,7 +187,12 @@ v1.1). `focus()` goes to the first empty cell (the last one when all are filled)
 - **Edits.** A user edit copies the native `value` into `value`, then calls `onchange(value, event)`. A change
   of the prop by the parent updates the input and calls nothing. Rapid repeated edits each call once.
 - **IME composition.** `onchange` is called during composition as the native `input` event is (the value follows
-  the text on screen). `onpressenter` and `onsearch` by Enter are not called while `event.isComposing` is true
+  the text on screen). At the end of a composition it is still called once per edit, with the event that carried
+  the text: Chromium fires its last `input` before `compositionend`, so `onchange` gets that `input` event and
+  `compositionend` changes nothing; Firefox fires `compositionend` before the last `input` (seen with the commit of
+  a composition in the browser tests), so `onchange` gets the `compositionend` event and the `input` after it
+  changes nothing. The text and the number of calls are the same; only `event.type` differs. (Clarified on
+  2026-11-11 after the first run of the browser tests in Firefox; the behavior of the component did not change.) `onpressenter` and `onsearch` by Enter are not called while `event.isComposing` is true
   (the Enter that confirms a candidate must not submit). `count.exceedFormatter` and `count.max` clipping are
   applied at `compositionend`, not in the middle of a composition. The browser's own `maxlength` is native and
   untouched. Checked in the browser with composition events, since jsdom has no IME.
