@@ -146,8 +146,12 @@ test.describe('navigation', () => {
 
   test('search: "/" focuses the field, the result opens with Enter', async ({ page }) => {
     await open(page, '');
-    await page.keyboard.press('/');
-    await expect(page.getByRole('searchbox')).toBeFocused();
+    // The shortcut exists once the page has hydrated, and "networkidle" does not say when that is (WebKit is
+    // slower to get there): press it again until it takes effect.
+    await expect(async () => {
+      await page.keyboard.press('/');
+      await expect(page.getByRole('searchbox')).toBeFocused({ timeout: 500 });
+    }).toPass();
     await page.keyboard.type('butt');
     await expect(page.getByRole('region', { name: 'Search' }).getByRole('link', { name: /Button/ })).toBeVisible();
     await page.keyboard.press('Enter');
@@ -242,14 +246,39 @@ test.describe('Button page', () => {
     }
   });
 
-  test('copy puts the source of the example on the clipboard', async ({ page, context }) => {
-    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  test('copy puts the source of the example on the clipboard', async ({ page, context, browserName }) => {
+    // The permission names are Chromium's: Firefox and WebKit have nothing to grant and let a click write to the
+    // clipboard. The page's own call is recorded in every engine (and passed on, so a refusal would show up as
+    // "Copy failed"); Chromium also reads the real clipboard back.
+    if (browserName === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.addInitScript(() => {
+      const written: string[] = [];
+      (window as unknown as { __written: string[] }).__written = written;
+      const original = navigator.clipboard.writeText.bind(navigator.clipboard);
+      navigator.clipboard.writeText = (text: string) => {
+        written.push(text);
+        return original(text);
+      };
+    });
     await open(page, 'components/button/');
     const first = page.locator('section.demo').first();
     await first.getByRole('button', { name: 'Copy code' }).click();
     await expect(first.getByRole('status')).toHaveText('Copied');
-    const copied = await page.evaluate(() => navigator.clipboard.readText());
-    expect(copied).toContain("import { Button } from 'svelte-ant-design'");
+    const written = await page.evaluate(() => (window as unknown as { __written: string[] }).__written);
+    expect(written).toHaveLength(1);
+    expect(written[0]).toContain("import { Button } from 'svelte-ant-design'");
+    if (browserName === 'chromium') expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(written[0]);
+  });
+
+  test('copy: when the clipboard refuses, the page says so and does not announce a copy', async ({ page }) => {
+    await page.addInitScript(() => {
+      navigator.clipboard.writeText = () => Promise.reject(new Error('refused'));
+    });
+    await open(page, 'components/button/');
+    const first = page.locator('section.demo').first();
+    await first.getByRole('button', { name: 'Copy code' }).click();
+    await expect(first.getByRole('status')).toHaveText('Copy failed');
+    await expect(first.getByRole('status')).not.toHaveText('Copied');
   });
 
   test('loading demo: the button keeps focus while it loads and is announced as busy', async ({ page }) => {
@@ -491,7 +520,9 @@ test.describe('Input page', () => {
     const demo = demoOf(page, 'Basic');
     const field = demo.getByRole('textbox', { name: 'Name' });
     const status = demo.locator('.demo-pre').getByRole('status');
-    await field.fill('Ada');
+    // Typed key by key: `fill()` in Firefox acts like the end of an IME composition, which ends with a
+    // `compositionend` event before the `input` one (the text and the number of calls are the same).
+    await field.pressSequentially('Ada');
     await expect(demo).toContainText('The name is "Ada"');
     await expect(status).toHaveText('onchange("Ada", input)');
   });

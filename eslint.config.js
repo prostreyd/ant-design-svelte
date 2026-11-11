@@ -31,7 +31,8 @@ export default tseslint.config(
     rules: { 'svelte/no-navigation-without-resolve': 'off' }
   },
   {
-    files: ['**/*.svelte'],
+    // `*.svelte.ts` are modules with runes: the Svelte parser, with TypeScript inside it.
+    files: ['**/*.svelte', '**/*.svelte.ts'],
     languageOptions: {
       parser: svelteParser,
       parserOptions: {

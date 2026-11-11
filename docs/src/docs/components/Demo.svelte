@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Component } from 'svelte';
   import { highlight } from '#docs/highlight';
+  import { createCopier } from '#docs/copy.svelte';
   import { useT } from '#docs/i18n/use-t';
   import Html from './Html.svelte';
   import Icon from './Icon.svelte';
@@ -26,17 +27,7 @@
 
   const t = useT();
   let open = $state(false);
-  let copied = $state(false);
-
-  async function copyCode() {
-    try {
-      await navigator.clipboard.writeText(code);
-    } catch {
-      /* the clipboard may be unavailable */
-    }
-    copied = true;
-    setTimeout(() => (copied = false), 1500);
-  }
+  const copier = createCopier();
 </script>
 
 <section class="demo" class:open aria-labelledby="demo-{id}">
@@ -59,10 +50,10 @@
     >
       <Icon name="code" />
     </button>
-    <button class="icon-btn" type="button" aria-label={t('demo.copy')} title={t('demo.copy')} onclick={copyCode}>
-      <Icon name={copied ? 'check' : 'copy'} />
+    <button class="icon-btn" type="button" aria-label={t('demo.copy')} title={t('demo.copy')} onclick={() => copier.copy(code)}>
+      <Icon name={copier.copied ? 'check' : 'copy'} />
     </button>
-    <span class="sr-only" role="status">{copied ? t('copy.done') : ''}</span>
+    <span class="sr-only" role="status">{copier.copied ? t('copy.done') : copier.failed ? t('copy.failed') : ''}</span>
   </div>
   <div class="demo-code" id="code-{id}" hidden={!open}>
     <!-- Long lines scroll sideways, so keyboard users need to be able to focus the block. -->

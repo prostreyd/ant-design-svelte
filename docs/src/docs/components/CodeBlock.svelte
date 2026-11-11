@@ -1,22 +1,13 @@
 <script lang="ts">
   import { highlight, type CodeKind } from '#docs/highlight';
+  import { createCopier } from '#docs/copy.svelte';
   import { useT } from '#docs/i18n/use-t';
   import Html from './Html.svelte';
   import Icon from './Icon.svelte';
 
   let { code, kind = 'svelte', copy = true }: { code: string; kind?: CodeKind; copy?: boolean } = $props();
   const t = useT();
-  let copied = $state(false);
-
-  async function copyCode() {
-    try {
-      await navigator.clipboard.writeText(code);
-    } catch {
-      /* the clipboard may be unavailable; the status below still confirms the click */
-    }
-    copied = true;
-    setTimeout(() => (copied = false), 1500);
-  }
+  const copier = createCopier();
 </script>
 
 <div class="codebox">
@@ -24,9 +15,9 @@
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <pre tabindex="0"><code><Html html={highlight(code, kind)} /></code></pre>
   {#if copy}
-    <button class="icon-btn" type="button" onclick={copyCode} aria-label={t('demo.copy')} title={t('demo.copy')}>
-      <Icon name={copied ? 'check' : 'copy'} />
+    <button class="icon-btn" type="button" onclick={() => copier.copy(code)} aria-label={t('demo.copy')} title={t('demo.copy')}>
+      <Icon name={copier.copied ? 'check' : 'copy'} />
     </button>
-    <span class="sr-only" role="status">{copied ? t('copy.done') : ''}</span>
+    <span class="sr-only" role="status">{copier.copied ? t('copy.done') : copier.failed ? t('copy.failed') : ''}</span>
   {/if}
 </div>

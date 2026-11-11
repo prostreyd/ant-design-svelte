@@ -76,6 +76,7 @@ export const strings = {
   "contrib.s6": { en: "A page on this site with live examples and an API table.", ru: "Страница на сайте с живыми примерами и таблицей API.", zh: "本站上带在线示例与 API 表格的页面。" },
   "copy": { en: "Copy", ru: "Копировать", zh: "复制" },
   "copy.done": { en: "Copied", ru: "Скопировано", zh: "已复制" },
+  "copy.failed": { en: "Copy failed", ru: "Не удалось скопировать", zh: "复制失败" },
   "d.a11y": { en: "Accessibility", ru: "Доступность", zh: "无障碍" },
   "d.changelog": { en: "Change log", ru: "Журнал изменений", zh: "更新日志" },
   "d.contrib": { en: "Contributing", ru: "Участие в разработке", zh: "参与贡献" },

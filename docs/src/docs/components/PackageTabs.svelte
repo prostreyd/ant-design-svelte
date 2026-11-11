@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
+  import { createCopier } from '#docs/copy.svelte';
   import { useT } from '#docs/i18n/use-t';
   import { highlight } from '#docs/highlight';
   import Html from './Html.svelte';
@@ -14,7 +15,7 @@
 
   const t = useT();
   let selected = $state(0);
-  let copied = $state(false);
+  const copier = createCopier();
   let tabs: HTMLButtonElement[] = [];
 
   /** Arrow keys, Home and End move between the tabs and bring the focus along (roving tabindex). */
@@ -33,15 +34,6 @@
     tabs[next]?.focus();
   }
 
-  async function copyCommand() {
-    try {
-      await navigator.clipboard.writeText(commands[selected].command);
-    } catch {
-      /* the clipboard may be unavailable */
-    }
-    copied = true;
-    setTimeout(() => (copied = false), 1500);
-  }
 </script>
 
 <div class="codebox">
@@ -64,8 +56,8 @@
     <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
     <pre tabindex="0"><code><Html html={highlight(commands[selected].command, 'sh')} /></code></pre>
   </div>
-  <button class="icon-btn" type="button" onclick={copyCommand} aria-label={t('demo.copy')} title={t('demo.copy')}>
-    <Icon name={copied ? 'check' : 'copy'} />
+  <button class="icon-btn" type="button" onclick={() => copier.copy(commands[selected].command)} aria-label={t('demo.copy')} title={t('demo.copy')}>
+    <Icon name={copier.copied ? 'check' : 'copy'} />
   </button>
-  <span class="sr-only" role="status">{copied ? t('copy.done') : ''}</span>
+  <span class="sr-only" role="status">{copier.copied ? t('copy.done') : copier.failed ? t('copy.failed') : ''}</span>
 </div>
