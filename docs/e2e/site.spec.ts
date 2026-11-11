@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { expect, test, type Page } from '@playwright/test';
 import { demos } from '../src/docs/data/button.ts';
 import { demos as checkboxDemos } from '../src/docs/data/checkbox.ts';
+import { demos as inputDemos } from '../src/docs/data/input.ts';
 import { demos as switchDemos } from '../src/docs/data/switch.ts';
 import { allPages, localize, type SitePath } from '../src/docs/pages.ts';
 
@@ -46,7 +47,7 @@ async function accessibilityViolations(page: Page): Promise<Violation[]> {
         run: (context: Document | { exclude: string[][] }, options?: object) => Promise<AxeResult>;
       };
     }).axe;
-    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group'];
+    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-input', '.ads-input-search', '.ads-input-otp'];
     const everything = await axe.run(document, { rules: { 'color-contrast': { enabled: false } } });
     const contrast = await axe.run(
       { exclude: library.map((selector) => [selector]) },
@@ -211,10 +212,13 @@ test.describe('home page', () => {
     await open(page, '');
     const now = page.locator('.road .card').first();
     await expect(now).toContainText('Button');
+    await expect(now).toContainText('Input');
     await expect(now).toContainText('Checkbox');
     await expect(now).toContainText('Switch');
-    await expect(now.locator('.chips').nth(1)).toContainText('classNames');
+    // The ready components follow the order of the sidebar: Button, Input, Checkbox, Switch.
+    await expect(now.locator('.chips').nth(1)).toContainText('variant');
     await expect(now.locator('.chips').nth(2)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(3)).toContainText('classNames');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -415,6 +419,176 @@ test.describe('Switch page', () => {
   test('is listed in the components menu', async ({ page }) => {
     await open(page, 'components/');
     await expect(page.getByRole('navigation', { name: 'Components' }).getByRole('link', { name: /^Switch/ })).toBeVisible();
+  });
+});
+
+test.describe('Input page', () => {
+  /** The example section with the given title. */
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+  // The site styles native inputs in the examples of other components; that must not reach the library fields
+  // (the field once showed a second border and padding inside its own box).
+  for (const theme of ['light', 'dark'] as const) {
+    test(`a field has exactly one border: the native control inside it has none (${theme})`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: theme });
+      await open(page, 'components/input/');
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+      const fields = await page.evaluate(() => {
+        const sides = ['Top', 'Right', 'Bottom', 'Left'] as const;
+        const bordered = (element: Element) => sides.some((side) => parseFloat(getComputedStyle(element)[`border${side}Width`]) > 0);
+        return [...document.querySelectorAll('.demo-pre .ads-input-input, .demo-pre .ads-input-textarea')].map((control) => {
+          const own = getComputedStyle(control);
+          let borders = 0;
+          for (let element: Element | null = control; element && !element.classList.contains('demo-pre'); element = element.parentElement) {
+            if (bordered(element)) borders += 1;
+          }
+          return { borders, padding: own.paddingLeft, background: own.backgroundColor, control: control.className.toString() };
+        });
+      });
+      expect(fields.length).toBeGreaterThan(30);
+      for (const field of fields) {
+        expect(field.borders, field.control).toBe(1);
+        expect(field.background, field.control).toBe('rgba(0, 0, 0, 0)');
+      }
+    });
+  }
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    await open(page, 'components/input/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(inputDemos.length);
+
+    for (let i = 0; i < inputDemos.length; i++) {
+      const demo = examples.nth(i);
+      // The preview contains library fields, not copies drawn with the same classes.
+      await expect(demo.locator('.demo-pre .ads-input input, .demo-pre .ads-input textarea').first()).toBeVisible();
+
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/input/${String(i + 1).padStart(2, '0')}-${inputDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('the API tables list the properties of the five components, the methods table the methods and the tokens table the design tokens', async ({ page }) => {
+    await open(page, 'components/input/');
+    await expect(page.getByRole('table', { name: 'API', exact: true }).getByRole('rowheader', { name: 'allowClear' })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'InputTextArea API' }).getByRole('rowheader', { name: 'autoSize' })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'InputPassword API' }).getByRole('rowheader', { name: 'visibilityToggle' })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'InputSearch API' }).getByRole('rowheader', { name: 'enterButton' })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'InputOTP API' }).getByRole('rowheader', { name: 'separator' })).toBeVisible();
+    await expect(page.getByRole('table', { name: /Methods/ }).getByRole('rowheader', { name: 'focus' })).toBeVisible();
+    await expect(page.getByRole('table', { name: /tokens/i }).getByRole('rowheader', { name: '--ads-input-border', exact: true })).toBeVisible();
+  });
+
+  test('is listed in the components menu', async ({ page }) => {
+    await open(page, 'components/');
+    await expect(page.getByRole('navigation', { name: 'Components' }).getByRole('link', { name: /^Input/ })).toBeVisible();
+  });
+
+  test('basic demo: typing updates the bound text and onchange reports each edit', async ({ page }) => {
+    await open(page, 'components/input/');
+    const demo = demoOf(page, 'Basic');
+    const field = demo.getByRole('textbox', { name: 'Name' });
+    const status = demo.locator('.demo-pre').getByRole('status');
+    await field.fill('Ada');
+    await expect(demo).toContainText('The name is "Ada"');
+    await expect(status).toHaveText('onchange("Ada", input)');
+  });
+
+  test('clear demo: the button empties the field, keeps focus in it and calls onclear', async ({ page }) => {
+    await open(page, 'components/input/');
+    const demo = demoOf(page, 'Clear button');
+    const field = demo.getByRole('textbox', { name: 'Clearable', exact: true });
+    await expect(field).toHaveValue('Clear me');
+    await field.locator('xpath=..').getByRole('button', { name: 'Clear' }).click();
+    await expect(field).toHaveValue('');
+    await expect(field).toBeFocused();
+    await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText('onclear called 1 times');
+  });
+
+  test('count demo: the count follows the text and the browser stops it at maxlength', async ({ page }) => {
+    await open(page, 'components/input/');
+    const demo = demoOf(page, 'Character count');
+    const field = demo.getByRole('textbox', { name: 'Limited to 20' });
+    await field.fill('x'.repeat(30));
+    await expect(field).toHaveValue('x'.repeat(20));
+    await expect(field.locator('xpath=..').locator('.ads-input-count')).toHaveText('20 / 20');
+  });
+
+  test('controlled demo: a refused edit puts the text back, Enter is reported', async ({ page }) => {
+    await open(page, 'components/input/');
+    const demo = demoOf(page, 'Controlled input and Enter');
+    const digits = demo.getByRole('textbox', { name: 'Digits only' });
+    await digits.pressSequentially('12a3');
+    await expect(digits).toHaveValue('123');
+    const enter = demo.getByRole('textbox', { name: 'Press Enter' });
+    await enter.fill('hello');
+    await enter.press('Enter');
+    await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText('Entered: hello');
+  });
+
+  test('password demo: the toggle shows the text and the controlled field follows its state', async ({ page }) => {
+    await open(page, 'components/input/');
+    const demo = demoOf(page, 'Password');
+    const field = demo.getByLabel('Password', { exact: true });
+    await expect(field).toHaveAttribute('type', 'password');
+    await field.locator('xpath=..').getByRole('button', { name: 'Show password' }).click();
+    await expect(field).toHaveAttribute('type', 'text');
+    await expect(demo.locator('.demo-pre').getByRole('status')).toContainText('toggled 1 times');
+    const controlled = demo.getByLabel('Controlled password');
+    await controlled.locator('xpath=..').getByRole('button', { name: 'Show password' }).click();
+    await expect(controlled).toHaveAttribute('type', 'text');
+    await expect(demo.locator('.demo-pre').getByRole('status')).toContainText('The password is shown');
+  });
+
+  test('search demo: Enter reports the text and the source; the spinner ignores a second search', async ({ page }) => {
+    await open(page, 'components/input/');
+    const demo = demoOf(page, 'Search');
+    const field = demo.getByRole('searchbox', { name: 'Search', exact: true });
+    const status = demo.locator('.demo-pre').getByRole('status').first();
+    await field.fill('cats');
+    await field.press('Enter');
+    await expect(status).toHaveText('onsearch("cats", source: input)');
+    await expect(field.locator('xpath=..').locator('.ads-input-icon-loading')).toBeVisible();
+    await field.fill('dogs');
+    await field.press('Enter');
+    await expect(status).toHaveText('onsearch("cats", source: input)');
+    await expect(field.locator('xpath=..').locator('.ads-input-icon-loading')).toBeHidden({ timeout: 4000 });
+  });
+
+  test('one-time code demo: typing fills the cells and onchange reports the whole code', async ({ page }) => {
+    await open(page, 'components/input/');
+    const demo = demoOf(page, 'One-time code');
+    const group = demo.getByRole('group', { name: 'Verification code' });
+    await group.getByRole('textbox').first().click();
+    await page.keyboard.type('123456');
+    await expect(demo).toContainText('The code is "123456"');
+    await expect(demo.locator('.demo-pre').getByRole('status')).toContainText('onchange (all filled): "123456"');
+  });
+
+  test('autosize demo: the field grows with the text', async ({ page }) => {
+    await open(page, 'components/input/');
+    const demo = demoOf(page, 'Auto size');
+    const field = demo.getByRole('textbox', { name: 'Grows with the text' });
+    const before = (await field.boundingBox())!.height;
+    await field.fill('1\n2\n3\n4\n5\n6');
+    await expect.poll(async () => (await field.boundingBox())!.height).toBeGreaterThan(before + 40);
+  });
+
+  test('native demo: a form submits the text of its fields and reset clears them', async ({ page }) => {
+    await open(page, 'components/input/');
+    const demo = demoOf(page, 'Forms and native attributes');
+    await demo.getByRole('textbox', { name: 'Email' }).fill('ada@example.com');
+    await demo.getByLabel('New password').fill('secret');
+    await demo.getByRole('textbox', { name: 'About you' }).fill('Hello');
+    await demo.getByRole('button', { name: 'Save' }).click();
+    await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText(
+      'Submitted: [["email","ada@example.com"],["password","secret"],["about","Hello"],["age",""]]'
+    );
+    await demo.getByRole('button', { name: 'Reset' }).click();
+    await expect(demo.getByRole('textbox', { name: 'Email' })).toHaveValue('');
+    await expect(demo.getByRole('textbox', { name: 'About you' })).toHaveValue('');
   });
 });
 
