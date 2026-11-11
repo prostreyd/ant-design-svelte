@@ -321,6 +321,9 @@ const MATRIX_IDS = MATRIX_TYPES.flatMap((type) =>
 
 for (const theme of ['light', 'dark'] as const) {
   test.describe(`Button text contrast, ${theme} theme`, () => {
+    // 20 combinations with several browser commands each. WebKit needs about a second per combination.
+    test.describe.configure({ timeout: 120_000 });
+
     test.beforeEach(async ({ page }) => {
       await page.goto('/');
       await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -354,19 +357,19 @@ for (const theme of ['light', 'dark'] as const) {
       expect(failures).toEqual([]);
     });
 
-    test('keyboard focus: every combination reaches 4.5:1 and the ring is visible', async ({
-      page
-    }) => {
-      const failures: string[] = [];
+    test('keyboard focus: every combination reaches 4.5:1 and the ring is visible', async ({ page }) => {
       await page.keyboard.press('Tab');
-      for (const id of MATRIX_IDS) {
-        const button = page.getByTestId(id);
-        await button.focus();
-        const focusVisible = await button.evaluate((element) => element.matches(':focus-visible'));
-        const ratio = await contrastOf(page, id);
-        const ring = await button.evaluate((element) =>
-          (window as unknown as { __ringContrast(e: Element): number }).__ringContrast(element)
-        );
+      // One round trip for all combinations: the focus is moved and measured inside the page.
+      const results = await page.evaluate((ids) => {
+        const w = window as unknown as { __contrast(e: Element): number; __ringContrast(e: Element): number };
+        return ids.map((id) => {
+          const element = document.querySelector<HTMLElement>(`[data-testid="${id}"]`)!;
+          element.focus();
+          return { id, focusVisible: element.matches(':focus-visible'), ratio: w.__contrast(element), ring: w.__ringContrast(element) };
+        });
+      }, MATRIX_IDS);
+      const failures: string[] = [];
+      for (const { id, focusVisible, ratio, ring } of results) {
         if (!focusVisible) failures.push(`${id} not focus-visible`);
         if (ratio < 4.5) failures.push(`${id} text ${ratio.toFixed(2)}`);
         if (ring < 3) failures.push(`${id} ring ${ring.toFixed(2)}`);

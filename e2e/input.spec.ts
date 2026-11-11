@@ -435,13 +435,22 @@ test.describe('Input behavior in a real browser', () => {
     await expect(cells.nth(1)).toBeFocused();
   });
 
-  test('IME: the text is cut at the end of a composition, not in the middle of it', async ({ page, context }) => {
+  // The real IME pipeline can only be driven through the Chrome DevTools Protocol, which Firefox and WebKit do
+  // not have: that test is in `input-ime.chromium.spec.ts`. This one sends the composition events themselves,
+  // so every engine checks that the component cuts the text at the end of a composition.
+  test('IME (composition events): the text is cut at the end of a composition, not in the middle of it', async ({ page }) => {
     const field = page.getByTestId('in-ime');
-    const session = await context.newCDPSession(page);
     await field.focus();
-    await session.send('Input.imeSetComposition', { text: 'abcdef', selectionStart: 6, selectionEnd: 6 });
+    await field.evaluate((element) => {
+      const input = element as HTMLInputElement;
+      input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+      input.value = 'abcdef';
+      input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertCompositionText', data: 'abcdef', isComposing: true }));
+    });
     await expect(field).toHaveValue('abcdef');
-    await session.send('Input.insertText', { text: 'abcdef' });
+    await field.evaluate((element) => {
+      element.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: 'abcdef' }));
+    });
     await expect(field).toHaveValue('abc');
   });
 

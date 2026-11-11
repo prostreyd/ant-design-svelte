@@ -11,11 +11,12 @@ export default defineConfig({
     baseURL: 'http://localhost:4174',
     trace: 'retain-on-failure'
   },
+  // Every test runs in all three engines. A file named `*.chromium.spec.ts` is for something only Chromium can do
+  // (the Chrome DevTools Protocol) and is left out of the other two.
   projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] }
-    }
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] }, testIgnore: '**/*.chromium.spec.ts' },
+    { name: 'webkit', use: { ...devices['Desktop Safari'] }, testIgnore: '**/*.chromium.spec.ts' }
   ],
   webServer: {
     command: 'npx vite --config vite.e2e.config.ts',

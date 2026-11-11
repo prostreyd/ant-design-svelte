@@ -86,11 +86,18 @@ npm install
 npm run dev        # documentation site (SvelteKit, in docs/), with live reload
 npm test           # unit and accessibility tests of the library and of the site content (Vitest)
 npm run test:coverage
-npm run test:e2e   # library tests in a real browser (Playwright)
+npm run test:e2e   # library tests in Chromium, Firefox and WebKit (Playwright)
 npm run check      # svelte-check (type checking of the library)
 npm run check:docs # svelte-check of the documentation site
 npm run lint       # ESLint
 npm run package    # build dist/ with svelte-package
+```
+
+The browser tests run in Chromium, Firefox and WebKit. Install them once, and again after Playwright is
+updated (the builds belong to a version of Playwright):
+
+```sh
+npx playwright install chromium firefox webkit   # on Linux add --with-deps for the system packages
 ```
 
 The documentation site lives in `docs/` and imports the library from `src/lib`, so its examples

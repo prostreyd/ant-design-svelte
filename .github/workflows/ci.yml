@@ -15,7 +15,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -46,8 +46,18 @@ jobs:
         env:
           BASE_PATH: /ant-design-svelte
 
-      - name: Install the browser for e2e tests
-        run: npx playwright install --with-deps chromium
+      # The tests run in Chromium, Firefox and WebKit. The download is cached by the version of Playwright, so most
+      # runs only install the system packages.
+      - name: Cache the browsers of Playwright
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install the browsers for e2e tests
+        run: npx playwright install --with-deps chromium firefox webkit
+        timeout-minutes: 8
 
       - name: End-to-end tests of the library
         run: npm run test:e2e
