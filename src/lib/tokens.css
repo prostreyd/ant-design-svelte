@@ -91,6 +91,12 @@
   --ads-motion-ease: cubic-bezier(0.645, 0.045, 0.355, 1);
   --ads-motion-ease-out-back: cubic-bezier(0.12, 0.4, 0.29, 1.46);
 
+  /* Popup layers (internal popup primitive): the order of the Ant Design token table. */
+  --ads-popover-z-index: 1030;
+  --ads-dropdown-z-index: 1050;
+  --ads-tooltip-z-index: 1070;
+  --ads-popup-arrow-size: 8px;
+
   /* Switch */
   --ads-switch-height: 22px;
   --ads-switch-height-sm: 16px;
