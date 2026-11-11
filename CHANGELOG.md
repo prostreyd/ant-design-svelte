@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-11
+
 ### Added
 
 - `Input`, `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP` components: a text field family on native
