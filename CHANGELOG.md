@@ -18,6 +18,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   system color for disabled controls. Sizes and layout are unchanged. Browser tests switch the mode on in Chromium,
   Firefox and WebKit.
 
+### Tests
+
+- Real IME composition in Chromium (through the Chrome DevTools Protocol) is now also checked for a text area cut at the
+  end of a composition, for `InputSearch` (the Enter that confirms a composition does not search, the next one does),
+  and for `InputOTP` (a cell takes its character, or several, when the composition ends, and Backspace and the arrows
+  during a composition are left to the IME). No component changed.
+
 ### Documentation
 
 - `Input`: the documentation of `onchange` now says which event it receives. It is the native `input` event, or `compositionend`
