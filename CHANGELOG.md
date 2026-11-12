@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-12
+
 ### Fixed
 
 - `Switch` and `Checkbox` in forced-colors modes such as Windows High Contrast. The track and the handle of a switch and
