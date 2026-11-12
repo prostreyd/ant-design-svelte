@@ -1,10 +1,11 @@
 # Select specification
 
-Status: **agreed, workflow stage 2 is done** (2026-11-11). Decisions 1, 2, 3 and 5 were answered one by
-one; 4 and 6 to 10 were accepted with "давай" to the proposals shown. Implementation waits for the popup
-primitive. Nothing is implemented. Prerequisite: the popup primitive of [popup.md](popup.md) (approach B
-chosen on 2026-11-11, not built yet). Select is its first consumer, so this document also checks the
-contract of that primitive. Decision 11 (result count announcement, added 2026-11-12 after the WAI-ARIA audit) is open.
+Status: **agreed, workflow stage 2 is done** (2026-11-11); **implementation started 2026-11-12**. Decisions
+1, 2, 3 and 5 were answered one by one; 4 and 6 to 10 were accepted with "давай" to the proposals shown;
+decision 11 (result count announcement, added 2026-11-12 after the WAI-ARIA audit) was taken on 2026-11-12:
+option (b). Prerequisite: the popup primitive of [popup.md](popup.md) (approach B, built and tested on
+2026-11-11). Select is its first consumer, so this document also checked the contract of that primitive.
+"Implementation notes" at the end lists the details that were settled while writing the code.
 
 The comparison below uses public documentation, not implementation source code.
 
@@ -75,8 +76,8 @@ development. With a non-empty `options` the children of `Select` are ignored (th
 |---|---|---|---|
 | `value` | `SelectValue \| SelectValue[] \| undefined` (`$bindable`) | `undefined` | Single mode: one value; `multiple`/`tags`: an array, and `undefined` means `[]`. `undefined` and `null` mean "nothing selected": the placeholder shows. `bind:value` for two-way use; plain `value={x}` is an initial value (no `defaultValue`, the Switch rule). A function binding can refuse or delay a change. A value that matches no option is shown as its own text (ours). |
 | `mode` | `SelectMode` | single | `multiple` and `tags` take an array value; in `tags` a text that matches no option can be added as a value. `'default'` is the Angular name for single, accepted as an alias. |
-| `options` | `ReadonlyArray<SelectValue \| SelectOption \| SelectOptionGroup>` | `[]` | Values must be unique. Groups are entries with an `options` array. |
-| `fieldNames` | `{ label?: string; value?: string; options?: string; groupLabel?: string }` | `label`, `value`, `options`, `label` | Maps the keys of the objects in `options` (React 4.17.0, `groupLabel` 5.6.0; Vue the first three). |
+| `options` | `ReadonlyArray<SelectValue \| SelectOption \| SelectOptionGroup \| Record<string, unknown>>` | `[]` | Values must be unique. Groups are entries with an `options` array. The last form of the union is for `fieldNames`: objects whose keys are not `label` and `value` cannot be typed as `SelectOption`. |
+| `fieldNames` | `{ label?: string; value?: string; options?: string; groupLabel?: string }` | `label`, `value`, `options`, the key of `label` | Maps the keys of the objects in `options` (React 4.17.0, `groupLabel` 5.6.0; Vue the first three). `groupLabel` follows the mapped `label` key unless it is set (so a consumer who maps `label` once gets groups right). |
 | `placeholder` | `string \| Snippet` | — | Shown while nothing is selected. Not a label: the field still needs an accessible name. |
 | `disabled` | `boolean` | `false` | Not focusable, does not open; the clear button and the icons use the disabled colors. |
 | `loading` | `boolean` | `false` | A spinner replaces the arrow (the width does not change). `aria-busy="true"` (ours). The list stays usable. |
@@ -89,9 +90,9 @@ development. With a non-empty `options` the children of `Select` are ignored (th
 | `removeIcon`, `menuItemSelectedIcon`, `loadingIcon` | `string \| Snippet` | built-in | Custom icons: the remove button of a tag, the mark on a selected option in the list, the spinner (React 6.4.0 for the last; the first two are in all three libraries). |
 | `showSearch` | `boolean` | single `false`; `multiple`/`tags` `true` | Makes the focused element a text input. Flat search props, decision 3. |
 | `searchValue` | `string` (`$bindable`) | `''` | The current search text. |
-| `onsearch` | `(value: string) => void` | — | Called on every edit of the search text, also for a change made by a token separator. |
+| `onsearch` | `(value: string) => void` | — | Called on every edit of the search text, also for a change made by a token separator, and when the component clears the text (on close, on blur, after a selection with `autoClearSearchValue`): the server-side search of a consumer needs to see the reset. |
 | `filterOption` | `boolean \| ((input: string, option: SelectOption) => boolean)` | `true` | `true` filters by `optionFilterProp`; `false` leaves the list as given (server-side search; Angular `nzServerSearch`). |
-| `filterSort` | `(a: SelectOption, b: SelectOption) => number` | — | Orders the filtered options (React and Vue). |
+| `filterSort` | `(a: SelectOption, b: SelectOption, info: { searchValue: string }) => number` | — | Orders the filtered options (React and Vue; the third argument is React 5.19.0). |
 | `optionFilterProp` | `string \| string[]` | `'label'` | Which fields of an option the text is matched against (React `string[]` since 6.1.0). Default is decision 8. |
 | `autoClearSearchValue` | `boolean` | `true` | `multiple`/`tags` only: clear the search text after a selection. |
 | `maxTagCount` | `number` | — | `multiple`/`tags`: show this many tags, the rest collapse into a `+ N ...` tag. `'responsive'` is decision 2. |
@@ -103,6 +104,7 @@ development. With a non-empty `options` the children of `Select` are ignored (th
 | `optionRender` | `Snippet<[option: SelectOption, index: number]>` | — | Custom content of an option in the list (React 5.11.0, Vue `option` slot, Angular `nzCustomContent`). The selection keeps the plain label. |
 | `labelRender` | `Snippet<[option: SelectOption]>` | — | Custom content of the selected value in the field (React 5.15.0, Angular `nzCustomTemplate`). |
 | `notFoundContent` | `string \| Snippet` | `No data` | Shown in the panel when no option remains (the React text; Vue and Angular say `Not Found`: React is the reference). |
+| `resultsText` | `(count: number) => string` | `1 result`, `N results` | Text of the polite status line that announces the number of matches while searching (decision 11, ours; none of the three libraries has it). English like the other built-in texts. |
 | `open` | `boolean` (`$bindable`) | `false` | The list is shown. `bind:open` for controlled use. |
 | `onopenchange` | `(open: boolean) => void` | — | Called once per change of the open state caused by the user, not for a change made by the parent. |
 | `placement` | `'bottomLeft' \| 'bottomRight' \| 'topLeft' \| 'topRight'` | `'bottomLeft'` | Preferred side of the panel; it flips at the edge (popup R2). |
@@ -141,10 +143,12 @@ they throw a `RangeError` in development and tests and fall back to the default 
   in single mode closes the list and changes nothing (no callbacks).
 - **Search.** With `showSearch`, typing filters the list live; the first match is active (when
   `defaultActiveFirstOption`). The default filter is a case-insensitive "contains" on the fields named by
-  `optionFilterProp`. When nothing matches, the panel shows `notFoundContent` (in a `role="status"`
-  element, so it is announced). **On close or blur the search text is cleared and the selected label
-  shows again** (single mode) (ours; no library documents it). In `tags` mode, Enter on text that
-  matches no option adds it as a value.
+  `optionFilterProp`. When nothing matches, the panel shows `notFoundContent` (a screen reader hears the
+  same text from the status line, see A11y). **On close or blur the search text is cleared and the selected label
+  shows again** (single mode) (ours; no library documents it). In `tags` mode, Enter adds the typed text
+  as a value (an existing option when its text or value is equal), **unless the user moved the highlight
+  to an option with the arrow keys or the pointer: then Enter selects that option** (ours; React lists the
+  typed text as the first item of the list, which would add a row the list does not otherwise have).
 - **`tokenSeparators`.** `multiple`/`tags` only: typing or pasting `Lucy,Jack` with `,` as a separator
   turns each part into a value (an existing option's value, or a new tag in `tags`; in `multiple` a part
   that matches no option is dropped).
@@ -172,8 +176,16 @@ they throw a `RangeError` in development and tests and fall back to the default 
   `aria-activedescendant`).
 - **Closing.** Outside press, Escape, Tab, selecting in single mode, and blur close the list. `onopenchange`
   is called once per change.
+- **Loading** shows the spinner in the place of the suffix (the arrow, a custom `suffix`, or the
+  hidden slot of `suffix={null}`): the state has to be visible (ours).
+- **Selected mark.** The check mark of a selected option is shown in `multiple`/`tags` (as in the three
+  libraries); in single mode only when `menuItemSelectedIcon` is given. Its slot is always reserved, so a
+  selection never changes the width of the list.
 - **Clear.** The button keeps its place in the layout and is hidden with `visibility` while there is
   nothing to clear, so the field does not change size when it appears (the Input rule).
+- **Width.** The field fills its container like `Input` (`width: 100%`); a consumer sets the width with
+  `class` or `style` (ours; Ant Design sizes the field by its content, which makes it grow and shrink with
+  the selected label, against the rule below).
 - **Layout.** The field never changes size when it opens, closes or selects. Single mode: a long label is
   cut with an ellipsis, it never widens the field. `multiple`/`tags`: the field grows in height as tags
   wrap, never below the height of its size, and neighbours move only for that reason.
@@ -199,7 +211,17 @@ each other are marked.
   we follow the listbox page and mark the **selected** ones. This divergence is tested with axe.
 - **Name.** An accessible name is **required** and comes from the consumer: `<label for={id}>`,
   `aria-labelledby` or `aria-label` (the `id` is forwarded to the combobox element). The placeholder is not
-  a name. A group's name is its label.
+  a name. A group's name is its label. A `<div>` is not labelable, so a `<label for>` does not name it
+  natively: when the field is not searchable and has neither `aria-label` nor `aria-labelledby`, the labels
+  that point at its `id` are found when the field mounts and when it takes focus, and the field refers to
+  them by `aria-labelledby` (a label without an `id` gets one); a click on such a label focuses the field.
+  The listbox of the panel takes the name of the field (`aria-label`, `aria-labelledby`, the found labels,
+  or the field itself for a native `<label for>` of the `<input>`), because an unnamed listbox is a
+  violation.
+- **Value for assistive technology.** A searchable field's `<input>` holds the search text, not the
+  selection, so the selected text is exposed through `aria-describedby` (the consumer's ids, then a hidden
+  element with the selected texts). A non-searchable field holds the selection as its own text, as in the
+  select-only example of the APG.
 - **`status="error"`** sets `aria-invalid="true"`; `loading` sets `aria-busy="true"`; `disabled` is native
   on the `<input>` and `aria-disabled="true"` plus no `tabindex` on the `<div>`.
 - The arrow, search and loading icons are decorative (`aria-hidden`; React 6.7.0). The clear and remove
@@ -223,9 +245,16 @@ each other are marked.
 | Printable character (searchable) | opens and types | types and filters |
 | Backspace (empty search, `multiple`/`tags`) | removes the last tag | removes the last tag |
 
-- **Live region.** The empty-result text is `role="status"`; selecting a value does not need an extra
-  announcement (the combobox value changes). While searching, the number of matches is not announced yet:
-  see decision 11.
+- **Live region.** Selecting a value does not need an extra announcement (the combobox value changes). While
+  searching, one visually hidden live line in the panel (`aria-live="polite"` and `aria-atomic="true"`, with no
+  `role="status"`, see the implementation notes) says how many options match (`3 results`, or
+  what `resultsText` returns; decision 11), or, when nothing matches, the empty-result text (`No data`, the
+  `notFoundContent` text, read from the element, so a snippet works). The visible empty-result text is not a live
+  region of its own: a text that appears together with the panel (the list opens empty on the first key that matches
+  nothing) is not announced by a live region, so the status line carries it. The line is empty while the list is
+  closed or the search text is empty, it is written 300 ms after the list stopped changing (so a fast typist hears the
+  last message only, and the region exists before it first speaks), and during an IME composition nothing is written
+  until the composition ends.
 - **Forced colors** (Windows High Contrast, `forced-colors: active`; found on the Switch and the Checkbox on
   2026-11-12, where a state drawn only with a background disappeared): the system replaces backgrounds. The panel
   has a 1px border in this mode, the active option takes `Highlight` and `HighlightText`, the selected option
@@ -278,7 +307,8 @@ and the token's value was not read). Colors for the accessible set are our own, 
   `onSearch`, `searchValue`, `optionFilterProp`, `autoClearSearchValue`, `searchIcon`), which would
   accept the flat props as aliases; a locale mechanism for the built-in texts (`No data`, `Clear`,
   `Remove`), as in Input; `selectOnTab` (Tab selects the active option, Angular
-  `nzSelectOnTab`).
+  `nzSelectOnTab`); the announcement of an option that was toggled in a field that searches
+  (`selectionText`, decision 12).
 - **Не берём (Vue-only):** `autofocus` (call `focus()` after mount, the Switch rule); `bordered`
   (`variant`); `firstActiveValue` (set `value` or use `defaultActiveFirstOption`); `dropdownMenuStyle`
   (`styles.list`); the `mouseenter` and `mouseleave` events (native handlers are forwarded);
@@ -433,17 +463,30 @@ others (4 and 6 to 10) were proposals, accepted with "давай" the same day, 
     `allowClear.label` override two of them; the remove button's name has no override in v1.0. A locale
     mechanism for all of them is reserved for v1.1, as in Input (proposed). **TAKEN, as proposed.**
 
-11. **Result count announcement: OPEN** (added 2026-11-12 after the WAI-ARIA audit of the finished components
-    and of this specification). When a searchable Select filters its list and the active option does not move,
-    a screen reader user is not told that the list changed. Options. **(a, recommended)** A built-in polite
-    `role="status"` line inside the panel with the number of matches, for example `3 results`: English like the
-    other built-in texts (decision 10), localized by the v1.1 mechanism, updated after the filter settles and, during
-    an IME composition, only when the composition ends; no new prop. **(b)** The same, plus an override prop now,
-    `resultsText: (count: number) => string`. **(c)** Nothing: `notFoundContent` stays the only announcement.
-    The maintainer decides; the implementation waits for the answer.
+11. **Result count announcement: TAKEN, option (b), on 2026-11-12** (added the same day after the WAI-ARIA
+    audit of the finished components and of this specification). When a searchable Select filters its list
+    and the active option does not move, a screen reader user is not told that the list changed. Options were
+    (a) a built-in polite `role="status"` line in the panel with the number of matches, no new prop;
+    **(b) the same plus an override prop now, `resultsText: (count: number) => string`**; (c) nothing, with
+    `notFoundContent` as the only announcement. The maintainer chose (b). The line is English like the other
+    built-in texts (decision 10) and will be localized by the v1.1 mechanism; until then `resultsText` is the
+    way to translate it.
 
-Also still open in popup.md: decision 4 (point anchor, RTL mirroring) and decision 5 (internal, not
-exported). Select does not need the point anchor.
+12. **Announcing the toggling of an option in a field that searches: DEFERRED to v1.1, taken on 2026-11-12** (the
+    maintainer said "да" to the proposal). Orca announces a change of `aria-selected` only after the Space key, and in a
+    field that searches (the default of `multiple` and `tags`) Space types a space and Enter toggles, so Orca says nothing
+    when an option is toggled; the field reads the selected values when it gets focus. The React, Vue and Angular demos
+    are silent too (A11y, implementation notes). It is not done in v1.0 because it needs a built-in English text and a
+    way to translate it, which is the locale mechanism reserved for v1.1, and because NVDA, JAWS and VoiceOver have not
+    been tried: they may read the change of `aria-selected` themselves, and a built-in line would then say it twice.
+    **Name and contract reserved:** `selectionText?: (text: string, selected: boolean) => string` (default `<text>
+    selected` and `<text> removed`), written to the status line of the panel after the toggle, only in `multiple` and `tags`
+    while the field searches, never for a change made by the parent; additive, so no major version. Condition for
+    building it: a check of NVDA and VoiceOver by hand shows that it is needed. The
+    limitation is written in the README and on the page of the site until then.
+
+Decisions 4 and 5 of popup.md (point anchor and RTL mirroring; internal, not exported) were taken on
+2026-11-11. Select does not need the point anchor.
 
 ## Requirements this puts on the popup primitive
 
@@ -496,7 +539,7 @@ and the visual states in Playwright (`e2e/select.spec.ts`).
   duplicates are not added.
 - Search: the input appears with `showSearch` and by default in `multiple`/`tags`; filtering by
   `optionFilterProp`, a custom `filterOption`, `filterOption={false}`, `filterSort`; the first match is
-  active; `notFoundContent` is `role="status"`; the text is cleared on close and blur; `searchValue`
+  active; `notFoundContent` is shown when nothing matches; the text is cleared on close and blur; `searchValue`
   binding; `onsearch` per edit.
 - Open state: `open` and `bind:open`, `onopenchange` once per user change, not for a parent change;
   click, outside press, Escape, Tab, blur close it; a press on the clear or remove button does not open
@@ -539,8 +582,9 @@ and the visual states in Playwright (`e2e/select.spec.ts`).
 - Forced colors (`e2e/forced-colors.spec.ts`, three engines): with `forcedColors: 'active'` the panel border, the
   active option, the selected option and a disabled option stay visible and distinct, as for the Switch and the
   Checkbox.
-- Result count (only if decision 11 is taken): the status text with the number of matches follows the filter and is
-  cleared with the panel; during an IME composition nothing is announced per key.
+- Result count (decision 11): the status text with the number of matches follows the filter, uses
+  `resultsText` when given, is empty with no search text, with no match, and with the list closed;
+  during an IME composition nothing is announced per key.
 - Axe: closed, open, searching, multiple, groups, disabled, loading, error; an unnamed Select is reported.
 - Mutation testing: `npm run test:mutation -- --target=Select` once the component exists.
 
@@ -558,3 +602,72 @@ and the visual states in Playwright (`e2e/select.spec.ts`).
 - All code is independently authored for Svelte. Ant Design implementation source was not used, and no
   documentation text is copied. API inspired by Ant Design (MIT); the implementation is original for
   Svelte.
+
+## Implementation notes (2026-11-12)
+
+Details that were settled while writing the code. None of them changes a decision above; the ones that go beyond the
+text of the specification are marked **(addition)** and are in the tables above where they belong.
+
+- **Type names.** The type of an option object is **`SelectOptionItem`**, not `SelectOption`: a Svelte component also
+  declares a type of its own name, so the component `SelectOption` and the interface `SelectOption` cannot be exported
+  from one entry point. `SelectOptionGroup` (the group object) is unchanged. `options` also accepts
+  `Record<string, unknown>`, because objects mapped by `fieldNames` cannot be typed as `SelectOptionItem`.
+- **Options as markup.** `SelectOption` and `SelectOptGroup` register while they are created (so a server render has them)
+  into a plain array kept by the `Select`, with a counter as the only state: a registration and a removal in the same update
+  (a keyed block that replaces its items) lose the new item when the list is kept in state, because the teardown of a removed
+  item reads the state as it was before the creation of the new one wrote it. The order is read from an invisible marker each
+  option leaves, and again when a `MutationObserver` on the hidden area sees the markup change. The content of an option
+  (`children`) is drawn but never read as text: search uses `label`, then `title`, then the value (as in React and Vue,
+  where a `children` text needs `optionFilterProp="children"`).
+- **Keys that open the list.** ArrowDown highlights the selected option or the first; Enter and Space open with the highlight
+  that a click gives, so they respect `defaultActiveFirstOption`.
+- **Tags** (addition, written in Behavior): Enter adds the typed text unless the highlight was moved by the user.
+- **Search.** `onsearch` is also called when the component clears the text; `filterSort` gets `{ searchValue }` as a third
+  argument (React 5.19.0); `groupLabel` follows the mapped `label` key; the placeholder and the selected label stay in the
+  field, hidden with `visibility`, while text is typed over them, so the field keeps its height. In `multiple` the input is
+  sized by an invisible copy of its text, so the field grows by wrapped rows only.
+- **Name and value for assistive technology** (additions, written in A11y): the labels of `<label for>` are found for a field
+  that does not search; the listbox takes the name of the field; the selected text of a searchable field goes to
+  `aria-describedby`.
+- **Focus.** `onfocus` and `onblur` follow the field, its clear button and its panel as one: moving between them does not
+  call either. An input in `popupRender` takes focus without closing the list.
+- **Loading** shows the spinner in place of any suffix (addition, written in Behavior). The check mark of a selected option is
+  shown in `multiple` and `tags`, and in a single field only with `menuItemSelectedIcon` (addition).
+- **Layout.** The field fills its container (`width: 100%`), as `Input` does. Tags are 24, 32 and 16px high with 3px padding
+  around the row, so one row keeps the 32, 40 and 24px of the size. The clear button keeps its own slot (hidden with
+  `visibility`), so `clearBg` of the token table is not needed, and the 18px arrow reserve of the table is the
+  `--ads-select-gap` between the text and the icons.
+- **Not a native form control.** A Select does not submit with a `<form>`; read `value`. The specification did not ask for it.
+- **Not done in this version, as agreed:** `virtual`, `listItemHeight`, `maxTagCount="responsive"`, `labelInValue`, the object
+  form of `showSearch`, a locale mechanism, `selectOnTab`. The content of the list is not virtual, so a very long list renders
+  all its options.
+- **Not verified:** the component has not been tried with a real screen reader (NVDA, VoiceOver, JAWS) or on a touch device;
+  iOS VoiceOver is known to support `aria-activedescendant` weakly. The browser floor of the popup primitive (Chrome 89,
+  Firefox 85, Safari 15.4) has not been run.
+- **Checked with a real screen reader (Orca 50.3 with Chromium, 2026-11-12).** Orca was run in an isolated session (its own
+  X server and D-Bus, no sound), a script drove real X key events, and what Orca says was read from its debug log. It
+  matches the A11y section: the name from `<label for>` (also for the `<div>` field), `combo box` / `editable combo box`,
+  the value (the selected text; for a searchable field it comes through `aria-describedby`), `opens listbox`, `collapsed`,
+  `invalid entry`, the list with its name and the number of items (`multi-select List with 3 items`), each option with
+  `not selected`, group names (`Engineers`, `Scientists`), `selected` and `unselected` when Space toggles an option, the
+  disabled option skipped, the clear button, and `1 result` / `No data` while searching. Findings: (1) a change of the text of a
+  `role="status"` element is not read by Orca (it takes the element for the status bar of a browser and drops the event
+  before it looks at the live region, and when Chromium sends two events it merges them), so the status line is a plain
+  `aria-live="polite"` block, which every screen reader treats as the same thing; (2) an empty-result text that appears together
+  with the panel is not announced by any live region, so the status line (one line for both messages) says it; (3) Orca
+  announces a change of `aria-selected` only after the Space key, so in a field that searches (the default of `multiple` and
+  `tags`, where Space types a space and Enter toggles) nothing is said when an option is toggled; a built-in announcement
+  such as `Linus selected` would need a text of its own and a way to translate it (deferred to v1.1, decision 12). The tags are read with
+  the field (`Red Remove Red`), because the remove buttons are inside it. NVDA, JAWS and VoiceOver were not tried. The
+  harness is not in the repository.
+- **Compared with the public demos of Ant Design (black box, 2026-11-12).** The same Orca and the same real keys were run on the
+  demos of the documentation sites of the React (ant.design), Vue (antdv.com) and Angular (ng.ant.design) libraries, and only
+  what Orca says was recorded (no source was read; their demos have no accessible name, so names are not compared). React and
+  Vue: `combo box` or `editable combo box`, `opens listbox`, the selected values read with the field (`a10, c12`), the list
+  announced with its number of items and each option with `not selected`; toggling an option with Enter, removing a tag with
+  Backspace, and the number of matches and the empty result while searching are **silent**; the remove buttons are not in the
+  Tab order (Tab goes to the clear button). Angular: the field is a `read only entry` (single) or an `entry` (multiple), with no
+  role of a combobox, no list, no selected values and no state, and every step is silent (the state did change: the visible
+  text went from `a10` to `a10 b11`). So Select is at parity where they speak and ahead of all three on the number of matches and
+  the empty result; none of the four announces the toggling of an option in a field that searches. A built-in announcement for
+  it needs a text of its own and a way to translate it, so it belongs with the locale mechanism reserved for v1.1.

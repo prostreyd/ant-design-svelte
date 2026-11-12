@@ -9,6 +9,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- `Select`, `SelectOption` and `SelectOptGroup` components: a drop-down list in the modes single, `multiple` and `tags`,
+  with `options` (strings, numbers, objects, groups, `fieldNames`) or the options written as markup, search
+  (`showSearch`, `filterOption`, `filterSort`, `optionFilterProp`, `searchValue`, `onsearch`, `autoClearSearchValue`),
+  tags with `maxTagCount`, `maxTagPlaceholder`, `maxTagTextLength`, `maxCount` and `tokenSeparators`, `allowClear`,
+  `loading`, `size`, `variant`, `status`, `prefix`, `suffix`, custom icons, `optionRender`, `labelRender`, `tagRender`,
+  `popupRender`, `notFoundContent`, `placement`, `popupMatchSelectWidth`, `listHeight`, `container`, `bind:open` with
+  `onopenchange`, the callbacks `onselect`, `ondeselect`, `onclear`, `onfocus`, `onblur`, `onpopupscroll` and
+  `oninputkeydown`, `classNames` and `styles` (eleven parts), and the methods `focus()` and `blur()`. The focused element
+  is a `combobox` and DOM focus never leaves it; the list is a `listbox` in a panel that is put at the end of the page,
+  flips at the edge of the screen and follows the field. Full keyboard support (arrows, Home, End, PageUp, PageDown,
+  Enter, Space, Escape, Tab, Backspace, type-ahead), a polite live line that says the number of matches, or the
+  empty-result text, while searching (`resultsText`), forced-colors support, light and dark themes. The type of an option object is `SelectOptionItem`.
+  Planned later and reserved: `virtual`, `listItemHeight`, `maxTagCount="responsive"`, `labelInValue`, `showSearch` as an
+  object, a locale mechanism for the built-in texts, `selectOnTab`, `selectionText` (an announcement of an option that was
+  toggled in a field that searches). Known limitation until then: Orca says nothing when an option is toggled with Enter in
+  such a field.
+- The `--ads-select-*` design tokens, and group label and empty-result colors in `tokens-accessible.css`.
+- A page for `Select` on the documentation site, in English, Russian and Chinese, with thirteen live examples, the API
+  tables of the three components, the methods and the tokens.
+
+### Tests
+
+- `Select` was run with a real screen reader (Orca 50.3 with Chromium, real key events, in an isolated session) and its
+  speech was checked: the name, the role, the value, the open list and its items, groups, `selected` and `unselected`, the
+  clear button, an invalid state, and the number of matches and the empty-result text while searching. That found two
+  defects, now fixed: Orca does not read a change of the text of a `role="status"` element, and an empty-result text that
+  appears together with the list is not announced by a live region; the search status line is now a plain polite live
+  region that says both. Mutation testing of `Select` (294 mutants) has a score of 100%.
+- The tests of the library and of the site check `Select` in Chromium, Firefox and WebKit: the sizes, the layout while
+  opening, closing, selecting, loading and clearing (with labels of different width, frame by frame during the
+  animations), the panel, the keyboard, tags, forced colors and the page of the site.
+
 ## [0.4.1] - 2026-11-12
 
 ### Fixed
