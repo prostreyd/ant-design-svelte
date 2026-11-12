@@ -230,6 +230,8 @@ test.describe('home page', () => {
 
 test.describe('Button page', () => {
   test('every example is the real component and shows its own source', async ({ page }) => {
+    // A loop over every example with several browser commands each: WebKit needs about three times the default time.
+    test.slow();
     await open(page, 'components/button/');
     const examples = page.locator('section.demo');
     await expect(examples).toHaveCount(demos.length);
@@ -320,6 +322,8 @@ test.describe('Switch page', () => {
   const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
 
   test('every example is the real component and shows its own source', async ({ page }) => {
+    // A loop over every example with several browser commands each: WebKit needs about three times the default time.
+    test.slow();
     await open(page, 'components/switch/');
     const examples = page.locator('section.demo');
     await expect(examples).toHaveCount(switchDemos.length);
@@ -483,6 +487,8 @@ test.describe('Input page', () => {
   }
 
   test('every example is the real component and shows its own source', async ({ page }) => {
+    // A loop over every example with several browser commands each: WebKit needs about three times the default time.
+    test.slow();
     await open(page, 'components/input/');
     const examples = page.locator('section.demo');
     await expect(examples).toHaveCount(inputDemos.length);
@@ -578,14 +584,27 @@ test.describe('Input page', () => {
     const demo = demoOf(page, 'Search');
     const field = demo.getByRole('searchbox', { name: 'Search', exact: true });
     const status = demo.locator('.demo-pre').getByRole('status').first();
+    const spinner = field.locator('xpath=..').locator('.ads-input-icon-loading');
     await field.fill('cats');
-    await field.press('Enter');
+    // The demo "searches" for 1.5 seconds. Both Enter presses go in one round trip, so the second one lands inside
+    // that time in every engine (WebKit needs about 300 ms per command and the test used to miss the window).
+    const spinnerShown = await field.evaluate(async (element) => {
+      const input = element as HTMLInputElement;
+      const frame = () => new Promise<void>((done) => requestAnimationFrame(() => done()));
+      const enter = () => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true }));
+      enter();
+      await frame();
+      const shown = input.parentElement!.querySelector('.ads-input-icon-loading') !== null;
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'dogs');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      await frame();
+      enter();
+      return shown;
+    });
+    expect(spinnerShown).toBe(true);
     await expect(status).toHaveText('onsearch("cats", source: input)');
-    await expect(field.locator('xpath=..').locator('.ads-input-icon-loading')).toBeVisible();
-    await field.fill('dogs');
-    await field.press('Enter');
+    await expect(spinner).toBeHidden({ timeout: 4000 });
     await expect(status).toHaveText('onsearch("cats", source: input)');
-    await expect(field.locator('xpath=..').locator('.ads-input-icon-loading')).toBeHidden({ timeout: 4000 });
   });
 
   test('one-time code demo: typing fills the cells and onchange reports the whole code', async ({ page }) => {
@@ -628,6 +647,8 @@ test.describe('Checkbox page', () => {
   const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
 
   test('every example is the real component and shows its own source', async ({ page }) => {
+    // A loop over every example with several browser commands each: WebKit needs about three times the default time.
+    test.slow();
     await open(page, 'components/checkbox/');
     const examples = page.locator('section.demo');
     await expect(examples).toHaveCount(checkboxDemos.length);
