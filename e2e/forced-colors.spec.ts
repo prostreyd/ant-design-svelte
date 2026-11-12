@@ -119,3 +119,56 @@ test.describe('Forced colors (Windows High Contrast)', () => {
     expect(bar).not.toBe(await computed(boxOf('cb-indeterminate', page), 'background-color', '::after'));
   });
 });
+
+test.describe('Select in forced colors', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+    await page.goto('/#select');
+    await expect(page.getByTestId('size-medium')).toBeVisible();
+    expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
+  });
+
+  const rootOf = (field: Locator) =>
+    field.locator('xpath=ancestor::div[contains(concat(" ", normalize-space(@class), " "), " ads-select ")][1]');
+  const panelOf = (page: Page) => page.locator('.ads-popup:not([hidden])').last();
+
+  test('the focused field and the open field draw an outline, because the border color is not what the system shows', async ({ page }) => {
+    const field = page.getByTestId('size-medium');
+    const canvas = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    expect(await computed(rootOf(field), 'outline-style')).toBe('none');
+    await field.focus();
+    expect(await computed(rootOf(field), 'outline-style')).toBe('solid');
+    expect(await computed(rootOf(field), 'outline-width')).toBe('2px');
+    expect(await computed(rootOf(field), 'outline-color')).not.toBe(canvas);
+  });
+
+  test('the panel has a border; a highlighted option takes the system highlight; the selected option has a bar; a disabled option is gray', async ({ page }) => {
+    const canvas = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    await page.getByTestId('single').click();
+    const panel = panelOf(page).locator('.ads-select-popup');
+    expect(await computed(panel, 'border-top-width')).toBe('1px');
+    expect(await computed(panel, 'border-top-color')).not.toBe(canvas);
+    const options = panelOf(page).getByRole('option');
+    // The first option is highlighted when the list opens.
+    const active = options.nth(0);
+    const plain = options.nth(1);
+    expect(await computed(active, 'background-color')).not.toBe(canvas);
+    expect(await computed(active, 'color')).not.toBe(await computed(plain, 'color'));
+    expect(await computed(plain, 'background-color')).not.toBe(await computed(active, 'background-color'));
+    expect(await computed(options.nth(3), 'color')).not.toBe(await computed(plain, 'color'));
+    await page.keyboard.press('Escape');
+    await page.getByTestId('set-sad').click();
+    await page.getByTestId('single').click();
+    const selected = panelOf(page).getByRole('option').nth(1);
+    const unselected = panelOf(page).getByRole('option').nth(2);
+    expect(await computed(selected, 'border-inline-start-color')).not.toBe(await computed(unselected, 'border-inline-start-color'));
+    expect(await computed(selected, 'border-inline-start-width')).toBe('3px');
+  });
+
+  test('a tag is outlined, so it is a visible chip without its background', async ({ page }) => {
+    const tag = rootOf(page.getByTestId('multiple')).locator('.ads-select-tag').first();
+    const canvas = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    expect(await computed(tag, 'border-top-width')).toBe('1px');
+    expect(await computed(tag, 'border-top-color')).not.toBe(canvas);
+  });
+});
