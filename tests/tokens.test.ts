@@ -174,6 +174,27 @@ describe('default light tokens', () => {
     '--ads-input-line-height': '1.5714285714285714',
     '--ads-input-line-height-lg': '1.5',
     '--ads-input-gap': '4px',
+    // Select (React token table, read 2026-11-12): the option, the multiple tag, the panel.
+    '--ads-select-option-height': '32px',
+    '--ads-select-option-font-size': '14px',
+    '--ads-select-option-line-height': '1.5714285714285714',
+    '--ads-select-option-padding-block': '5px',
+    '--ads-select-option-padding-inline': '12px',
+    '--ads-select-option-active-bg': 'rgba(0, 0, 0, 0.04)',
+    '--ads-select-option-selected-bg': '#e6f4ff',
+    '--ads-select-option-selected-color': 'rgba(0, 0, 0, 0.88)',
+    '--ads-select-selected-font-weight': '600',
+    '--ads-select-tag-bg': 'rgba(0, 0, 0, 0.06)',
+    '--ads-select-tag-border': 'transparent',
+    '--ads-select-tag-color-disabled': 'rgba(0, 0, 0, 0.25)',
+    '--ads-select-tag-height': '24px',
+    '--ads-select-tag-height-lg': '32px',
+    '--ads-select-tag-height-sm': '16px',
+    '--ads-select-popup-bg': '#ffffff',
+    '--ads-select-popup-radius': '8px',
+    '--ads-select-option-radius': '4px',
+    '--ads-select-group-label-color': 'rgba(0, 0, 0, 0.45)',
+    '--ads-dropdown-z-index': '1050',
     '--ads-motion-duration-fast': '0.1s',
     '--ads-motion-duration-slow': '0.3s',
     '--ads-motion-ease-out-back': 'cubic-bezier(0.12, 0.4, 0.29, 1.46)'
@@ -201,8 +222,8 @@ describe('accessible tokens (tokens-accessible.css)', () => {
     for (const token of accessible.keys()) expect(light.has(token), token).toBe(true);
   });
 
-  it('changes the -solid, -text, link, switch, checkbox and input tokens, and nothing else', () => {
-    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover))$/;
+  it('changes the -solid, -text, link, switch, checkbox, input and select tokens, and nothing else', () => {
+    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color))$/;
     for (const token of accessible.keys()) expect(token, token).toMatch(allowed);
   });
 
@@ -379,6 +400,70 @@ describe('input tokens: contrast', () => {
 
   it('the dark theme defines the colours of the input again', () => {
     for (const token of [...light.keys()].filter((name) => name.startsWith('--ads-input-') && !/(font-size|padding|radius|border-width|line-height|gap|icon-size|addon-padding|otp-gap)/.test(name))) {
+      expect(dark.has(token), token).toBe(true);
+    }
+  });
+});
+
+describe('select tokens: contrast', () => {
+  /** The colors the panel paints over the page: its own background, then the translucent layers of a row or a tag. */
+  function surface(tokens: Map<string, string>, ...layers: string[]): Rgba {
+    return layers.reduce(
+      (below, layer) => over(parse(tokens.get(layer)!), below),
+      over(parse(tokens.get('--ads-select-popup-bg')!), { r: 255, g: 255, b: 255, a: 1 })
+    );
+  }
+
+  function contrast(tokens: Map<string, string>, foreground: string, ...layers: string[]): number {
+    const background = surface(tokens, ...layers);
+    const color = over(parse(tokens.get(foreground)!), background);
+    const [hi, lo] = [luminance(color), luminance(background)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+
+  /** What a row of the list can be: plain, highlighted, selected. */
+  const rows: Array<[string, string[]]> = [
+    ['a plain row', []],
+    ['the highlighted row', ['--ads-select-option-active-bg']],
+    ['the selected row', ['--ads-select-option-selected-bg']]
+  ];
+
+  it('the default light group label and empty-result text are below 4.5:1, which is why the accessible file darkens them', () => {
+    expect(contrast(light, '--ads-select-group-label-color')).toBeLessThan(4.5);
+    expect(contrast(light, '--ads-select-empty-color')).toBeLessThan(4.5);
+  });
+
+  for (const [theme, tokens] of [['light with the accessible file', lightAccessible], ['dark', darkTheme]] as const) {
+    describe(theme, () => {
+      it('the group label and the empty-result text reach 4.5:1 on the panel', () => {
+        expect(contrast(tokens, '--ads-select-group-label-color'), 'group label').toBeGreaterThanOrEqual(4.5);
+        expect(contrast(tokens, '--ads-select-empty-color'), 'empty').toBeGreaterThanOrEqual(4.5);
+      });
+
+      for (const [name, layers] of rows) {
+        it(`the text of an option reaches 4.5:1 on ${name}`, () => {
+          expect(contrast(tokens, '--ads-color-text', ...layers)).toBeGreaterThanOrEqual(4.5);
+        });
+      }
+
+      it('the text of the selected option reaches 4.5:1 on the selected row', () => {
+        expect(contrast(tokens, '--ads-select-option-selected-color', '--ads-select-option-selected-bg')).toBeGreaterThanOrEqual(4.5);
+      });
+
+      it('the text of a tag reaches 4.5:1 on the tag, and its remove icon, also on hover, 3:1', () => {
+        expect(contrast(tokens, '--ads-color-text', '--ads-select-tag-bg')).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(tokens, '--ads-input-icon-color', '--ads-select-tag-bg'), 'icon').toBeGreaterThanOrEqual(3);
+        expect(contrast(tokens, '--ads-input-icon-color-hover', '--ads-select-tag-bg'), 'icon on hover').toBeGreaterThanOrEqual(3);
+      });
+
+      it('the mark of a selected option reaches 3:1 on the selected row', () => {
+        expect(contrast(tokens, '--ads-color-text', '--ads-select-option-selected-bg')).toBeGreaterThanOrEqual(3);
+      });
+    });
+  }
+
+  it('the dark theme defines the colors of the select again', () => {
+    for (const token of [...light.keys()].filter((name) => /^--ads-select-.*(bg|color|border|shadow)$/.test(name))) {
       expect(dark.has(token), token).toBe(true);
     }
   });

@@ -215,6 +215,53 @@
   --ads-input-warning-hover: #ffc53d;
   --ads-input-warning-shadow: 0 0 0 2px rgba(255, 215, 5, 0.1);
   --ads-input-warning-bg: #fffbe6;
+
+  /*
+   * Select: the dimensions and colors of the Ant Design token tables (read 2026-11-12). The field itself reads
+   * the Input tokens (the same box, border, states and sizes). `--ads-select-gap` is the distance between the
+   * text and the arrow (the 18px the documentation reserves minus the 12px icon).
+   */
+  --ads-select-icon-size: 12px;
+  --ads-select-gap: 6px;
+  --ads-select-multiple-padding-block: 3px;
+  --ads-select-multiple-padding-inline: 4px;
+  --ads-select-tag-height: 24px;
+  --ads-select-tag-height-lg: 32px;
+  --ads-select-tag-height-sm: 16px;
+  --ads-select-tag-radius: 4px;
+  --ads-select-tag-gap: 4px;
+  --ads-select-tag-padding-start: 8px;
+  --ads-select-tag-padding-end: 4px;
+  --ads-select-tag-remove-size: 10px;
+  --ads-select-popup-padding: 4px;
+  --ads-select-popup-radius: 8px;
+  --ads-select-option-radius: 4px;
+  --ads-select-option-height: 32px;
+  --ads-select-option-font-size: 14px;
+  --ads-select-option-line-height: 1.5714285714285714;
+  --ads-select-option-padding-block: 5px;
+  --ads-select-option-padding-inline: 12px;
+  --ads-select-option-gap: 2px;
+  --ads-select-selected-font-weight: 600;
+  --ads-select-group-font-size: 12px;
+
+  /*
+   * Select colors. In the light theme the values are the ones of the Ant Design token documentation. They do
+   * not reach WCAG for text: the group label and the empty-result text are `colorTextDescription` (3.4:1 against
+   * white, 4.5:1 is needed). `tokens-accessible.css` darkens them. The dark theme below keeps the ratios.
+   */
+  --ads-select-popup-bg: #ffffff;
+  --ads-select-popup-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  --ads-select-option-active-bg: rgba(0, 0, 0, 0.04);
+  --ads-select-option-selected-bg: #e6f4ff;
+  --ads-select-option-selected-color: rgba(0, 0, 0, 0.88);
+  --ads-select-tag-bg: rgba(0, 0, 0, 0.06);
+  --ads-select-tag-border: transparent;
+  --ads-select-tag-color-disabled: rgba(0, 0, 0, 0.25);
+  --ads-select-group-label-color: rgba(0, 0, 0, 0.45);
+  --ads-select-empty-color: rgba(0, 0, 0, 0.45);
 }
 
 :root[data-theme='dark'] {
@@ -309,4 +356,18 @@
   --ads-input-warning-hover: #ffc53d;
   --ads-input-warning-shadow: 0 0 0 2px rgba(250, 173, 20, 0.2);
   --ads-input-warning-bg: #2b2111;
+
+  /* The dark theme of Ant Design: an elevated panel one step lighter than the page. */
+  --ads-select-popup-bg: #1f1f1f;
+  --ads-select-popup-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.32), 0 3px 6px -4px rgba(0, 0, 0, 0.48),
+    0 9px 28px 8px rgba(0, 0, 0, 0.2);
+  --ads-select-option-active-bg: rgba(255, 255, 255, 0.08);
+  --ads-select-option-selected-bg: #111a2c;
+  --ads-select-option-selected-color: rgba(255, 255, 255, 0.88);
+  --ads-select-tag-bg: rgba(255, 255, 255, 0.08);
+  --ads-select-tag-border: transparent;
+  --ads-select-tag-color-disabled: rgba(255, 255, 255, 0.3);
+  --ads-select-group-label-color: rgba(255, 255, 255, 0.55);
+  --ads-select-empty-color: rgba(255, 255, 255, 0.55);
 }
