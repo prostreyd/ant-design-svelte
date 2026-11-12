@@ -144,6 +144,9 @@ Inside a `CheckboxGroup`:
   indeterminate bar against the box and the focus ring reach 3:1 in the rest, hover and pressed
   states. The label text keeps 4.5:1 (`--ads-color-text`). The default light set is Ant Design's
   own and its unchecked border does not reach 3:1 (see "Colors").
+- **Forced colors** (Windows High Contrast, `forced-colors: active`): the system replaces backgrounds. The bar of an
+  indeterminate box is a background, so it takes `ButtonText` in that mode (otherwise the box looked unchecked);
+  the check mark is a border and keeps showing; a disabled box, its mark or bar and its label use `GrayText`.
 - `prefers-reduced-motion: reduce` disables the border transition and the check mark animation.
 - Positions use logical properties: the box is at the inline start and the text after it, so the
   control mirrors in right-to-left layouts (e2e).
@@ -390,6 +393,7 @@ Browser (Playwright, `e2e/checkbox.spec.ts`):
   control nor the position of the next sibling, with labels of different lengths and without a
   label; the items of a group keep their positions when one toggles.
 - Right-to-left: the box is at the inline start and the text after it.
+- Forced colors (`e2e/forced-colors.spec.ts`, Chromium, Firefox and WebKit): with `forcedColors: 'active'` the bar of an indeterminate box differs from the box, checked, unchecked and indeterminate stay apart, and a disabled box, its bar and its label use another color.
 - Mutation testing: `npm run test:mutation -- --target=Checkbox` mutates `Checkbox.svelte` and runs
   `tests/Checkbox.test.ts` and `tests/CheckboxGroup.test.ts`; `-- --target=Checkbox --file=CheckboxGroup` does the
   same for `CheckboxGroup.svelte`. Current result: Checkbox 100% (54 of 54 killed), CheckboxGroup 100% (24 of 24).

@@ -156,6 +156,7 @@ It darkens the unchecked border (`#737373`) and the checked hover fill (`#0958d9
 - A group has `role="group"`; name it with `aria-label` or `aria-labelledby`, or wrap it in a `<fieldset>` with a `<legend>`.
 - A visible `:focus-visible` outline from the design tokens around the box, at least 3:1 against the page.
 - The border, the check mark, the bar and the focus ring keep at least 3:1 contrast, and the label text 4.5:1, in every state: in the dark theme, and in the light theme when `tokens-accessible.css` is imported (see Colors).
+- In forced-colors modes such as Windows High Contrast the bar of an indeterminate box is drawn in the text color, so it still differs from an unchecked box, and a disabled checkbox uses the disabled color.
 - Under `prefers-reduced-motion: reduce` the transitions are disabled.
 - Positions use logical properties, so the checkbox mirrors in right-to-left layouts. Toggling `checked`, `indeterminate` or `disabled` never changes the size of the control or moves its neighbours.
 

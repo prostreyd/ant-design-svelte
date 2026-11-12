@@ -315,6 +315,33 @@
     --_bar: var(--ads-checkbox-disabled-check-color);
   }
 
+  /*
+   * Forced colors (Windows High Contrast): the system replaces the author's backgrounds, and the bar of an
+   * indeterminate box is a background, so it would vanish and the box would look unchecked. The bar and the
+   * disabled parts take system colors. The check mark is a border and keeps showing.
+   */
+  @media (forced-colors: active) {
+    .ads-checkbox-indeterminate .ads-checkbox-icon::after {
+      background-color: ButtonText;
+    }
+
+    .ads-checkbox-disabled {
+      color: GrayText;
+    }
+
+    .ads-checkbox-disabled .ads-checkbox-icon {
+      border-color: GrayText;
+    }
+
+    .ads-checkbox-disabled .ads-checkbox-icon::after {
+      border-color: GrayText;
+    }
+
+    .ads-checkbox-disabled.ads-checkbox-indeterminate .ads-checkbox-icon::after {
+      background-color: GrayText;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .ads-checkbox-icon,
     .ads-checkbox-icon::after {
