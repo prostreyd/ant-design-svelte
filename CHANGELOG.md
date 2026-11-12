@@ -17,8 +17,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   an outlined off track, a `Highlight` on track, a handle in the text color, the bar in the text color, and the disabled
   system color for disabled controls. Sizes and layout are unchanged. Browser tests switch the mode on in Chromium,
   Firefox and WebKit.
+- Documentation site: the four copy buttons (home page, examples, code blocks, install commands) announced "Copied" even when
+  the browser refused to write to the clipboard. They now report the real outcome and say "Copy failed" when it failed, in
+  English, Russian and Chinese.
 
 ### Tests
+
+- The browser tests of the library and of the documentation site now run in Chromium, Firefox and WebKit, locally and in CI,
+  which installs the three browsers. Tests that were slow in WebKit got longer timeouts or fewer browser round trips, and the
+  test that needs the Chrome DevTools Protocol stays in Chromium only. None of the changes was a defect of a component.
 
 - Real IME composition in Chromium (through the Chrome DevTools Protocol) is now also checked for a text area cut at the
   end of a composition, for `InputSearch` (the Enter that confirms a composition does not search, the next one does),
