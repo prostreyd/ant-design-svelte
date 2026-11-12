@@ -108,6 +108,7 @@ theme needs no extra file.
 - A loading switch is not natively disabled: it keeps keyboard focus when loading starts, exposes `aria-busy="true"` and `aria-disabled="true"`, and ignores clicks, Enter and Space. A disabled switch is natively disabled.
 - A visible `:focus-visible` outline from the design tokens, at least 3:1 against the page.
 - The track and the handle keep at least 3:1 contrast, and the on/off text 4.5:1, in every state: in the dark theme, and in the light theme when `tokens-accessible.css` is imported (see Colors). For that the accessible light set has a darker off track and does not dim a loading switch.
+- In forced-colors modes such as Windows High Contrast the switch is drawn with system colors: an outlined track when off, a `Highlight` track when on, a disabled switch in the disabled color.
 - Under `prefers-reduced-motion: reduce`, transitions are disabled and the spinner turns more slowly.
 - Positions use logical properties, so the switch mirrors in right-to-left layouts.
 

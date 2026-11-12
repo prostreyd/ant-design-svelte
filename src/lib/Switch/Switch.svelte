@@ -302,6 +302,75 @@
     }
   }
 
+  /*
+   * Forced colors (Windows High Contrast): the system replaces the author's backgrounds, and the track and the
+   * handle are both backgrounds, so the switch would vanish. The state is drawn with system colors instead: an
+   * outlined track and a handle in the text color when off, a Highlight track and a HighlightText handle when on.
+   * Opacity is dropped, so the disabled color alone says that a switch is unavailable. The 1px border is
+   * compensated in the handle offsets, so the handle keeps its place and the size of the switch does not change.
+   */
+  @media (forced-colors: active) {
+    .ads-switch {
+      --_track: Canvas;
+      --_track-hover: Canvas;
+      --_track-active: Canvas;
+
+      border: 1px solid ButtonText;
+      color: ButtonText;
+      opacity: 1;
+    }
+
+    .ads-switch-checked {
+      --_track: Highlight;
+      --_track-hover: Highlight;
+      --_track-active: Highlight;
+
+      border-color: Highlight;
+      color: HighlightText;
+    }
+
+    /* Chromium puts a Canvas backplate behind forced text; white text on the Highlight track would vanish on it. */
+    .ads-switch-content {
+      forced-color-adjust: none;
+    }
+
+    .ads-switch-indicator {
+      top: calc(var(--ads-switch-padding) - 1px);
+      inset-inline-start: calc(var(--ads-switch-padding) - 1px);
+      background-color: ButtonText;
+      box-shadow: none;
+    }
+
+    .ads-switch-checked .ads-switch-indicator {
+      inset-inline-start: calc(100% - var(--_handle) - var(--ads-switch-padding) + 1px);
+      background-color: HighlightText;
+    }
+
+    .ads-switch-disabled,
+    .ads-switch-loading {
+      opacity: 1;
+    }
+
+    .ads-switch-disabled {
+      --_track: Canvas;
+
+      border-color: GrayText;
+      color: GrayText;
+    }
+
+    .ads-switch-disabled .ads-switch-indicator {
+      background-color: GrayText;
+    }
+
+    .ads-switch-disabled.ads-switch-checked {
+      --_track: GrayText;
+    }
+
+    .ads-switch-disabled.ads-switch-checked .ads-switch-indicator {
+      background-color: Canvas;
+    }
+  }
+
   /* Honour the OS "reduce motion" setting: no transitions, a slower spinner. */
   @media (prefers-reduced-motion: reduce) {
     .ads-switch,

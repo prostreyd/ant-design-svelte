@@ -92,6 +92,14 @@ development and tests, and falls back to `medium` in a production build.
   pressed are slightly darker, not lighter: a lighter track would lose contrast against the white
   handle. The default light set is Ant Design's own and does not reach these ratios (see "Colors").
   Disabled switches are exempt, as in WCAG.
+- **Forced colors** (Windows High Contrast, `forced-colors: active`): the system replaces backgrounds, and the
+  track and the handle are backgrounds, so they are drawn with system colors in that mode: an off track is `Canvas`
+  with a 1px `ButtonText` border and a `ButtonText` handle, an on track is `Highlight` with a `HighlightText` handle
+  and text, a disabled switch uses `GrayText` and is not dimmed. The border is compensated in the handle offsets, so
+  the handle keeps its place and the size does not change. The text opts out of the adjustment
+  (`forced-color-adjust: none`), because Chromium would put a page-colored backplate behind it and hide the
+  `HighlightText` of an on switch; WebKit does not know the property and has no backplate. Found 2026-11-11: before
+  this the switch vanished in that mode.
 - `prefers-reduced-motion: reduce` disables the handle and track transitions and slows the spinner
   (`--ads-motion-duration-spinner-reduced`).
 - Axe checks cover named switches in every state; an unnamed switch is reported (negative check).
@@ -259,6 +267,7 @@ Each item is at least one test; the test name is the item.
   design tokens; a contrast matrix (state x light/dark) checks track and handle contrast >= 3:1 and
   the focus ring >= 3:1.
 - The internal `classNames`/`styles` helper has its own unit tests.
+- Forced colors (`e2e/forced-colors.spec.ts`, Chromium, Firefox and WebKit): with `forcedColors: 'active'` the off track is outlined and the on track filled, the handle differs from the track in both states and in both sizes, on and off differ, the handle gap is the same on every side, a disabled switch is not dimmed and uses another color, and the text of an on switch differs from the track and is opted out of the backplate where the engine knows the property.
 - Mutation testing: `npm run test:mutation -- --target=Switch` applies one mutation at a time to
   `Switch.svelte` and runs `tests/Switch.test.ts`. Current result: 100% (53 of 53 killed). The score
   depends on the code around each mutation, so re-run it after editing the component.
