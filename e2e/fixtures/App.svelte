@@ -208,6 +208,9 @@
   <div class="field">
     <Input data-testid="in-ime" aria-label="IME" count={{ max: 3, exceedFormatter: (value, { max }) => [...value].slice(0, max).join('') }} />
   </div>
+  <div class="field">
+    <InputTextArea data-testid="ta-ime" aria-label="Text area IME" count={{ max: 3, exceedFormatter: (value, { max }) => [...value].slice(0, max).join('') }} />
+  </div>
 </section>
 <output data-testid="search-log">{searchLog}</output>
 <output data-testid="otp-value">{otpValue}</output>
