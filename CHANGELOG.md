@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-12
+
 ### Added
 
 - `Select`, `SelectOption` and `SelectOptGroup` components: a drop-down list in the modes single, `multiple` and `tags`,
