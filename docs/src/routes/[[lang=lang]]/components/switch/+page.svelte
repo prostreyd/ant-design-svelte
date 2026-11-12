@@ -126,4 +126,5 @@
   <li><T k="sw.a2" /></li>
   <li><T k="sw.a3" /></li>
   <li><T k="sw.a4" /></li>
+  <li><T k="sw.a5" /></li>
 </ul>
