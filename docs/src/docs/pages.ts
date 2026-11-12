@@ -34,6 +34,7 @@ export const componentPages: PageDef[] = [
   { path: '/components/button/', section: 'components', title: 'b.title', description: 'seo.button' },
   { path: '/components/checkbox/', section: 'components', title: 'cb.title', description: 'seo.checkbox' },
   { path: '/components/input/', section: 'components', title: 'in.title', description: 'seo.input' },
+  { path: '/components/select/', section: 'components', title: 'sel.title', description: 'seo.select' },
   { path: '/components/switch/', section: 'components', title: 'sw.title', description: 'seo.switch' }
 ];
 
@@ -80,7 +81,7 @@ export const componentGroups: ComponentGroup[] = [
       { name: 'Checkbox', note: 'n.checkbox', phase: 'now', path: '/components/checkbox/' },
       { name: 'Radio', note: 'n.radio', phase: 'next' },
       { name: 'Switch', note: 'n.switch', phase: 'now', path: '/components/switch/' },
-      { name: 'Select', note: 'n.select', phase: 'later' },
+      { name: 'Select', note: 'n.select', phase: 'now', path: '/components/select/' },
       { name: 'DatePicker', note: 'n.datepicker', phase: 'later' },
       { name: 'Form', note: 'n.form', phase: 'later' }
     ]

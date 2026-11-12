@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { demos } from '../src/docs/data/button.ts';
 import { demos as checkboxDemos } from '../src/docs/data/checkbox.ts';
 import { demos as inputDemos } from '../src/docs/data/input.ts';
+import { demos as selectDemos } from '../src/docs/data/select.ts';
 import { demos as switchDemos } from '../src/docs/data/switch.ts';
 import { allPages, localize, type SitePath } from '../src/docs/pages.ts';
 
@@ -47,7 +48,7 @@ async function accessibilityViolations(page: Page): Promise<Violation[]> {
         run: (context: Document | { exclude: string[][] }, options?: object) => Promise<AxeResult>;
       };
     }).axe;
-    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-input', '.ads-input-search', '.ads-input-otp'];
+    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-popup'];
     const everything = await axe.run(document, { rules: { 'color-contrast': { enabled: false } } });
     const contrast = await axe.run(
       { exclude: library.map((selector) => [selector]) },
@@ -219,10 +220,12 @@ test.describe('home page', () => {
     await expect(now).toContainText('Input');
     await expect(now).toContainText('Checkbox');
     await expect(now).toContainText('Switch');
-    // The ready components follow the order of the sidebar: Button, Input, Checkbox, Switch.
+    await expect(now).toContainText('Select');
+    // The ready components follow the order of the sidebar: Button, Input, Checkbox, Switch, Select.
     await expect(now.locator('.chips').nth(1)).toContainText('variant');
     await expect(now.locator('.chips').nth(2)).toContainText('classNames');
     await expect(now.locator('.chips').nth(3)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(4)).toContainText('showSearch');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -639,6 +642,119 @@ test.describe('Input page', () => {
     await demo.getByRole('button', { name: 'Reset' }).click();
     await expect(demo.getByRole('textbox', { name: 'Email' })).toHaveValue('');
     await expect(demo.getByRole('textbox', { name: 'About you' })).toHaveValue('');
+  });
+});
+
+test.describe('Select page', () => {
+  /** The example section with the given title. */
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+  const panel = (page: Page) => page.locator('.ads-popup:not([hidden])').last();
+
+  // The site styles native inputs in the examples of other components; that must not reach the search field of a Select.
+  for (const theme of ['light', 'dark'] as const) {
+    test(`the search input of a Select has no border, padding or background of its own (${theme})`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: theme });
+      await open(page, 'components/select/');
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+      const inputs = await page.evaluate(() =>
+        [...document.querySelectorAll('.demo-pre input.ads-select-input')].map((control) => {
+          const own = getComputedStyle(control);
+          return { border: own.borderTopWidth, padding: own.paddingLeft, background: own.backgroundColor };
+        })
+      );
+      expect(inputs.length).toBeGreaterThan(5);
+      for (const input of inputs) expect(input).toEqual({ border: '0px', padding: '0px', background: 'rgba(0, 0, 0, 0)' });
+    });
+  }
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    // A loop over every example with several browser commands each: WebKit needs about three times the default time.
+    test.slow();
+    await open(page, 'components/select/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(selectDemos.length);
+
+    for (let i = 0; i < selectDemos.length; i++) {
+      const demo = examples.nth(i);
+      // The preview contains library fields, not copies drawn with the same classes.
+      await expect(demo.locator('.demo-pre .ads-select [role=combobox]').first()).toBeAttached();
+
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/select/${String(i + 1).padStart(2, '0')}-${selectDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('the API tables list the properties of Select, SelectOption and SelectOptGroup, the methods table the methods and the tokens table the design tokens', async ({ page }) => {
+    await open(page, 'components/select/');
+    await expect(page.getByRole('table', { name: 'API', exact: true }).getByRole('rowheader', { name: 'popupMatchSelectWidth' })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'SelectOption API' }).getByRole('rowheader', { name: 'value' })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'SelectOptGroup API' }).getByRole('rowheader', { name: 'label' })).toBeVisible();
+    await expect(page.getByRole('table', { name: /Methods/ }).getByRole('rowheader', { name: 'focus' })).toBeVisible();
+    await expect(page.getByRole('table', { name: /tokens/i }).getByRole('rowheader', { name: '--ads-select-option-height', exact: true })).toBeVisible();
+  });
+
+  test('is listed in the components menu', async ({ page }) => {
+    await open(page, 'components/');
+    await expect(page.getByRole('navigation', { name: 'Components' }).getByRole('link', { name: /^Select/ })).toBeVisible();
+  });
+
+  test('the basic example: opening, choosing an option and the callback', async ({ page }) => {
+    await open(page, 'components/select/');
+    const demo = demoOf(page, 'Basic');
+    await demo.getByRole('combobox', { name: 'City' }).click();
+    await expect(panel(page)).toBeVisible();
+    await panel(page).getByRole('option', { name: 'Tashkent' }).click();
+    await expect(demo.getByRole('combobox', { name: 'City' })).toContainText('Tashkent');
+    await expect(demo.locator('.demo-pre [role=status]')).toHaveText('onchange("tashkent", {"value":"tashkent","label":"Tashkent"})');
+  });
+
+  test('the search example filters the list and reports the number of matches', async ({ page }) => {
+    await open(page, 'components/select/');
+    const demo = demoOf(page, 'Search');
+    const field = demo.getByRole('combobox', { name: 'Person' });
+    await field.click();
+    await page.keyboard.type('comp');
+    await expect(panel(page).getByRole('option')).toHaveCount(2);
+    await expect(panel(page).locator('.ads-select-sr')).toHaveText('2 found');
+    await page.keyboard.press('Enter');
+    await expect(field).toHaveValue('');
+    await expect(demo.locator('.demo-pre [role=status]')).toHaveText('onsearch("")');
+  });
+
+  test('the panel is not cut off by the example around it, and the field keeps its size while it is open', async ({ page }) => {
+    await open(page, 'components/select/');
+    const field = demoOf(page, 'Basic').getByRole('combobox', { name: 'City' });
+    const root = field.locator('xpath=ancestor::div[contains(concat(" ", normalize-space(@class), " "), " ads-select ")][1]');
+    const before = await root.boundingBox();
+    await field.click();
+    await expect(panel(page)).toBeVisible();
+    const panelBox = await panel(page).boundingBox();
+    expect(await root.boundingBox()).toEqual(before);
+    // The panel is a child of the body, so the overflow of the example does not clip it.
+    expect(await panel(page).evaluate((element) => element.parentElement === document.body)).toBe(true);
+    expect(panelBox!.height).toBeGreaterThan(100);
+  });
+
+  test('the custom content example: a press in the footer of the list keeps the list open and the focus in the field', async ({ page }) => {
+    await open(page, 'components/select/');
+    const demo = demoOf(page, 'Custom content');
+    const field = demo.getByRole('combobox', { name: 'With a footer' });
+    await field.click();
+    await panel(page).getByRole('button', { name: /Add a person/ }).click();
+    await expect(panel(page).getByRole('button', { name: 'Add a person (1)' })).toBeVisible();
+    expect(await field.evaluate((element) => element === document.activeElement)).toBe(true);
+  });
+
+  test('the markup example: an inserted option appears in its place and the group can be reversed', async ({ page }) => {
+    await open(page, 'components/select/');
+    const demo = demoOf(page, 'Options as children');
+    await demo.getByRole('button', { name: 'Insert an option' }).click();
+    await demo.getByRole('button', { name: 'Reverse the group' }).click();
+    await demo.getByRole('combobox', { name: 'Options as markup' }).click();
+    const texts = (await panel(page).getByRole('option').allTextContents()).map((text) => text.trim());
+    expect(texts.slice(0, 5)).toEqual(['Option A', 'Inserted in the middle', 'Option D', 'Option C', 'Option B']);
   });
 });
 
