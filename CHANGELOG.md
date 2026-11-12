@@ -9,6 +9,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Fixed
+
+- `Switch` and `Checkbox` in forced-colors modes such as Windows High Contrast. The track and the handle of a switch and
+  the bar of an indeterminate checkbox are backgrounds, which these modes replace, so a switch disappeared (only its text
+  and the loading spinner were left) and an indeterminate checkbox looked unchecked. They are now drawn with system colors:
+  an outlined off track, a `Highlight` on track, a handle in the text color, the bar in the text color, and the disabled
+  system color for disabled controls. Sizes and layout are unchanged. Browser tests switch the mode on in Chromium,
+  Firefox and WebKit.
+
 ### Documentation
 
 - `Input`: the documentation of `onchange` now says which event it receives. It is the native `input` event, or `compositionend`
