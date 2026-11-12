@@ -4,7 +4,7 @@ Status: **agreed, workflow stage 2 is done** (2026-11-11). Decisions 1, 2, 3 and
 one; 4 and 6 to 10 were accepted with "давай" to the proposals shown. Implementation waits for the popup
 primitive. Nothing is implemented. Prerequisite: the popup primitive of [popup.md](popup.md) (approach B
 chosen on 2026-11-11, not built yet). Select is its first consumer, so this document also checks the
-contract of that primitive.
+contract of that primitive. Decision 11 (result count announcement, added 2026-11-12 after the WAI-ARIA audit) is open.
 
 The comparison below uses public documentation, not implementation source code.
 
@@ -224,7 +224,17 @@ each other are marked.
 | Backspace (empty search, `multiple`/`tags`) | removes the last tag | removes the last tag |
 
 - **Live region.** The empty-result text is `role="status"`; selecting a value does not need an extra
-  announcement (the combobox value changes).
+  announcement (the combobox value changes). While searching, the number of matches is not announced yet:
+  see decision 11.
+- **Forced colors** (Windows High Contrast, `forced-colors: active`; found on the Switch and the Checkbox on
+  2026-11-12, where a state drawn only with a background disappeared): the system replaces backgrounds. The panel
+  has a 1px border in this mode, the active option takes `Highlight` and `HighlightText`, the selected option
+  keeps a mark drawn with a border and is not told apart by its background alone, a disabled option uses `GrayText`,
+  and the arrow, search, clear and remove icons are drawn with `ButtonText` (an icon drawn as a background or a
+  mask would vanish). Tested like the Switch and the Checkbox.
+- **Required and assistive technology notes.** `aria-required="true"` passes through the native attributes to the
+  combobox element. Support for `aria-activedescendant` in iOS VoiceOver has been weak, so the component is checked
+  by hand there before its release.
 - `:focus-visible` ring from the tokens, at least 3:1 against the page background (on the root while the
   focused element is inside it).
 - **Contrast.** As in Input: the default light set is Ant Design's and may not reach WCAG AA; the border,
@@ -392,7 +402,8 @@ others (4 and 6 to 10) were proposals, accepted with "давай" the same day, 
    position in the markup (Behavior, "Children markup"); with `options` given, the children are ignored.
 2. **Expensive helpers: TAKEN, both to v1.1.** v1.0 has `listHeight` with a scrolling list and a numeric
    `maxTagCount`. Reserved names: `virtual`, `listItemHeight`, `maxTagCount="responsive"`. A long list in
-   v1.0 renders all its options; the site page says so.
+   v1.0 renders all its options; the site page says so. When `virtual` arrives, the options that are not in the
+   DOM need `aria-setsize` and `aria-posinset` (the WAI-ARIA listbox pattern).
 3. **Search props: TAKEN, flat props.** `showSearch: boolean` plus `filterOption`, `filterSort`,
    `optionFilterProp`, `searchValue` (`bind:`), `onsearch`, `autoClearSearchValue`; the React 6 object form
    is reserved and will accept these as aliases. **This is an exception to rule 4a**, which says to take
@@ -421,6 +432,15 @@ others (4 and 6 to 10) were proposals, accepted with "давай" the same day, 
 10. **Built-in texts** (`No data`, `Clear`, `Remove <label>`) are English. `notFoundContent` and
     `allowClear.label` override two of them; the remove button's name has no override in v1.0. A locale
     mechanism for all of them is reserved for v1.1, as in Input (proposed). **TAKEN, as proposed.**
+
+11. **Result count announcement: OPEN** (added 2026-11-12 after the WAI-ARIA audit of the finished components
+    and of this specification). When a searchable Select filters its list and the active option does not move,
+    a screen reader user is not told that the list changed. Options. **(a, recommended)** A built-in polite
+    `role="status"` line inside the panel with the number of matches, for example `3 results`: English like the
+    other built-in texts (decision 10), localized by the v1.1 mechanism, updated after the filter settles and, during
+    an IME composition, only when the composition ends; no new prop. **(b)** The same, plus an override prop now,
+    `resultsText: (count: number) => string`. **(c)** Nothing: `notFoundContent` stays the only announcement.
+    The maintainer decides; the implementation waits for the answer.
 
 Also still open in popup.md: decision 4 (point anchor, RTL mirroring) and decision 5 (internal, not
 exported). Select does not need the point anchor.
@@ -516,6 +536,11 @@ and the visual states in Playwright (`e2e/select.spec.ts`).
   by wrapped tags; the panel is at least as wide as the field.
 - Visual states (e2e): hover, active, `:focus-visible`, open, disabled, error, warning, in light and dark
   themes; the contrast matrix on `tokens-accessible.css` and the dark theme.
+- Forced colors (`e2e/forced-colors.spec.ts`, three engines): with `forcedColors: 'active'` the panel border, the
+  active option, the selected option and a disabled option stay visible and distinct, as for the Switch and the
+  Checkbox.
+- Result count (only if decision 11 is taken): the status text with the number of matches follows the filter and is
+  cleared with the panel; during an IME composition nothing is announced per key.
 - Axe: closed, open, searching, multiple, groups, disabled, loading, error; an unnamed Select is reported.
 - Mutation testing: `npm run test:mutation -- --target=Select` once the component exists.
 
