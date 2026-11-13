@@ -22,7 +22,7 @@
     rtl: false,
     preventBlur: false,
     destroyOnHidden: false,
-    container: 'body' as 'body' | 'scroller',
+    container: 'body' as 'body' | 'scroller' | 'shifted',
     secondOpen: false,
     secondLayer: 'tooltip' as PopupLayer,
     flowOpen: false,
@@ -35,6 +35,7 @@
   let cfg = $state({ ...initial });
   let anchor = $state<HTMLElement | null>(null);
   let scroller = $state<HTMLElement | null>(null);
+  let shifted = $state<HTMLElement | null>(null);
   let flowAnchor = $state<HTMLElement | null>(null);
   let innerAnchor = $state<HTMLElement | null>(null);
   let nestedAnchor = $state<HTMLElement | null>(null);
@@ -78,6 +79,9 @@
     </div>
   </div>
 
+  <!-- A container with a transform: it is the containing block of everything inside it, fixed or not. -->
+  <div data-testid="shifted" style="position: absolute; left: 0; top: 0; width: 10px; height: 10px; transform: translate(37px, 29px)" bind:this={shifted}></div>
+
   <button type="button" data-testid="nested-anchor" style="position: fixed; z-index: 1; left: 700px; top: 500px" bind:this={nestedAnchor}>Nested</button>
   <button type="button" data-testid="field" style="position: fixed; z-index: 1; left: 700px; top: 600px">Field</button>
 </div>
@@ -94,7 +98,7 @@
   zIndex={cfg.zIndex}
   preventBlur={cfg.preventBlur}
   destroyOnHidden={cfg.destroyOnHidden}
-  container={cfg.container === 'scroller' ? (scroller ?? undefined) : undefined}
+  container={cfg.container === 'scroller' ? (scroller ?? undefined) : cfg.container === 'shifted' ? (shifted ?? undefined) : undefined}
   class="lab-frame"
   data-testid="frame"
 >

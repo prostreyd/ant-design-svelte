@@ -150,6 +150,64 @@ test.describe('follows the layout (R3)', () => {
     expectPlaced('bottom', await rect(page.getByTestId('flow-anchor')), await rect(frame(page, 'flow-frame')));
   });
 
+  /** Scrolls the page in steps and reports how far the panel was from where it belongs at each `scroll` event. */
+  const driftWhileScrolling = (page: Page, anchorId: string, panelId: string) =>
+    page.evaluate(
+      async ({ anchorId, panelId }) => {
+        const anchor = document.querySelector(`[data-testid="${anchorId}"]`)!;
+        const panel = document.querySelector(`[data-testid="${panelId}"]`)!;
+        const relation = () => panel.getBoundingClientRect().y - anchor.getBoundingClientRect().y;
+        const rest = relation();
+        const seen: number[] = [];
+        addEventListener('scroll', () => seen.push(Math.abs(relation() - rest)), { capture: true, passive: true });
+        for (let step = 0; step < 12; step++) {
+          scrollBy(0, 37);
+          await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+        }
+        return { events: seen.length, worst: Math.max(0, ...seen) };
+      },
+      { anchorId, panelId }
+    );
+
+  test('the page scroll moves an anchor and its panel together: at every scroll event the panel is where it belongs (decision 13)', async ({ page }) => {
+    await page.evaluate(() => window.scrollTo(0, 800));
+    await lab(page, { flowOpen: true });
+    const drift = await driftWhileScrolling(page, 'flow-anchor', 'flow-frame');
+    expect(drift.events).toBeGreaterThan(5);
+    expect(drift.worst).toBeLessThan(0.5);
+  });
+
+  test('an anchor in the flow of the page gets a panel in the page, a fixed anchor a panel that is fixed', async ({ page }) => {
+    const position = () => page.evaluate(() => getComputedStyle(document.querySelector('.ads-popup:not([hidden])')!).position);
+    await lab(page, { flowOpen: true });
+    expect(await position()).toBe('absolute');
+    await lab(page, { flowOpen: false, open: true });
+    await expect(page.locator('.ads-popup:not([hidden])')).toHaveCount(1);
+    expect(await position()).toBe('fixed');
+  });
+
+  test('a fixed anchor and its panel stay together while the page scrolls under them', async ({ page }) => {
+    await lab(page, { open: true });
+    const drift = await driftWhileScrolling(page, 'anchor', 'frame');
+    expect(drift.events).toBeGreaterThan(5);
+    expect(drift.worst).toBeLessThan(0.5);
+    expectPlaced('bottomLeft', await rect(page.getByTestId('anchor')), await rect(frame(page)));
+  });
+
+  test('a body that is positioned and has a margin does not move the panel off its anchor', async ({ page }) => {
+    await page.evaluate(() => Object.assign(document.body.style, { position: 'relative', margin: '23px 0 0 41px' }));
+    await lab(page, { flowOpen: true });
+    await page.evaluate(() => window.scrollTo(0, 800));
+    await settle(page);
+    expectPlaced('bottom', await rect(page.getByTestId('flow-anchor')), await rect(frame(page, 'flow-frame')));
+  });
+
+  test('a container with a transform does not move the panel off its anchor', async ({ page }) => {
+    await lab(page, { container: 'shifted', placement: 'bottomLeft', open: true });
+    await expect(page.getByTestId('shifted').getByTestId('frame')).toHaveCount(1);
+    expectPlaced('bottomLeft', await rect(page.getByTestId('anchor')), await rect(frame(page)));
+  });
+
   test('the scroll of a scroll parent, which does not bubble', async ({ page }) => {
     await lab(page, { innerOpen: true });
     const scroller = page.getByTestId('scroller');

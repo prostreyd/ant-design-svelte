@@ -5,17 +5,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openLayers } from '../src/lib/internal/popup/layers';
 import PopupHarness from './fixtures/PopupHarness.svelte';
 import PopupNestedHarness from './fixtures/PopupNestedHarness.svelte';
+import { panelRect, placed, type Place } from './popupHelpers';
 
 // jsdom has no layout: every rectangle is empty. The tests give the anchor a rectangle and the panel a
 // size, so the placement can be checked with numbers (the math itself is in popupPlacement.test.ts).
 let anchorRect = { left: 400, top: 300, width: 100, height: 40 };
+// Where the containing block of the panel starts in the viewport (the corner, unless a test moves it).
+let panelOrigin: Place = { left: 0, top: 0 };
 const originalWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
 const originalHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
 
 beforeEach(() => {
   anchorRect = { left: 400, top: 300, width: 100, height: 40 };
+  panelOrigin = { left: 0, top: 0 };
   vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
-    const r = this.getAttribute('data-testid') === 'anchor' ? anchorRect : { left: 0, top: 0, width: 0, height: 0 };
+    const r = this.getAttribute('data-testid') === 'anchor' ? anchorRect : this.classList.contains('ads-popup') ? panelRect(this as HTMLElement, panelOrigin) : { left: 0, top: 0, width: 0, height: 0 };
     return { ...r, right: r.left + r.width, bottom: r.top + r.height, x: r.left, y: r.top, toJSON: () => r } as DOMRect;
   });
   const isPanel = (element: HTMLElement) => element.classList.contains('ads-popup');
@@ -159,8 +163,8 @@ describe('Popup: placement (R1, R2, R4, R5, R6, R15)', () => {
   it('places the panel next to the anchor', async () => {
     await mountOpen();
     const panel = panelOf()!;
-    expect(panel.style.left).toBe('400px');
-    expect(panel.style.top).toBe('344px');
+    expect(placed(panel).left).toBe(400);
+    expect(placed(panel).top).toBe(344);
     expect(panel).toHaveAttribute('data-positioned');
   });
 
@@ -178,7 +182,7 @@ describe('Popup: placement (R1, R2, R4, R5, R6, R15)', () => {
     const onplacement = vi.fn();
     await mountOpen({ placement: 'bottomLeft', onplacement });
     expect(frameOf()).toHaveAttribute('data-placement', 'topLeft');
-    expect(panelOf()!.style.top).toBe('636px');
+    expect(placed(panelOf()!).top).toBe(636);
     expect(onplacement).toHaveBeenCalledWith('topLeft');
   });
 
@@ -186,18 +190,18 @@ describe('Popup: placement (R1, R2, R4, R5, R6, R15)', () => {
     anchorRect = { left: 400, top: 740, width: 100, height: 40 };
     await mountOpen({ placement: 'bottomLeft', autoAdjustOverflow: false });
     expect(frameOf()).toHaveAttribute('data-placement', 'bottomLeft');
-    expect(panelOf()!.style.top).toBe('784px');
+    expect(placed(panelOf()!).top).toBe(784);
   });
 
   it('a point anchor places the panel at the point', async () => {
     await mountOpen({ point: { x: 120, y: 80 } });
-    expect(panelOf()!.style.left).toBe('120px');
-    expect(panelOf()!.style.top).toBe('84px');
+    expect(placed(panelOf()!).left).toBe(120);
+    expect(placed(panelOf()!).top).toBe(84);
   });
 
   it('offset is the gap to the anchor', async () => {
     await mountOpen({ offset: 10 });
-    expect(panelOf()!.style.top).toBe('350px');
+    expect(placed(panelOf()!).top).toBe(350);
   });
 
   it('matchWidth: true is the anchor width, a number is a minimum, false is none', async () => {
@@ -234,7 +238,7 @@ describe('Popup: placement (R1, R2, R4, R5, R6, R15)', () => {
   it('mirrors the placement in a right-to-left layout', async () => {
     await mountOpen({ rtl: true });
     expect(frameOf()).toHaveAttribute('data-placement', 'bottomRight');
-    expect(panelOf()!.style.left).toBe('300px');
+    expect(placed(panelOf()!).left).toBe(300);
   });
 });
 
@@ -473,8 +477,8 @@ describe('Popup: follows the layout (R3)', () => {
     await mountOpen();
     anchorRect = { left: 100, top: 100, width: 100, height: 40 };
     window.dispatchEvent(new Event('resize'));
-    await waitFor(() => expect(panelOf()!.style.left).toBe('100px'));
-    expect(panelOf()!.style.top).toBe('144px');
+    await waitFor(() => expect(placed(panelOf()!).left).toBe(100));
+    expect(placed(panelOf()!).top).toBe(144);
   });
 
   it('moves with the anchor after the scroll of any scroll parent, which does not bubble', async () => {
@@ -483,7 +487,7 @@ describe('Popup: follows the layout (R3)', () => {
     document.body.append(scroller);
     anchorRect = { left: 400, top: 200, width: 100, height: 40 };
     scroller.dispatchEvent(new Event('scroll', { bubbles: false }));
-    await waitFor(() => expect(panelOf()!.style.top).toBe('244px'));
+    await waitFor(() => expect(placed(panelOf()!).top).toBe(244));
   });
 
   it('places again when a prop that decides the place changes', async () => {
@@ -491,7 +495,7 @@ describe('Popup: follows the layout (R3)', () => {
     // The harness passes `offset` through; a new value is read on the next placement.
     anchorRect = { left: 10, top: 10, width: 10, height: 10 };
     window.dispatchEvent(new Event('resize'));
-    await waitFor(() => expect(panelOf()!.style.left).toBe('10px'));
+    await waitFor(() => expect(placed(panelOf()!).left).toBe(10));
   });
 
   it('stops listening when closed or removed', async () => {
@@ -662,8 +666,8 @@ describe('Popup: how it listens to the layout (R3)', () => {
   it('follows an anchor that moves with no event at all, once per frame', async () => {
     await mountOpen();
     anchorRect = { left: 10, top: 20, width: 100, height: 40 };
-    await waitFor(() => expect(panelOf()!.style.left).toBe('10px'));
-    expect(panelOf()!.style.top).toBe('64px');
+    await waitFor(() => expect(placed(panelOf()!).left).toBe(10));
+    expect(placed(panelOf()!).top).toBe(64);
   });
 
   it('several events in one frame ask for one placement', async () => {
@@ -699,7 +703,7 @@ describe('Popup: how it listens to the layout (R3)', () => {
     expect(observer.observe).toHaveBeenCalledWith(screen.getByTestId('anchor'));
     anchorRect = { left: 77, top: 300, width: 100, height: 40 };
     observer.callback();
-    await waitFor(() => expect(panelOf()!.style.left).toBe('77px'));
+    await waitFor(() => expect(placed(panelOf()!).left).toBe(77));
     view.unmount();
     expect(observer.disconnect).toHaveBeenCalled();
   });
@@ -722,8 +726,116 @@ describe('Popup: how it listens to the layout (R3)', () => {
     const view = await mountOpen();
     anchorRect = { left: 5, top: 300, width: 100, height: 40 };
     viewport.dispatchEvent(new Event('resize'));
-    await waitFor(() => expect(panelOf()!.style.left).toBe('5px'));
+    await waitFor(() => expect(placed(panelOf()!).left).toBe(5));
     view.unmount();
     expect(removed.mock.calls.map((call) => call[0]).sort()).toEqual(['resize', 'scroll']);
+  });
+});
+
+describe('Popup: in the space of its anchor (R3, decision 13)', () => {
+  const frames = () => new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())));
+  const resize = () => window.dispatchEvent(new Event('resize'));
+  /** Every attribute change in the panel until `stop()`: nothing should be written when nothing changed. */
+  function watchWrites() {
+    const records: MutationRecord[] = [];
+    const observer = new MutationObserver((list) => records.push(...list));
+    observer.observe(panelOf()!, { attributes: true, subtree: true });
+    return { stop: () => (observer.takeRecords().forEach((record) => records.push(record)), observer.disconnect(), records) };
+  }
+
+  it('moves the panel with a transform from the corner, and sets neither left nor top', async () => {
+    await mountOpen();
+    expect(panelOf()!.style.transform).toBe('translate(400px, 344px)');
+    expect(panelOf()!.style.left).toBe('');
+    expect(panelOf()!.style.top).toBe('');
+  });
+
+  it('places the panel against where its containing block starts, and again after each move of the anchor', async () => {
+    panelOrigin = { left: 30, top: 50 };
+    await mountOpen();
+    expect(placed(panelOf())).toEqual({ left: 370, top: 294 });
+    anchorRect = { left: 100, top: 100, width: 100, height: 40 };
+    resize();
+    await waitFor(() => expect(placed(panelOf())).toEqual({ left: 70, top: 94 }));
+  });
+
+  it('forgets the translation when it hides, so that the next opening is placed against the same corner', async () => {
+    panelOrigin = { left: 30, top: 50 };
+    await mountOpen();
+    await toggle();
+    await waitFor(() => expect(panelOf()!.hidden).toBe(true));
+    expect(panelOf()!.style.transform).toBe('');
+    await toggle();
+    await waitFor(() => expect(panelOf()!.hidden).toBe(false));
+    expect(placed(panelOf())).toEqual({ left: 370, top: 294 });
+  });
+
+  it('a point anchor stays on the screen, so its panel is fixed', async () => {
+    await mountOpen({ point: { x: 120, y: 80 } });
+    expect(panelOf()).toHaveAttribute('data-fixed');
+  });
+
+  it('an anchor in the flow of the page scrolls with it, so its panel is not fixed', async () => {
+    await mountOpen();
+    expect(panelOf()).not.toHaveAttribute('data-fixed');
+  });
+
+  it('a fixed anchor, or one inside a fixed element, gets a fixed panel, until it is not fixed any more', async () => {
+    await mountOpen();
+    const anchor = screen.getByTestId('anchor');
+    anchor.style.position = 'fixed';
+    resize();
+    await waitFor(() => expect(panelOf()).toHaveAttribute('data-fixed'));
+    anchor.style.position = '';
+    anchor.parentElement!.style.position = 'fixed';
+    resize();
+    await frames();
+    expect(panelOf()).toHaveAttribute('data-fixed');
+    anchor.parentElement!.style.position = '';
+    resize();
+    await waitFor(() => expect(panelOf()).not.toHaveAttribute('data-fixed'));
+  });
+
+  it('writes nothing when a scroll did not change the placement', async () => {
+    await mountOpen();
+    const rects = vi.mocked(Element.prototype.getBoundingClientRect);
+    const measured = rects.mock.calls.length;
+    const writes = watchWrites();
+    document.dispatchEvent(new Event('scroll'));
+    await frames();
+    expect(rects.mock.calls.length).toBeGreaterThan(measured);
+    expect(writes.stop()).toEqual([]);
+  });
+
+  it('a change of the anchor below 0.01px is noise and is not written', async () => {
+    await mountOpen();
+    anchorRect = { left: 400.004, top: 300.004, width: 100, height: 40 };
+    const writes = watchWrites();
+    resize();
+    await frames();
+    expect(writes.stop()).toEqual([]);
+    expect(panelOf()!.style.transform).toBe('translate(400px, 344px)');
+  });
+
+  it('a change of the anchor along x is written, and so is one along y alone', async () => {
+    await mountOpen();
+    anchorRect = { left: 401, top: 300, width: 100, height: 40 };
+    resize();
+    await waitFor(() => expect(placed(panelOf())).toEqual({ left: 401, top: 344 }));
+    anchorRect = { left: 401, top: 301, width: 100, height: 40 };
+    resize();
+    await waitFor(() => expect(placed(panelOf())).toEqual({ left: 401, top: 345 }));
+  });
+
+  it('rounds the translation to a device pixel, so that text is not drawn between pixels', async () => {
+    vi.stubGlobal('devicePixelRatio', 2);
+    anchorRect = { left: 400.3, top: 300, width: 100, height: 40 };
+    await mountOpen();
+    expect(panelOf()!.style.transform).toBe('translate(400.5px, 344px)');
+  });
+
+  it('the panel is at most as wide as the viewport, as a fixed panel was, wherever its containing block is', async () => {
+    await mountOpen();
+    expect(panelOf()!.style.maxWidth).toBe('1000px');
   });
 });
