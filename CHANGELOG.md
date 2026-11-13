@@ -9,6 +9,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Documentation
+
+- The header of the documentation site is an ordinary block now: it scrolls away with the page instead of staying at the
+  top of the screen. The sidebar and the table of contents stay in view under the top edge once the header has gone, and
+  a link to a heading lands near the top.
+
 ## [0.5.2] - 2026-11-13
 
 ### Fixed
