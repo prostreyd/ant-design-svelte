@@ -210,7 +210,109 @@ test.describe('mobile', () => {
     await page.keyboard.press('Escape');
     await expect(menu).toBeHidden();
   });
+
+  test('the menu fills the screen under the header, and every link in it can really be pressed', async ({ page }) => {
+    // A link that is "visible" can still be cut off by a panel that is too short: what counts is that the point in
+    // the middle of the link belongs to the link, and that the panel reaches the bottom of the screen.
+    for (const path of ['', 'docs/faq/', 'components/', 'components/select/']) {
+      await open(page, path);
+      await page.getByRole('button', { name: 'Menu', exact: true }).click();
+      const menu = page.getByRole('navigation', { name: 'Main navigation' });
+      await expect(menu).toBeVisible();
+      const reach = await menu.evaluate((nav) => ({
+        bottom: Math.round(nav.getBoundingClientRect().bottom),
+        viewport: window.innerHeight,
+        links: [...nav.querySelectorAll('a')].map((link) => {
+          // The panel scrolls (a long list of components): a link below the screen is reached by scrolling to it.
+          link.scrollIntoView({ block: 'nearest' });
+          const box = link.getBoundingClientRect();
+          return { name: link.textContent!.trim(), pressed: link.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)) };
+        })
+      }));
+      expect(reach.bottom, `${path} the panel reaches the bottom of the screen`).toBe(reach.viewport);
+      for (const link of reach.links) expect(link.pressed, `${path} ${link.name}`).toBe(true);
+      expect(reach.links.map((link) => link.name.replace(/\d.*$/, '')).slice(0, 3), path).toEqual(['Docs', 'Components', 'Changelog']);
+    }
+  });
+
+  test('the menu has the link to the page with the list of components, and it opens that page', async ({ page }) => {
+    await open(page, '');
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Components' }).click();
+    await expect(page).toHaveURL(/components\/$/);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Components overview');
+  });
 });
+
+for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a desktop', { width: 1280, height: 900 }]] as const) {
+  test.describe(`components overview on ${label}`, () => {
+    test.use({ viewport });
+
+    const READY = ['Button', 'Input', 'Checkbox', 'Switch', 'Select'];
+    const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'Radio', 'DatePicker', 'Form', 'Table', 'Tooltip', 'Modal', 'Drawer', 'Message', 'Notification'];
+
+    test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
+      await open(page, 'components/');
+      for (const name of READY) {
+        const card = page.locator(`a.card[data-component="${name}"]`);
+        await expect(card, name).toHaveAttribute('href', new RegExp(`/components/${name.toLowerCase()}/$`));
+        await expect(card.locator('.nm'), name).toHaveText(name);
+        const picture = card.locator('svg.wire');
+        await expect(picture, name).toBeVisible();
+        await expect(picture, name).toHaveClass(/ready/);
+        expect(await picture.locator('> *').count(), name).toBeGreaterThan(1);
+        // The silhouette is decorative; no description, no tag, no live component (the page showed two buttons on every card).
+        await expect(card.locator('.pic'), name).toHaveAttribute('aria-hidden', 'true');
+        await expect(card.locator('.tag, .ov-blurb, .ads-btn, .ads-input, .ads-select, .ads-switch, .ads-checkbox'), name).toHaveCount(0);
+      }
+    });
+
+    test('a planned card is not a link: a grey dashed silhouette and its name', async ({ page }) => {
+      await open(page, 'components/');
+      for (const name of PLANNED) {
+        const card = page.locator(`div.card.soon[data-component="${name}"]`);
+        await expect(card.locator('.nm'), name).toHaveText(name);
+        const picture = card.locator('svg.wire');
+        await expect(picture, name).toBeVisible();
+        await expect(picture, name).toHaveClass(/planned/);
+        expect(await picture.locator('> *').count(), name).toBeGreaterThan(1);
+        await expect(card.locator('a'), name).toHaveCount(0);
+        await expect(card.locator('.go'), name).toHaveCount(0);
+      }
+    });
+
+    test('the state is told to a screen reader only: the name of a link ends with Ready, a planned card says Planned', async ({ page }) => {
+      await open(page, 'components/');
+      for (const name of READY) await expect(page.getByRole('link', { name: `${name} Ready`, exact: true })).toHaveCount(1);
+      for (const name of PLANNED) await expect(page.locator(`div.card.soon[data-component="${name}"] .sr`), name).toHaveText('Planned');
+      // Not drawn: the words are clipped to a point.
+      const box = await page.locator('a.card[data-component="Select"] .sr').evaluate((element) => element.getBoundingClientRect().width);
+      expect(box).toBeLessThanOrEqual(1);
+    });
+
+    test('the whole card is the link: a press on its picture opens the page, and the page does not scroll sideways', async ({ page }) => {
+      await open(page, 'components/');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+      const picture = page.locator('a.card[data-component="Select"] .pic');
+      await picture.scrollIntoViewIfNeeded();
+      const box = (await picture.boundingBox())!;
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      await expect(page).toHaveURL(/\/components\/select\/$/);
+    });
+
+    test('the cards lie in a grid: two in a row on a phone, at least four on a wide screen, none cut off', async ({ page }) => {
+      await open(page, 'components/');
+      const perRow = await page.locator('h2#g-entry + .ov').evaluate((grid) => {
+        const tops = [...grid.querySelectorAll('.card')].map((card) => Math.round(card.getBoundingClientRect().top));
+        return tops.filter((top) => top === tops[0]).length;
+      });
+      if (viewport.width < 600) expect(perRow).toBe(2);
+      else expect(perRow).toBeGreaterThanOrEqual(4);
+      const cut = await page.locator('.ov .card').evaluateAll((cards) => cards.filter((card) => card.scrollWidth > card.clientWidth + 1).length);
+      expect(cut).toBe(0);
+    });
+  });
+}
 
 test.describe('home page', () => {
   test('the roadmap lists every ready component, and no alpha label is left', async ({ page }) => {
