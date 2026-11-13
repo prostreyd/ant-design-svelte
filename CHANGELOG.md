@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-11-13
+
 ### Fixed
 
 - `Select` on a touch screen: an open list is no longer closed by the first touch of a scroll. A touch outside the
