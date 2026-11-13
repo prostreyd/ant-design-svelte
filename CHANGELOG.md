@@ -9,7 +9,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Fixed
+
+- `Select` on a touch screen: an open list is no longer closed by the first touch of a scroll. A touch outside the
+  list now closes it only as a tap: the finger comes up where it went down, the browser did not take the touch for
+  scrolling, and no second finger went down. The list stays open while the page is scrolled with a finger, until an
+  option is chosen or the user taps somewhere else. The mouse and the pen are unchanged.
+- `Select` in Safari (WebKit): an option could not be chosen by a tap, because the browser sent no `click` to an
+  element that has no click listener of its own (Svelte puts the handler on the document). Every option now has one.
+
 ### Documentation
+
+- The documentation site on a phone: the menu behind the burger button was only 49 px high, so the link to the page
+  with the list of components (and the one to the changelog) was cut off; it now fills the screen under the header.
+- The components overview page: each card is now the name of the component and a drawn silhouette of it (before, every
+  ready card showed the same two buttons). A ready component has blue lines, a solid border and an arrow, the whole card is
+  the link; a planned one has grey dashed lines and no arrow. The state is told to screen readers only.
 
 - The rules for AI assistants now allow studying the source code of single mechanisms of Ant Design, to understand a
   technique and judge it, and say on what conditions: the decision is written down before reading, only the mechanism in
