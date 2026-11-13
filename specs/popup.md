@@ -308,9 +308,24 @@ registry), `triggers.ts` (the trigger helper) and `Popup.svelte`. Tokens `--ads-
 1.65), run with the Firefox and WebKit projects of Playwright added to the configuration. The maintainer decided
 on 2026-11-11 that every browser test runs in all three engines; the Playwright configuration and CI for that
 are a separate change and are not part of the commits of the primitive. These are the newest engines: the floor
-versions (Firefox 85, Safari 15.4, Chrome 89) have **not** been run. The first run in WebKit failed one
+versions (Firefox 85, Safari 15.4, Chrome 89) had **not** been run when this was written (see "Floor run" below). The first run in WebKit failed one
 test, and the fault was the test: it clicked a point that, in WebKit, the wider "Open inner" button made the
 inner panel cover.
+
+**Floor run (2026-11-13).** `npm run test:floor` builds the e2e fixtures for the floor and drives them in the engines of
+the old Playwright releases (Docker images, `scripts/floor/`): Chromium 90.0.4392.0, Firefox 85.0b5 and WebKit 15.4.
+Chromium 90.0.4392.0 stands for Chrome 89: the nearest Playwright build at or above it (the one of Playwright 1.7.0,
+Chromium 89.0.4344.0, is an early build of the 89 branch and lacks what shipped in 89, such as the logical border radii and
+`forced-colors`). The WebKit is the Linux build of that version, the engine and not Safari. The smoke clicks and types in
+the Button, Switch, Checkbox, Input and Select, opens the Select panel under the field and above it at the bottom of
+the page, and checks the sizes and that nothing throws. A CSS audit asks each engine, through its own parser, whether it
+understands every selector, declaration and media query of the shipped CSS. Result: everything is understood except
+enhancements that are meant to be ignored by an engine that lacks them: the forced-colors block (Firefox before 89,
+Safari), `color-scheme` (Firefox before 96: the native controls stay light in the dark theme) and `overscroll-behavior`
+(Safari before 16: the list of a panel does not hold the scroll of the page at its end). The maintainer confirmed these
+three on 2026-11-13; they are the allowlist `ENHANCEMENTS` of `scripts/floor/smoke.cjs`, and a new entry there is a
+decision about the floor and goes through this document. Not run: a real Safari 15.4 on
+macOS or iOS, touch, and Chrome 89 itself.
 
 What the implementation settled, and what it changed in this document:
 

@@ -643,7 +643,8 @@ text of the specification are marked **(addition)** and are in the tables above 
   all its options.
 - **Not verified:** the component has not been tried with a real screen reader (NVDA, VoiceOver, JAWS) or on a touch device;
   iOS VoiceOver is known to support `aria-activedescendant` weakly. The browser floor of the popup primitive (Chrome 89,
-  Firefox 85, Safari 15.4) has not been run.
+  Firefox 85, Safari 15.4) was run on 2026-11-13 with the smoke of `npm run test:floor` (the engines and what they do not show
+  are in specs/popup.md, "Floor run"); a real Safari 15.4 and a touch device were not.
 - **Checked with a real screen reader (Orca 50.3 with Chromium, 2026-11-12).** Orca was run in an isolated session (its own
   X server and D-Bus, no sound), a script drove real X key events, and what Orca says was read from its debug log. It
   matches the A11y section: the name from `<label for>` (also for the `<div>` field), `combo box` / `editable combo box`,
