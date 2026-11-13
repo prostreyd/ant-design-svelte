@@ -340,7 +340,8 @@ for (const [size, viewport] of Object.entries(VIEWPORTS)) {
       // Without the smooth scrolling of the page, which is still under way when the position is read.
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await open(page, 'components/select/');
-      const id = await page.locator('.art h2[id]').nth(2).getAttribute('id');
+      const id = (await page.locator('.art h2[id]').nth(2).getAttribute('id')) ?? '';
+      expect(id).not.toBe('');
       await page.evaluate((hash) => (location.hash = hash), id);
       await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
       await page.waitForTimeout(300);
