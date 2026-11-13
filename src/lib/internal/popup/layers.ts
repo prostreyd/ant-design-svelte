@@ -5,6 +5,10 @@
  * are open: a press outside closes the popups it is outside of, and Escape closes the topmost one only.
  * A popup opened from inside another popup (a Select inside a Popover) is its child: a press in the child
  * is inside the parent as well, so the parent stays open while the child is used.
+ *
+ * A mouse or a pen presses on `pointerdown`. A finger is decided when it comes up, and only if it was a tap:
+ * a finger that goes down may be about to scroll the page, and closing at that moment would close the popup
+ * under the user's hand (decision 14).
  */
 
 export type DismissReason = 'outsidePress' | 'escape';
@@ -52,13 +56,67 @@ export function isInsideLayer(layer: Layer, target: Node): boolean {
   return stack.some((other) => other !== layer && parentOf(other) === layer && isInsideLayer(other, target));
 }
 
+/** How far a finger may move and still be a tap, in CSS pixels. */
+const TAP_SLOP = 10;
+
+/** A finger that went down outside some popups and may still turn out to be a tap. */
+interface Touch {
+  id: number;
+  x: number;
+  y: number;
+  /** The popups it was outside of when it went down, the topmost first. */
+  layers: Layer[];
+}
+
+let touch: Touch | null = null;
+
+function outsideLayers(target: Node): Layer[] {
+  return [...stack].reverse().filter((layer) => layer.outsidePress() && !isInsideLayer(layer, target));
+}
+
+function endTouch(): void {
+  touch = null;
+  document.removeEventListener('pointermove', onTouchMove, true);
+  document.removeEventListener('pointerup', onTouchUp, true);
+  document.removeEventListener('pointercancel', endTouch, true);
+}
+
+/** A finger that moves is scrolling or dragging, not pressing. */
+function onTouchMove(event: PointerEvent): void {
+  const { id, x, y } = touch as Touch;
+  if (event.pointerId === id && Math.hypot(event.clientX - x, event.clientY - y) > TAP_SLOP) endTouch();
+}
+
+function onTouchUp(event: PointerEvent): void {
+  const { id, layers } = touch as Touch;
+  if (event.pointerId !== id) return;
+  endTouch();
+  // A popup may have closed since the finger went down.
+  for (const layer of layers) if (stack.includes(layer)) layer.dismiss('outsidePress');
+}
+
 function onPointerDown(event: PointerEvent): void {
   // A press on the document always has a node as its target.
   const target = event.target as Node;
-  // Topmost first. A copy, because a dismissal may unregister a layer.
-  for (const layer of [...stack].reverse()) {
-    if (layer.outsidePress() && !isInsideLayer(layer, target)) layer.dismiss('outsidePress');
+  if (event.pointerType !== 'touch') {
+    // Topmost first. A copy, because a dismissal may unregister a layer.
+    for (const layer of [...stack].reverse()) {
+      if (layer.outsidePress() && !isInsideLayer(layer, target)) layer.dismiss('outsidePress');
+    }
+    return;
   }
+  // A second finger: a pinch, or a scroll with two fingers.
+  if (touch) {
+    endTouch();
+    return;
+  }
+  const layers = outsideLayers(target);
+  if (layers.length === 0) return;
+  touch = { id: event.pointerId, x: event.clientX, y: event.clientY, layers };
+  document.addEventListener('pointermove', onTouchMove, { capture: true, passive: true });
+  document.addEventListener('pointerup', onTouchUp, true);
+  // The browser takes the touch for scrolling the page: it cancels the pointer.
+  document.addEventListener('pointercancel', endTouch, true);
 }
 
 function onKeyDown(event: KeyboardEvent): void {
@@ -76,6 +134,7 @@ function listen(): void {
 }
 
 function unlisten(): void {
+  if (touch) endTouch();
   document.removeEventListener('pointerdown', onPointerDown, true);
   document.removeEventListener('keydown', onKeyDown);
 }
