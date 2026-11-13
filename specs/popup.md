@@ -70,7 +70,7 @@ What the primitive must provide. "Evidence" is where the need shows in the publi
 | R6 | **Arrow.** Optional, pointing at the anchor; `pointAtCenter` points at the center of the anchor instead of its aligned edge. The arrow must stay correct after a flip or a shift. | React `arrow: boolean \| {pointAtCenter}` (5.2.0; Tooltip default `true`, Dropdown `false`); Angular `nzTooltipArrowPointAtCenter`, `nzArrow`; Vue `arrow: boolean \| {pointAtCenter}` (Tooltip 4.2.0, default `true`; Dropdown 3.3.0, default `false`) and the older `arrowPointAtCenter` |
 | R7 | **Open state.** Controlled by an `open` value and reported through `onopenchange(open, info)`; `info.source` tells whether the trigger or the content caused it. | React `open`/`onOpenChange` (Dropdown `info.source`, 5.11.0); Angular `nzVisible`/`nzVisibleChange`; Vue `open` (v-model) and `openChange(open)`. **Semantics differ:** the Vue Dropdown does not call `openChange` when the menu closes after an item click; React does, with `source: 'menu'`. React is the reference. |
 | R8 | **Triggers and delays.** `hover`, `focus`, `click`, `contextMenu`, any combination, or none (controlled only). Delays in seconds, default 0.1 before show and 0.1 before hide in React; Angular 0.15 and 0.1. The pointer may cross the gap between the anchor and the panel without closing it. | React `trigger`, `mouseEnterDelay`, `mouseLeaveDelay`; Angular `nzTooltipTrigger` (`null` = never), delays; Vue `trigger` (a single value for Tooltip, an array for Dropdown, `contextmenu` in lower case), delays 0.1 and 0.1 seconds. The React trigger package also has `focusDelay` and `blurDelay` (README), which the Tooltip docs do not expose. |
-| R9 | **Dismissal.** Outside press, Escape, and (for field-anchored popups) focus leaving the field. A press inside the panel, or inside a popup opened from it, is not outside. | ours (React Select only says it closes on lost focus) |
+| R9 | **Dismissal.** Outside press, Escape, and (for field-anchored popups) focus leaving the field. A press inside the panel, or inside a popup opened from it, is not outside. **On a touch screen a press is decided when the finger comes up** (decision 14): a finger that moves, a second finger, or a touch the browser takes for scrolling is not a press, so a list stays open while the page is scrolled. | ours (React Select only says it closes on lost focus) |
 | R10 | **Layering.** Drawn above the page content and outside its flow, not clipped by `overflow: hidden` ancestors. Ant Design tokens order the layers: Popover 1030, Dropdown and Select 1050, Tooltip 1070. React `getPopupContainer(triggerNode)` (default `document.body`) moves it into another element. | React `zIndex`, `getPopupContainer`, tokens `zIndexPopup`. React and Vue Select: render into the trigger's parent when the panel scrolls with the page or must sit inside other popup layers. |
 | R11 | **Motion.** Enter and leave animation from motion tokens; `prefers-reduced-motion: reduce` removes it. After the first opening the content stays mounted while closed; `destroyOnHidden` removes it on every close (React 5.25.0, default `false`). Before the first opening nothing is rendered (ours). `fresh` (React 5.10.0, keeps the closed content updating) is not needed: mounted Svelte content stays reactive. | React Tooltip tokens `motionDuration*`, `destroyOnHidden`, `fresh`; Vue `destroyTooltipOnHide`, `destroyPopupOnHide` (same meaning, old names) |
 | R12 | **Focus.** The primitive never moves focus by itself. A field-anchored popup keeps focus in the field, so pressing inside the panel must not blur it. | React Select FAQ (stop `mousedown` to keep it open); Vue Select FAQ (a click in the `dropdownRender` area closes the dropdown unless its default is prevented); ours |
@@ -364,6 +364,31 @@ Still open or not handled:
   measures where its own containing block starts, so any container works.
 - Firefox and WebKit, as above.
 
+## Dismissal on a touch screen (decision 14, 2026-11-13)
+
+**The problem.** The outside press was decided on `pointerdown`. A finger that goes down to scroll the page
+is also a `pointerdown`, so on a phone an open Select closed at the first touch of a scroll. The maintainer
+saw it ("the list disappears when I scroll; in the other libraries it stays until I choose or tap somewhere").
+Reproduced on an emulated phone: a touch swipe outside the list closed it before the page moved.
+
+**Decision (maintainer, 2026-11-13).** A mouse or a pen is unchanged: the press is decided on `pointerdown`. A touch is
+decided on `pointerup`, and only if it was a tap:
+
+- the finger comes up within 10 CSS pixels of where it went down;
+- the browser did not take the touch for scrolling (`pointercancel` ends the press; a scroll gesture is a
+  `pointercancel` in every engine);
+- no second finger went down meanwhile (a pinch or a scroll with two fingers is not a press).
+
+The popups that count as "outside" are fixed at `pointerdown`, not at `pointerup`, so a node that was
+re-rendered under the finger is not taken for an outside one; a popup that closed in between is not asked
+again. A touch inside a popup, or on its anchor, is not tracked at all. The listeners for the touch are added
+when a touch goes down outside and removed when it ends, so there are still two document listeners while a
+popup is open and nothing happens on a mouse move.
+
+**Not taken:** closing on `scroll` (the list should follow the page, decision 13); a longer or shorter slop
+(10 px is what the common touch UIs use, and a tap rarely moves more); waiting for `click` (a click is not sent
+for a tap on a non-interactive area in every browser).
+
 ## Following the page scroll (decision 13, 2026-11-12)
 
 **The problem.** With the panel `position: fixed` and the placement redone in JS after each `scroll` event,
@@ -460,6 +485,10 @@ in Playwright (`e2e/popup.spec.ts`).
 - R7: `open` controls; `onopenchange` is called once per change with the right `source`; no call for a
   change made by the parent.
 - R8: each trigger and combinations; delays; the pointer crosses the gap to the panel; empty trigger list.
+- R9 (decision 14): a touch closes a popup only as a tap, on `pointerup`: a swipe, a second finger and a
+  `pointercancel` do not; a tap inside the panel or on the anchor does not; a mouse and a pen close on
+  `pointerdown` as before; the touch listeners come and go with the touch (unit, in jsdom; a real swipe in
+  Chromium and a tap in all three engines, e2e).
 - R9: outside press, Escape, field blur close; a press inside does not; a press inside a nested popup
   does not close the outer one.
 - R10: not clipped by `overflow: hidden`; above the page content; `container` as an element and as a
@@ -492,6 +521,9 @@ in Playwright (`e2e/popup.spec.ts`).
   CSS anchor positioning is deferred to v1.1+ by the maintainer, who also allowed a one-time reading of the
   Ant Design source for this question; on 2026-11-13 the project rules turned it into a standing permission to
   study single mechanisms, on conditions (the decision first, nothing copied, a record in the specification).
+- **Decision 14** (2026-11-13): on a touch screen an outside press is a tap, decided on `pointerup`, so a list
+  stays open while the page is scrolled with a finger (see "Dismissal on a touch screen"). Public traces and a
+  black-box look at their behavior only; no source was read for this.
 - All code is independently authored for Svelte. Ant Design implementation source was not used for the
   requirements and the primitive's design; it was read once afterwards for one question (see "Source consulted"
   under decision 13). No code and no documentation text is copied: the requirements above are paraphrased from the public API tables and

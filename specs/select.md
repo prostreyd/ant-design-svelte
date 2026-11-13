@@ -683,3 +683,19 @@ and once more in the next frame). Tests: `tests/SelectPopup.test.ts` (the attrib
 (the wheel, in the three engines; at the end of a list that scrolls the wheel is asserted in Chromium and WebKit only:
 Firefox 159 under automation lets the wheel through there on a plain page as well, so that engine is checked through
 the computed `overscroll-behavior-y`).
+
+## Implementation notes (2026-11-13): a touch screen
+
+- **The list stays open while a finger scrolls the page.** The popup primitive decided an outside press on
+  `pointerdown`, which a finger that starts a scroll also sends; on a phone the list closed at the first touch of a
+  scroll. A touch is now decided as a tap, on `pointerup` (decision 14 of `specs/popup.md`).
+- **An option can be tapped in WebKit.** A tap on an element sends no `click` unless the element has a click listener
+  of its own (or is a link, a button, a field, or has a `tabindex`). Svelte puts the listener of `onclick` on the
+  document, so an option, a plain `div`, could not be chosen by a tap. Found by the browser test in WebKit (the
+  events of the tap were `pointerdown`, `touchstart`, `pointerup`, `touchend` and nothing else); the same in 0.5.0.
+  Every option now gets an empty click listener of its own (`src/lib/internal/clickable.ts`, `use:clickable`); the
+  handler that chooses stays where it was. The arrow, the field and the clear button were checked and are fine.
+- Tests: `e2e/select.spec.ts` ("Select on a touch screen", three engines), `e2e/popup-touch.chromium.spec.ts` (a real
+  swipe, Chromium), `tests/SelectPopup.test.ts`, `tests/clickable.test.ts`. Not checked on a real iPhone or Android
+  phone: only emulated touch in three engines.
+
