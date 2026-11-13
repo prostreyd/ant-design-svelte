@@ -17,6 +17,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   (date, question, what was read, by whom). Studying the public demos as a black box (geometry, recorded frames, screen
   readers) is listed as a way to compare behavior. The library stays an independent implementation.
 
+### Tests
+
+- `npm run test:floor` runs a smoke of the library in the engines of the lowest supported versions (Chromium 90 for Chrome 89,
+  Firefox 85, WebKit 15.4) from the Docker images of old Playwright releases, with an audit that asks each engine whether it
+  understands every selector, declaration and media query of the shipped CSS.
+
 ## [0.5.1] - 2026-11-13
 
 ### Fixed
