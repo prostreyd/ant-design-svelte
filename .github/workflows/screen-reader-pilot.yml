@@ -1,0 +1,65 @@
+# Pilot: tests with a real screen reader (Orca with Firefox, through Guidepup) on a GitHub runner.
+# It runs on a push to the pilot branch and by hand; it is not part of the CI of main.
+name: Screen reader (pilot)
+
+on:
+  push:
+    branches: [chore/guidepup-pilot]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: screen-reader-pilot
+  cancel-in-progress: true
+
+jobs:
+  orca:
+    # The runner that Guidepup itself uses for Orca (Ubuntu 26.04, Linux kernel 7).
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build the e2e fixtures
+        run: npx vite build --config vite.e2e.config.ts --outDir "$PWD/tmp/screen-reader/site" --emptyOutDir
+
+      - name: Serve the fixtures
+        run: |
+          python3 -m http.server 4195 --bind 127.0.0.1 --directory tmp/screen-reader/site > /dev/null 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:4195/ > /dev/null
+
+      - name: Set up the machine for the screen reader
+        run: npx -y @guidepup/setup@0.29.3 setup --ci
+
+      - name: Install the dependencies of the screen reader tests
+        working-directory: screen-reader
+        run: npm ci
+
+      - name: Install the screen reader
+        working-directory: screen-reader
+        run: npx -y @guidepup/setup@0.29.3 install
+
+      - name: Install Firefox
+        working-directory: screen-reader
+        run: npx playwright install --with-deps firefox
+
+      - name: Tests with Orca
+        working-directory: screen-reader
+        run: xvfb-run -a dbus-run-session -- npx playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: screen-reader-results
+          path: screen-reader/test-results
+          retention-days: 7
