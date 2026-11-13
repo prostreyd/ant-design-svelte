@@ -38,6 +38,10 @@ registry.
 2. Add the route `src/routes/[[lang=lang]]/components/<component>/+page.svelte` and an entry in `componentPages` of
    `pages.ts`; in `componentGroups` set the component's `phase` to `'now'` and give it a `path`.
 3. Add the texts to `strings.ts` in all three languages.
+   The card of the component on the overview page shows its name and a silhouette. A silhouette is drawn in
+   `components/Wireframe.svelte` and the name is in `WIREFRAMES` in `src/docs/overview.ts`; a test fails until the list
+   matches the roadmap. Nothing is written on the card but the name: the state (ready or planned) is the colour of the
+   silhouette, the border and the arrow, and a hidden word for screen readers.
 4. Add `tests/docs/<component>-page.test.ts` (compare the tables with the sources, as the Button test does) and run
    `npm test`, `npm run check:docs`, the build and `npm run test:docs`.
 

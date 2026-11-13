@@ -73,7 +73,8 @@ kbd { font-size: 11px; line-height: 18px; padding: 0 6px; border: 1px solid var(
 .star { height: 32px; padding: 0 12px 0 10px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ads-color-border); border-radius: 8px; color: var(--ads-color-text); }
 .star:hover { border-color: var(--s-link-hover); color: var(--s-link); }
 .langwrap { position: relative; }
-.mnav { position: fixed; z-index: 58; left: 0; right: 0; top: 64px; bottom: 0; overflow: auto; background: var(--ads-color-bg-container); border-top: 1px solid var(--s-border); padding: 8px 0 40px; }
+/* A height, not `bottom: 0`: the header has a backdrop-filter, which makes it the containing block of this fixed panel, and `bottom: 0` then ended at the bottom of the 64px header and left the panel 49px high. */
+.mnav { position: fixed; z-index: 58; left: 0; right: 0; top: 64px; height: calc(100vh - 64px); height: calc(100dvh - 64px); overflow: auto; overscroll-behavior: contain; background: var(--ads-color-bg-container); border-top: 1px solid var(--s-border); padding: 8px 0 40px; }
 .mnav a { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 11px 24px; color: var(--ads-color-text); }
 .mnav a.active { background: var(--s-primary-soft); color: var(--s-link); font-weight: 500; }
 .mnav .item.soon { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 11px 24px; color: var(--ads-color-text-secondary); }
@@ -232,11 +233,20 @@ table.api { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .api td.df { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12.5px; color: var(--ads-color-text-secondary); white-space: nowrap; }
 .api td.ver { color: var(--ads-color-text-secondary); white-space: nowrap; }
 .api.plain td:first-child { color: inherit; font-family: inherit; font-size: inherit; font-weight: 500; }
-.ov { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
-.ov .card { padding: 18px; display: block; color: inherit; }
+.ov { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.ov .card { position: relative; display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: 12px; color: inherit; text-decoration: none; }
 .ov .card.soon { border-style: dashed; background: var(--s-soft); }
-.ov .card h3 small { color: var(--ads-color-text-secondary); font-weight: 400; margin-left: 6px; }
-.ov .prev { height: 84px; margin-top: 12px; border-radius: 8px; background: var(--s-soft); display: grid; place-items: center; gap: 6px; }
+.ov .pic { display: grid; place-items: center; height: 104px; background: linear-gradient(180deg, var(--s-primary-soft), transparent); border-bottom: 1px solid var(--s-border); }
+.ov .card.soon .pic { background: transparent; border-bottom-style: dashed; }
+.ov .pic svg { width: 70%; max-width: 150px; }
+.ov .foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 11px 14px; }
+.ov .nm { font-weight: 600; font-size: 15px; color: var(--ads-color-text); }
+.ov .card.soon .nm { color: var(--ads-color-text-secondary); }
+.ov .go { color: var(--s-link); font-size: 16px; transition: transform .2s; }
+.ov a.card:hover { border-color: var(--s-link); }
+.ov a.card:hover .go { transform: translateX(3px); }
+.ov a.card:focus-visible { outline: 2px solid var(--s-link); outline-offset: 2px; }
+.ov .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .qa p { margin: 8px 0 0; }
 .ph-input { width: 120px; height: 32px; border: 1px solid var(--ads-color-border); border-radius: 6px; background: var(--ads-color-bg-container); }
 .ph-check { width: 18px; height: 18px; border-radius: 4px; background: var(--s-accent); position: relative; }

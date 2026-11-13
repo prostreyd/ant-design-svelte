@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Button } from 'svelte-ant-design';
   import Crumbs from '#docs/components/Crumbs.svelte';
   import Seo from '#docs/components/Seo.svelte';
   import T from '#docs/components/T.svelte';
+  import Wireframe from '#docs/components/Wireframe.svelte';
   import { localHref } from '#docs/href';
   import { useT } from '#docs/i18n/use-t';
   import { componentGroups } from '#docs/pages';
@@ -20,18 +20,17 @@
   <div class="ov">
     {#each group.items as item (item.name)}
       {#if item.path}
-        <a class="card" href={localHref(item.path)}>
-          <h3>{item.name}<small>{t(item.note)}</small></h3>
-          <p class="tag ok">{t('tag.ready')}</p>
-          <div class="prev" aria-hidden="true" inert>
-            <Button type="primary" tabindex={-1}>Primary</Button>
-            <Button tabindex={-1}>Default</Button>
-          </div>
+        <!-- The whole card is the link. Only the name and a silhouette are drawn; the state is told to a screen reader. -->
+        <a class="card" href={localHref(item.path)} data-component={item.name}>
+          <span class="pic" aria-hidden="true"><Wireframe name={item.name} tone="ready" /></span>
+          <span class="foot"><span class="nm">{item.name}</span><span class="go" aria-hidden="true">→</span></span>
+          <span class="sr">{t('tag.ready')}</span>
         </a>
       {:else}
-        <div class="card soon">
-          <h3>{item.name}<small>{t(item.note)}</small></h3>
-          <p class="tag plan">{t('tag.plan')}</p>
+        <div class="card soon" data-component={item.name}>
+          <span class="pic" aria-hidden="true"><Wireframe name={item.name} tone="planned" /></span>
+          <span class="foot"><span class="nm">{item.name}</span></span>
+          <span class="sr">{t('tag.plan')}</span>
         </div>
       {/if}
     {/each}
