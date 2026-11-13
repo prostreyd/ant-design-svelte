@@ -54,7 +54,7 @@
     "package": "svelte-package",
     "prepublishOnly": "npm run lint && npm run check && npm run test && npm run package",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "check:docs": "npm run check -w docs",
+    "check:docs": "npm run check -w docs && node scripts/check-quality-matrix.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
