@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// E2E_PORT: a run of its own, next to another one (a second working copy, the library and the site together).
+const port = Number(process.env.E2E_PORT ?? 4174);
+
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.ts',
@@ -8,7 +11,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [['list']],
   use: {
-    baseURL: 'http://localhost:4174',
+    baseURL: `http://localhost:${port}`,
     trace: 'retain-on-failure'
   },
   // Every test runs in all three engines. A file named `*.chromium.spec.ts` is for something only Chromium can do
@@ -20,7 +23,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npx vite --config vite.e2e.config.ts',
-    url: 'http://localhost:4174',
+    url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI
   }
 });

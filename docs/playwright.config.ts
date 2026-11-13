@@ -4,7 +4,8 @@ import { defineConfig, devices } from '@playwright/test';
 // Build and test with the same BASE_PATH to check the site under its real base path, for example
 //   BASE_PATH=/ant-design-svelte npm run build && BASE_PATH=/ant-design-svelte npm run test:e2e
 const base = process.env.BASE_PATH ?? '';
-const port = 4175;
+// DOCS_PORT: a run of its own, next to another one.
+const port = Number(process.env.DOCS_PORT ?? 4175);
 const url = `http://localhost:${port}${base}/`;
 
 export default defineConfig({

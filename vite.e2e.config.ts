@@ -13,7 +13,8 @@ export default defineConfig({
     }
   },
   server: {
-    port: 4174,
+    // E2E_PORT lets a second run (another folder, another chat) have its own server.
+    port: Number(process.env.E2E_PORT ?? 4174),
     strictPort: true
   }
 });
