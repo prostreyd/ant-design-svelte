@@ -314,6 +314,65 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   });
 }
 
+for (const [size, viewport] of Object.entries(VIEWPORTS)) {
+  test.describe(`the header is an ordinary block (${size})`, () => {
+    test.use({ viewport });
+
+    const bottomOfHeader = (page: Page) => page.locator('header.hdr').evaluate((header) => Math.round(header.getBoundingClientRect().bottom));
+
+    test('it scrolls away with the page, bit by bit, and is back at the top', async ({ page }) => {
+      await open(page, 'components/select/');
+      const header = page.locator('header.hdr');
+      expect(await header.evaluate((element) => getComputedStyle(element).position)).not.toMatch(/sticky|fixed/);
+      const full = await bottomOfHeader(page);
+      expect(full).toBeGreaterThan(40);
+      // Part of the way: the header is cut by the top edge of the screen, as an ordinary block is.
+      await page.evaluate(() => window.scrollTo(0, 30));
+      await expect.poll(() => bottomOfHeader(page)).toBe(full - 30);
+      // Far down: it is out of view.
+      await page.evaluate(() => window.scrollTo(0, 900));
+      await expect.poll(() => bottomOfHeader(page)).toBeLessThanOrEqual(0);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await expect.poll(() => bottomOfHeader(page)).toBe(full);
+    });
+
+    test('a link to a heading lands near the top, with no room left for a header that is not there', async ({ page }) => {
+      // Without the smooth scrolling of the page, which is still under way when the position is read.
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await open(page, 'components/select/');
+      const id = await page.locator('.art h2[id]').nth(2).getAttribute('id');
+      await page.evaluate((hash) => (location.hash = hash), id);
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
+      await page.waitForTimeout(300);
+      const top = await page.locator(`.art h2[id="${id}"]`).evaluate((heading) => Math.round(heading.getBoundingClientRect().top));
+      expect(top).toBeGreaterThanOrEqual(0);
+      expect(top).toBeLessThan(48);
+    });
+  });
+}
+
+test.describe('the sidebar and the table of contents, with a header that scrolls away', () => {
+  test.use({ viewport: VIEWPORTS.wide });
+
+  test('they stay in view under the top edge once the header has gone, and still scroll inside', async ({ page }) => {
+    await open(page, 'components/select/');
+    await page.evaluate(() => window.scrollTo(0, 1500));
+    await page.waitForTimeout(250);
+    const side = page.locator('aside.side, .side').first();
+    const toc = page.locator('.toc').first();
+    const sideBox = (await side.boundingBox())!;
+    expect(sideBox.y).toBeGreaterThanOrEqual(0);
+    expect(sideBox.y).toBeLessThan(40);
+    // It fills the screen: nothing is left above it for a header, and nothing is cut at the bottom.
+    expect(Math.round(sideBox.y + sideBox.height)).toBeLessThanOrEqual(VIEWPORTS.wide.height);
+    expect(sideBox.height).toBeGreaterThan(VIEWPORTS.wide.height - 80);
+    const tocBox = (await toc.boundingBox())!;
+    expect(tocBox.y).toBeGreaterThanOrEqual(0);
+    expect(tocBox.y).toBeLessThan(48);
+    expect(Math.round(tocBox.y + tocBox.height)).toBeLessThanOrEqual(VIEWPORTS.wide.height);
+  });
+});
+
 test.describe('home page', () => {
   test('the roadmap lists every ready component, and no alpha label is left', async ({ page }) => {
     await open(page, '');
