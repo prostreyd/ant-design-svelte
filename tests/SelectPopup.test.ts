@@ -325,10 +325,15 @@ describe('Select panel: the list holds the wheel only while it scrolls', () => {
   });
 
   it('it measures again in the next frame, when the layout has settled', async () => {
+    // The frame is run by hand. A real one could come before the layout changes below, on a slow machine (it did, on
+    // the runner of the CI), and then there would be no frame left to see the change.
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => frames.push(callback));
     render(Select, { props: field });
     await openField();
     expect(listbox()).not.toHaveAttribute('data-scrollable');
     box = 60;
+    for (const frame of frames.splice(0)) frame(0);
     await waitFor(() => expect(listbox()).toHaveAttribute('data-scrollable'));
   });
 
