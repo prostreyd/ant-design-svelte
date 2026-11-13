@@ -15,7 +15,9 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # The job takes about 20 minutes (the e2e tests of the library and of the site in three engines); a slow runner adds
+    # 40% to that, so the limit leaves room for it.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
