@@ -1,4 +1,4 @@
-# Tests with a real screen reader (pilot)
+# Tests with a real screen reader
 
 Tests that drive a real screen reader, Orca with Firefox, through [Guidepup](https://www.guidepup.dev/) and assert on
 what it says: the name and the state of a control and how the state changes after Space. They cover the Switch and the
@@ -9,7 +9,7 @@ bus. The log is what Orca sends to speech, not what a person hears.
 
 ## Run
 
-In the CI workflow `.github/workflows/screen-reader-pilot.yml`. Locally, in Docker (nothing is installed on the machine):
+In the CI workflow `.github/workflows/screen-reader.yml` (on every push to `main` and on pull requests, apart from the CI of the library). Locally, in Docker (nothing is installed on the machine):
 
 ```sh
 docker build -t guidepup-pilot -f screen-reader/Dockerfile screen-reader

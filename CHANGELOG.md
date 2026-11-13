@@ -26,6 +26,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 - `npm run check:docs` also checks that the specification of a new component has a quality matrix that is filled in:
   every row is present, a test cell names files and scripts that exist, a manual check has a date, a row that does not
   apply has a reason.
+- `screen-reader/`: tests with a real screen reader (Orca with Firefox, driven through Guidepup) for the Switch and the
+  Checkbox: they assert what the screen reader says for the name and the state of a control and after Space. The workflow
+  `Screen reader` runs them on a GitHub runner, apart from the CI of the library.
 
 ## [0.5.2] - 2026-11-13
 

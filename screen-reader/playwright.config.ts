@@ -6,7 +6,8 @@ export default withGuidepup({
   testDir: '.',
   testMatch: '**/*.spec.ts',
   timeout: 90_000,
-  retries: 0,
+  // The speech of a real screen reader has a timing of its own; the examples of Guidepup retry up to five times.
+  retries: process.env.CI ? 2 : 0,
   reporter: [['list']],
   projects: [{ name: 'firefox', use: { ...devices['Desktop Firefox'] } }]
 });

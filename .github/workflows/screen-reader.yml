@@ -1,17 +1,18 @@
-# Pilot: tests with a real screen reader (Orca with Firefox, through Guidepup) on a GitHub runner.
-# It runs on a push to the pilot branch and by hand; it is not part of the CI of main.
-name: Screen reader (pilot)
+# Tests with a real screen reader (Orca with Firefox, through Guidepup) on a GitHub runner. A workflow of its own, so
+# that the CI of the library does not wait for it and a speech that is late does not stop a release by itself.
+name: Screen reader
 
 on:
   push:
-    branches: [chore/guidepup-pilot]
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: screen-reader-pilot
+  group: screen-reader-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
