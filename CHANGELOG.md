@@ -9,6 +9,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Documentation
+
+- The rules for AI assistants now allow studying the source code of single mechanisms of Ant Design, to understand a
+  technique and judge it, and say on what conditions: the decision is written down before reading, only the mechanism in
+  question is read, nothing is copied, ported or retold line by line, and what was read is recorded in the specification
+  (date, question, what was read, by whom). Studying the public demos as a black box (geometry, recorded frames, screen
+  readers) is listed as a way to compare behavior. The library stays an independent implementation.
+
 ## [0.5.1] - 2026-11-13
 
 ### Fixed
