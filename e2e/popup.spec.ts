@@ -456,3 +456,59 @@ test.describe('motion (R11)', () => {
     await expect(frame(page)).toBeVisible();
   });
 });
+
+
+test.describe('a touch screen (R9, decision 14)', () => {
+  test.use({ hasTouch: true });
+
+  const state = (page: Page) => frame(page).getAttribute('data-state');
+  /** A touch of the given kind, as the browser would send it to the document. */
+  const touch = (page: Page, type: string, x: number, y: number, pointerId = 1) =>
+    page.evaluate(
+      ({ type, x, y, pointerId }) => {
+        const target = document.elementFromPoint(x, y) ?? document.body;
+        target.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, composed: true, pointerType: 'touch', pointerId, clientX: x, clientY: y, isPrimary: pointerId === 1 }));
+      },
+      { type, x, y, pointerId }
+    );
+
+  test('a tap outside closes the popup, on the finger lifting, and a tap on the panel does not', async ({ page }) => {
+    await lab(page, { open: true });
+    const panel = await rect(frame(page));
+    await page.touchscreen.tap(panel.x + panel.width / 2, panel.y + panel.height / 2);
+    await settle(page);
+    expect(await state(page)).toBe('open');
+    await page.touchscreen.tap(900, 100);
+    await expect(frame(page)).toHaveAttribute('data-state', 'closed');
+  });
+
+  test('a finger that goes down outside does not close it at once: the page may be about to scroll', async ({ page }) => {
+    await lab(page, { open: true });
+    await touch(page, 'pointerdown', 900, 100);
+    await settle(page);
+    expect(await state(page)).toBe('open');
+    await touch(page, 'pointerup', 900, 100);
+    await expect(frame(page)).toHaveAttribute('data-state', 'closed');
+  });
+
+  test('a touch that the browser takes for scrolling, or a finger that moves, does not close it', async ({ page }) => {
+    await lab(page, { open: true });
+    await touch(page, 'pointerdown', 900, 100);
+    await touch(page, 'pointercancel', 900, 100);
+    await touch(page, 'pointerup', 900, 100);
+    await touch(page, 'pointerdown', 900, 100);
+    await touch(page, 'pointermove', 900, 160);
+    await touch(page, 'pointerup', 900, 160);
+    await touch(page, 'pointerdown', 900, 100, 1);
+    await touch(page, 'pointerdown', 700, 100, 2);
+    await touch(page, 'pointerup', 900, 100, 1);
+    await settle(page);
+    expect(await state(page)).toBe('open');
+  });
+
+  test('a mouse is decided on the press, as before', async ({ page }) => {
+    await lab(page, { open: true });
+    await page.evaluate(() => document.elementFromPoint(900, 100)!.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'mouse' })));
+    await expect(frame(page)).toHaveAttribute('data-state', 'closed');
+  });
+});

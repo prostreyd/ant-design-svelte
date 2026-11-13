@@ -498,3 +498,37 @@ test.describe('Select options written as markup in a real browser', () => {
     await expect(rootOf(page.getByTestId('markup')).locator('.ads-select-item')).toHaveText('Option B');
   });
 });
+
+
+test.describe('Select on a touch screen', () => {
+  test.use({ hasTouch: true });
+
+  test('the list stays open while a finger scrolls the page, and closes on a tap outside, or on choosing an option', async ({ page }) => {
+    const open = () => page.locator('.ads-popup:not([hidden])').count();
+    const field = await box(rootOf(page.getByTestId('single')));
+    await page.touchscreen.tap(field.x + 20, field.y + field.height / 2);
+    await expect.poll(open).toBe(1);
+
+    // A finger goes down outside and the browser takes it for scrolling: it cancels the pointer.
+    const outside = { x: 5, y: 5 };
+    await page.evaluate(({ x, y }) => {
+      const target = document.elementFromPoint(x, y) ?? document.body;
+      const init = { bubbles: true, cancelable: true, composed: true, pointerType: 'touch', pointerId: 1, clientX: x, clientY: y };
+      target.dispatchEvent(new PointerEvent('pointerdown', init));
+      target.dispatchEvent(new PointerEvent('pointercancel', init));
+    }, outside);
+    await page.waitForTimeout(200);
+    expect(await open()).toBe(1);
+
+    // A tap outside, with the finger coming up in place, closes it.
+    await page.touchscreen.tap(outside.x, outside.y);
+    await expect.poll(open).toBe(0);
+
+    // A tap on an option chooses it and closes the list.
+    await page.touchscreen.tap(field.x + 20, field.y + field.height / 2);
+    await expect.poll(open).toBe(1);
+    await optionsOf(page).filter({ hasText: 'Sad' }).tap();
+    await expect(page.getByTestId('single-value')).toHaveText('sad');
+    await expect.poll(open).toBe(0);
+  });
+});

@@ -343,3 +343,28 @@ describe('Select panel: the list holds the wheel only while it scrolls', () => {
     await waitFor(() => expect(panelOf()).toHaveAttribute('hidden'));
   });
 });
+
+
+describe('Select panel: an option can be tapped in WebKit', () => {
+  it('every option has a click listener of its own: WebKit sends the click of a tap only to such an element', async () => {
+    const listeners: Array<{ node: unknown; type: string }> = [];
+    const add = EventTarget.prototype.addEventListener;
+    vi.spyOn(EventTarget.prototype, 'addEventListener').mockImplementation(function (this: EventTarget, type: string, ...rest: unknown[]) {
+      listeners.push({ node: this, type });
+      return (add as (...args: unknown[]) => void).call(this, type, ...rest);
+    });
+    render(Select, { props: field });
+    await openField();
+    const own = (element: Element) => listeners.some((entry) => entry.node === element && entry.type === 'click');
+    expect(options().length).toBeGreaterThan(0);
+    for (const option of options()) expect(own(option)).toBe(true);
+  });
+
+  it('and a click on an option still chooses it, once', async () => {
+    const onchange = vi.fn();
+    render(Select, { props: { ...field, onchange } });
+    const user = await openField();
+    await user.click(optionNamed('Beta'));
+    expect(onchange).toHaveBeenCalledTimes(1);
+  });
+});
