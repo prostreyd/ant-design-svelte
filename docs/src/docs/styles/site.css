@@ -44,7 +44,8 @@ svg.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-widt
 .lg-red { fill: var(--logo-red); } .lg-blue { fill: var(--logo-blue); }
 
 /* ---- header ---- */
-.hdr { position: sticky; top: 0; z-index: 60; background: color-mix(in srgb, var(--ads-color-bg-container) 90%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--s-border); }
+/* An ordinary block: it scrolls away with the page. It is positioned only so that what hangs from it (the menu of the burger, the search results, the language menu) is drawn over the page. */
+.hdr { position: relative; z-index: 60; background: var(--ads-color-bg-container); border-bottom: 1px solid var(--s-border); }
 .hdr-in { max-width: 1520px; margin: 0 auto; height: 64px; padding: 0 24px; display: flex; align-items: center; gap: 20px; }
 .logo { flex: none; display: flex; align-items: center; gap: 10px; color: var(--ads-color-text); font-weight: 650; font-size: 17px; letter-spacing: -.01em; white-space: nowrap; }
 .logo:hover { color: var(--ads-color-text); }
@@ -73,8 +74,8 @@ kbd { font-size: 11px; line-height: 18px; padding: 0 6px; border: 1px solid var(
 .star { height: 32px; padding: 0 12px 0 10px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ads-color-border); border-radius: 8px; color: var(--ads-color-text); }
 .star:hover { border-color: var(--s-link-hover); color: var(--s-link); }
 .langwrap { position: relative; }
-/* A height, not `bottom: 0`: the header has a backdrop-filter, which makes it the containing block of this fixed panel, and `bottom: 0` then ended at the bottom of the 64px header and left the panel 49px high. */
-.mnav { position: fixed; z-index: 58; left: 0; right: 0; top: 64px; height: calc(100vh - 64px); height: calc(100dvh - 64px); overflow: auto; overscroll-behavior: contain; background: var(--ads-color-bg-container); border-top: 1px solid var(--s-border); padding: 8px 0 40px; }
+/* The panel hangs from the header and goes with it. Its containing block is the 64px header, so it has a height of its own: `bottom: 0` would end at the bottom of the header. */
+.mnav { position: absolute; z-index: 58; left: 0; right: 0; top: 100%; height: calc(100vh - 64px); height: calc(100dvh - 64px); overflow: auto; overscroll-behavior: contain; background: var(--ads-color-bg-container); border-top: 1px solid var(--s-border); padding: 8px 0 40px; }
 .mnav a { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 11px 24px; color: var(--ads-color-text); }
 .mnav a.active { background: var(--s-primary-soft); color: var(--s-link); font-weight: 500; }
 .mnav .item.soon { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 11px 24px; color: var(--ads-color-text-secondary); }
@@ -151,7 +152,7 @@ kbd { font-size: 11px; line-height: 18px; padding: 0 6px; border: 1px solid var(
 
 /* ---- shells: documentation and components have separate sidebars ---- */
 .shell { max-width: 1520px; margin: 0 auto; display: grid; grid-template-columns: 272px minmax(0, 1fr); }
-.side { position: sticky; top: 64px; align-self: start; height: calc(100vh - 64px); overflow-y: auto; border-right: 1px solid var(--s-border); padding: 20px 0 32px; }
+.side { position: sticky; top: 16px; align-self: start; height: calc(100vh - 32px); overflow-y: auto; border-right: 1px solid var(--s-border); padding: 20px 0 32px; }
 .side-title { margin: 0 24px 12px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ads-color-text-secondary); }
 .side-title::before { content: ''; width: 8px; height: 8px; border-radius: 2px; background: var(--logo-blue); }
 .shell.comp .side-title::before { background: var(--logo-red); }
@@ -176,7 +177,7 @@ nav.crumbs li + li::before { content: "/"; margin: 0 6px; }
 .title-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
 .art h1 { font-size: 34px; letter-spacing: -.01em; }
 .art h1 small { margin-left: 12px; font-size: 18px; font-weight: 400; color: var(--ads-color-text-secondary); }
-.art h2 { font-size: 22px; margin: 44px 0 14px; scroll-margin-top: 84px; }
+.art h2 { font-size: 22px; margin: 44px 0 14px; scroll-margin-top: 24px; }
 .art .lede { margin: 14px 0; font-size: 15.5px; color: var(--ads-color-text-secondary); line-height: 1.8; }
 .art > p, .art li { line-height: 1.8; }
 .art > p { margin: 12px 0; }
@@ -187,7 +188,7 @@ nav.crumbs li + li::before { content: "/"; margin: 0 6px; }
 .meta { margin: 16px 0 4px; display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 13.5px; }
 .meta dt { color: var(--ads-color-text-secondary); } .meta dd { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 18px; }
 .meta a { display: inline-flex; align-items: center; gap: 5px; }
-.toc { position: sticky; top: 88px; align-self: start; padding: 8px 0 0 8px; margin-top: 32px; font-size: 13px; max-height: calc(100vh - 110px); overflow: auto; }
+.toc { position: sticky; top: 24px; align-self: start; padding: 8px 0 0 8px; margin-top: 32px; font-size: 13px; max-height: calc(100vh - 48px); overflow: auto; }
 .toc b { display: block; margin-bottom: 8px; color: var(--ads-color-text-secondary); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; }
 .toc a { display: block; padding: 3px 0 3px 12px; border-left: 2px solid var(--s-border); color: var(--ads-color-text-secondary); }
 .toc a.active { border-left-color: var(--s-link); color: var(--s-link); }
