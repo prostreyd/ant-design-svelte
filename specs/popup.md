@@ -64,7 +64,7 @@ What the primitive must provide. "Evidence" is where the need shows in the publi
 |---|---|---|
 | R1 | **Placement.** 12 values: `top`, `bottom`, `left`, `right` and the aligned `topLeft`, `topRight`, `bottomLeft`, `bottomRight`, `leftTop`, `leftBottom`, `rightTop`, `rightBottom`. Consumers restrict the set (Select: 4 values, default `bottomLeft`; Tooltip default `top`; Dropdown default `bottomLeft`). | React Tooltip, Dropdown, Select; Angular Tooltip; Vue Tooltip (12 values, default `top`), Dropdown (6 values: `bottom` and `top` are the centered ones), Select (4 values, 3.3.0) |
 | R2 | **Overflow.** When there is no room: move to the opposite side (`top` to `bottom`, `topLeft` to `bottomLeft`), and for a placement without alignment also shift along the edge; an aligned placement only flips. On by default, switchable (`autoAdjustOverflow`, default `true`). | React Tooltip text and props, Dropdown (5.2.0); Vue Tooltip `autoAdjustOverflow` (default `true`) |
-| R3 | **Follow the layout.** Stays attached through scroll of the page and of any scrolling ancestor, window resize, size change of the anchor or the panel, and a movement of the anchor by a layout change elsewhere, with no manual call (the rectangle of the anchor is checked once per frame while the popup is open). | React says it does not realign after layout changes unless `forceAlign` is called; Angular says only the body scroll repositions it and a custom scroll container needs `CdkScrollable`. Both are limits we do not inherit. The Vue pages are silent. |
+| R3 | **Follow the layout.** Stays attached through scroll of the page and of any scrolling ancestor, window resize, size change of the anchor or the panel, and a movement of the anchor by a layout change elsewhere, with no manual call (the rectangle of the anchor is checked once per frame while the popup is open). **The page scroll needs no repositioning step** (decision 13): the panel is in the same coordinate space as its anchor, so the browser moves both together, in the same frame. | React says it does not realign after layout changes unless `forceAlign` is called; Angular says only the body scroll repositions it and a custom scroll container needs `CdkScrollable`. Both are limits we do not inherit. The Vue pages are silent. |
 | R4 | **Anchor.** An element, or a point `{x, y}` (the context menu opens at the pointer). | React Dropdown `contextMenu` trigger; Angular `NzContextMenuService.create({x, y})`, `nzTooltipOrigin`; Vue lists the `contextmenu` trigger without saying where the panel opens |
 | R5 | **Match the anchor width.** `boolean` or a number; the width is a **minimum**: the panel may be wider, and a number wider than the field is kept. | React Select `popupMatchSelectWidth` (5.5.0); Angular `nzDropdownMatchSelectWidth` (boolean); Vue Select `dropdownMatchSelectWidth` (`boolean \| number`, same minimum-width wording; `false` also disables virtual scroll) |
 | R6 | **Arrow.** Optional, pointing at the anchor; `pointAtCenter` points at the center of the anchor instead of its aligned edge. The arrow must stay correct after a flip or a shift. | React `arrow: boolean \| {pointAtCenter}` (5.2.0; Tooltip default `true`, Dropdown `false`); Angular `nzTooltipArrowPointAtCenter`, `nzArrow`; Vue `arrow: boolean \| {pointAtCenter}` (Tooltip 4.2.0, default `true`; Dropdown 3.3.0, default `false`) and the older `arrowPointAtCenter` |
@@ -343,10 +343,70 @@ Still open or not handled:
 - The mobile virtual keyboard: `visualViewport` is listened to, but the flip uses the layout viewport
   (`documentElement.clientWidth` and `clientHeight`). Whether it should use the visual viewport on Safari
   15.4 and later is not decided and was not tried on a device.
-- A `container` with a CSS `transform`, `filter` or `contain` becomes the containing block of the
-  `position: fixed` panel, so the coordinates would be off. Not handled; the default (`document.body`) is
-  not affected.
+- ~~A `container` with a CSS `transform`, `filter` or `contain` becomes the containing block of the
+  `position: fixed` panel, so the coordinates would be off.~~ Handled since 0.5.1 (decision 13): the panel
+  measures where its own containing block starts, so any container works.
 - Firefox and WebKit, as above.
+
+## Following the page scroll (decision 13, 2026-11-12)
+
+**The problem.** With the panel `position: fixed` and the placement redone in JS after each `scroll` event,
+the field moves with the page at once and the panel only one frame later. The maintainer saw it as a list
+that jerks while the page scrolls under an open Select.
+
+**Measured** (2026-11-12, Chromium 158, a scroll gesture driven through the DevTools protocol, so the
+compositor scrolls as it does under a trackpad; every composited frame was recorded and the painted gap
+between a blue "field" and a red "panel" was read from the pixels; the gap at rest is 9 px):
+
+| Method | Frames with both visible | Frames whose gap was not 9 px | Worst error |
+|---|---|---|---|
+| `position: fixed`, JS placement after `scroll` (0.5.0) | 40 | 37 | 5 px |
+| `position: absolute` in page coordinates | 40 | 0 | 0 px |
+| CSS anchor positioning, no JS | 40 | 0 | 0 px |
+
+The same kind of check on the public demos of the three libraries (geometry at each `scroll` event, 14
+wheel steps of 50 px): the React and Vue panels were 0 px from where they belong at every event; the
+Angular panel (CDK overlay, fixed container, reposition on scroll) was 50 px behind at every event and caught
+up two frames later, exactly like 0.5.0. This reading of the geometry at the event is not a painted frame
+(it also shows an error for CSS anchor positioning, which the compositor corrects), so only the recorded
+frames above are used as proof.
+
+**How the others do it** (public documentation and, once, source: the maintainer allowed a one-time look on
+2026-11-12 for this question only; nothing was copied, the ideas are stated here in words).
+React and Vue place the panel `position: absolute` in a wrapper in `body`, with coordinates that include the
+scroll of the page, so a page scroll moves it for free; they re-align on `scroll` of the window and of every
+scrolling ancestor of the anchor, and on resize. Angular's overlay container is fixed over the window and its
+`reposition` scroll strategy re-applies the position on every scroll event, which its documentation says
+costs scrolling performance.
+
+**Decision (maintainer, 2026-11-12): do A and B, defer D.**
+
+- **A. Same space as the anchor.** The panel is `position: absolute` and is placed with the offset between the
+  anchor and where its own containing block starts. That offset is measured, not assumed: the rectangle of
+  the panel minus the translation applied last. So it holds for a `body` that is positioned or has a margin,
+  and for a `container` with a `transform`, `filter` or `contain` (the old note in "Still open").
+- **The exception.** An anchor that does not move with the page (a point anchor, or an element inside a
+  `position: fixed` ancestor) gets a `position: fixed` panel (`data-fixed`), so the panel stays with it.
+- **B. Cheaper placement.** The panel stays at `left: 0; top: 0` and is moved with `transform: translate()`,
+  so measuring its natural size needs no write and no forced layout; nothing is written when the placement did
+  not change (a change below 0.01 px is noise); the translation is rounded to a device pixel, where a layout
+  would have snapped `left` and `top` (a fractional transform blurs text). The panel is `width: max-content`
+  with a `max-width` of the viewport, which is what shrink-to-fit gave a fixed panel, so a narrow positioned
+  `container` does not make it wrap.
+- **What it does not fix.** An anchor inside a scrolling element (or inside a fixed one that scrolls, such as a
+  modal wrapper) is still followed by JS after each `scroll`, one frame behind. The same is true of the React
+  and Vue popups.
+- **D reserved for v1.1+ (CSS anchor positioning).** It would remove that last lag and the per-frame
+  rectangle check, as an additive enhancement behind a feature test, with the JS placement staying the
+  baseline. Not taken now: it needs two code paths to test in every engine, and `onplacement`, the arrow after
+  a flip and the size limits are known only to the JS. Support is real in the engines of 2026 (Chrome 158,
+  Firefox 159 and WebKit 27.2 all answer `CSS.supports` for it) but absent at the library's floor.
+- **C (close on scroll) is not taken:** none of the three libraries does it by default.
+
+**Select, found while checking this.** The list had `overscroll-behavior: contain` always, so with the cursor
+over an open list that does not scroll the wheel did not move the page in Chromium and WebKit (Firefox did).
+The property is now applied only while the list really scrolls (`data-scrollable`, measured after each
+change of the options and once more in the next frame). Behavior of a list that scrolls is unchanged.
 
 ## Страница на сайте
 
@@ -362,6 +422,10 @@ in Playwright (`e2e/popup.spec.ts`).
   only flips; `autoAdjustOverflow={false}` neither flips nor shifts (e2e).
 - R3: stays attached after a page scroll, a scroll of an ancestor, a resize of the window, and a change
   of the size of the anchor and of the panel (e2e).
+- R3 (decision 13): at every `scroll` event of the page the panel is where it belongs, with no repositioning
+  step in between (e2e, three engines; it fails with a fixed panel); a fixed anchor and a point anchor keep a
+  fixed panel; a `container` that is positioned, or has a `transform`, still gets a panel next to the anchor;
+  nothing is written when the placement did not change; a change below 0.01 px is not written.
 - R4: element anchor, point anchor, `null` anchor renders nothing.
 - R5: `matchWidth` `true`, a number smaller and larger than the anchor, `false`; the width is a minimum.
 - R6: arrow points at the anchor on every placement, after a flip, with `pointAtCenter`.
@@ -396,6 +460,9 @@ in Playwright (`e2e/popup.spec.ts`).
   Firefox 125, Safari 17, and it adds no dependency. The price is accepted: the most code of the four
   (measuring, portal, layer registry), the Modal constraint and the scoped-token note above, and tests
   that need a real browser for geometry, in all three engines (see "Implementation notes").
+- **Decision 13** (2026-11-12): the panel follows the page scroll without a repositioning step (A and B above);
+  CSS anchor positioning is deferred to v1.1+ by the maintainer, who also allowed a one-time reading of the
+  Ant Design source for this question (the rule of CLAUDE.md sections 3 and 4a is unchanged).
 - All code is independently authored for Svelte. Ant Design implementation source was not used, and no
   documentation text is copied: the requirements above are paraphrased from the public API tables and
   notes. API inspired by Ant Design (MIT); the implementation is original for Svelte.
