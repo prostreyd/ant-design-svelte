@@ -11,6 +11,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Documentation
 
+- The rules for AI assistants now ask to run, on the developer's machine, only the checks that a change affects
+  (`npm run test:affected`, with `--dry-run` to see the plan and `--quick` for Chromium only) and to leave the full run to
+  CI. The browser tests are chosen from the import graph of the library: a change in a component also checks the components
+  that use it, and what imports cannot show (design tokens, configuration) runs everything. CI now starts on every pushed
+  branch, and it has to be green before a branch is merged or released.
 - The header of the documentation site is an ordinary block now: it scrolls away with the page instead of staying at the
   top of the screen. The sidebar and the table of contents stay in view under the top edge once the header has gone, and
   a link to a heading lands near the top.
