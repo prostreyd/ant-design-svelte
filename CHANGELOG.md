@@ -16,6 +16,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   question is read, nothing is copied, ported or retold line by line, and what was read is recorded in the specification
   (date, question, what was read, by whom). Studying the public demos as a black box (geometry, recorded frames, screen
   readers) is listed as a way to compare behavior. The library stays an independent implementation.
+- The rules for AI assistants now say that a branch merged into `main` is deleted, locally and on GitHub, and that a release
+  is marked by its tag, not by a `release/*` branch.
 
 ### Tests
 
