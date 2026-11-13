@@ -14,6 +14,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 - The header of the documentation site is an ordinary block now: it scrolls away with the page instead of staying at the
   top of the screen. The sidebar and the table of contents stay in view under the top edge once the header has gone, and
   a link to a heading lands near the top.
+- The rules for AI assistants add a quality matrix to the specification of every new component (rule 7a): for the
+  accessibility pattern, forced colors, IME, touch, the three browsers, the lowest browser versions and a manual screen
+  reader check it says whether a test covers it, a manual check with a date, or why it does not apply. A manual check that
+  has not been done is marked as such on the README and the page of the component, and `npm run test:floor` joins the
+  checks of a release.
+- The README states the supported browsers and what has and has not been tested.
+
+### Tests
+
+- `npm run check:docs` also checks that the specification of a new component has a quality matrix that is filled in:
+  every row is present, a test cell names files and scripts that exist, a manual check has a date, a row that does not
+  apply has a reason.
 
 ## [0.5.2] - 2026-11-13
 

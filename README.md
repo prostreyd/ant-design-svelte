@@ -20,6 +20,14 @@ Ant Design.
 
 Version `0.5.2`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Select` (with `SelectOption` and `SelectOptGroup`), `Switch`. More components are planned.
 
+## Browser support
+
+Chrome 89, Firefox 85 and Safari 15.4, and newer versions. The tests of every change run in the latest Chromium, Firefox
+and WebKit. The lowest versions run in a smoke test before a release (`npm run test:floor`: Chromium 90, the nearest
+build to Chrome 89 that is available, Firefox 85 and WebKit 15.4). Not tested: a real Safari on macOS or iOS, and touch
+devices. A newer feature that an older browser lacks falls back to the plain look: the high-contrast block (before
+Firefox 89 and in Safari), `color-scheme` (before Firefox 96) and `overscroll-behavior` (before Safari 16).
+
 ## Installation
 
 ```sh
