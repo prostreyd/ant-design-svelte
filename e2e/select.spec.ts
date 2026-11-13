@@ -311,6 +311,34 @@ test.describe('Select panel', () => {
     await expect.poll(async () => (await box(panelOf(page))).y).toBeCloseTo(before.y - 40, 0);
   });
 
+  test('the wheel over an open list that fits moves the page, over a list that scrolls it stays in the list at its end', async ({ page, browserName }) => {
+    const wheelOver = async (list: Locator, dy: number) => {
+      const at = await box(list);
+      await page.mouse.move(at.x + at.width / 2, at.y + Math.min(at.height, 60) / 2);
+      const before = await page.evaluate(() => window.scrollY);
+      await page.mouse.wheel(0, dy);
+      await page.waitForTimeout(300);
+      return (await page.evaluate(() => window.scrollY)) - before;
+    };
+    // Four short rows: nothing to scroll in the list, so it does not keep the wheel, and the page moves under the cursor.
+    await page.getByTestId('single').click();
+    const short = panelOf(page).getByRole('listbox');
+    expect(await computed(short, 'overscroll-behavior-y')).toBe('auto');
+    expect(await wheelOver(short, 120)).toBeGreaterThan(60);
+    await page.keyboard.press('Escape');
+    // A list of 60 rows keeps it.
+    await page.getByTestId('long').click();
+    const long = panelOf(page).getByRole('listbox');
+    await expect(long).toHaveAttribute('data-scrollable', '');
+    expect(await computed(long, 'overscroll-behavior-y')).toBe('contain');
+    // Firefox 159 under automation lets the wheel through at the end of a box with `overscroll-behavior: contain`, on
+    // a plain page with none of our code as well (checked), so the wheel itself is asserted in the other two engines.
+    if (browserName !== 'firefox') {
+      await long.evaluate((element) => (element.scrollTop = element.scrollHeight));
+      expect(await wheelOver(long, 200)).toBe(0);
+    }
+  });
+
   test('listHeight: a long list is as high as the limit and scrolls', async ({ page }) => {
     await page.getByTestId('long').click();
     const list = panelOf(page).getByRole('listbox');

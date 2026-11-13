@@ -6,6 +6,7 @@ import { tick } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Select from '../src/lib/Select/Select.svelte';
 import SelectPanelHarness from './fixtures/SelectPanelHarness.svelte';
+import { placed, panelRect } from './popupHelpers';
 import { OPTIONS, activeOption, combobox, listbox, named, optionNamed, options, root } from './selectHelpers';
 
 // jsdom has no layout: every rectangle is empty. The field gets a rectangle and the panel a size.
@@ -16,7 +17,7 @@ const originalHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'o
 beforeEach(() => {
   fieldRect = { left: 100, top: 100, width: 150, height: 32 };
   vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
-    const r = this.classList.contains('ads-select') ? fieldRect : { left: 0, top: 0, width: 0, height: 0 };
+    const r = this.classList.contains('ads-select') ? fieldRect : this.classList.contains('ads-popup') ? panelRect(this as HTMLElement, { left: 0, top: 0 }) : { left: 0, top: 0, width: 0, height: 0 };
     return { ...r, right: r.left + r.width, bottom: r.top + r.height, x: r.left, y: r.top, toJSON: () => r } as DOMRect;
   });
   const isPanel = (element: HTMLElement) => element.classList.contains('ads-popup');
@@ -109,15 +110,15 @@ describe('Select panel: where it opens', () => {
   it('placement bottomLeft (default): under the field, left edges aligned, with the gap of a popup', async () => {
     render(Select, { props: field });
     await openField();
-    expect(panelOf().style.left).toBe('100px');
-    expect(panelOf().style.top).toBe('136px');
+    expect(placed(panelOf()).left).toBe(100);
+    expect(placed(panelOf()).top).toBe(136);
     expect(frameOf().dataset.placement).toBe('bottomLeft');
   });
 
   it('bottomRight: right edges aligned', async () => {
     render(Select, { props: { ...field, placement: 'bottomRight' } });
     await openField();
-    expect(panelOf().style.left).toBe('50px');
+    expect(placed(panelOf()).left).toBe(50);
     expect(frameOf().dataset.placement).toBe('bottomRight');
   });
 
@@ -125,13 +126,13 @@ describe('Select panel: where it opens', () => {
     fieldRect = { left: 100, top: 400, width: 150, height: 32 };
     const first = render(Select, { props: { ...field, placement: 'topLeft' } });
     await openField();
-    expect(panelOf().style.top).toBe('296px');
+    expect(placed(panelOf()).top).toBe(296);
     expect(frameOf().dataset.side).toBe('top');
     first.unmount();
     document.body.innerHTML = '';
     render(Select, { props: { ...field, placement: 'topRight' } });
     await openField();
-    expect(panelOf().style.left).toBe('50px');
+    expect(placed(panelOf()).left).toBe(50);
   });
 
   it('it flips to the other side at the edge of the screen', async () => {
@@ -146,7 +147,7 @@ describe('Select panel: where it opens', () => {
     await openField();
     fieldRect = { left: 100, top: 160, width: 150, height: 32 };
     await fireEvent.scroll(document);
-    await waitFor(() => expect(panelOf().style.top).toBe('196px'));
+    await waitFor(() => expect(placed(panelOf()).top).toBe(196));
   });
 });
 
@@ -283,5 +284,62 @@ describe('Select panel: the lifetime', () => {
     await waitFor(() => expect(panelOf()).not.toHaveAttribute('hidden'));
     expect(options()).toHaveLength(4);
     expect(optionNamed('Beta')).toBeInTheDocument();
+  });
+});
+
+describe('Select panel: the list holds the wheel only while it scrolls', () => {
+  // jsdom has no layout. The list is `rows` rows of 30px in a box of `box` px, the way a browser measures it.
+  let box = 256;
+  const rowsOf = (list: Element) => list.querySelectorAll('[role="option"]').length;
+  beforeEach(() => {
+    box = 256;
+    vi.spyOn(Element.prototype, 'clientHeight', 'get').mockImplementation(function (this: Element) {
+      return this.classList.contains('ads-select-list') ? box : 0;
+    });
+    vi.spyOn(Element.prototype, 'scrollHeight', 'get').mockImplementation(function (this: Element) {
+      return this.classList.contains('ads-select-list') ? rowsOf(this) * 30 : 0;
+    });
+  });
+
+  it('a list that fits in its box lets the wheel through to the page', async () => {
+    render(Select, { props: field });
+    await openField();
+    expect(listbox()).not.toHaveAttribute('data-scrollable');
+  });
+
+  it('a list taller than its box keeps the wheel to itself', async () => {
+    render(Select, { props: { ...field, listHeight: 256, options: Array.from({ length: 12 }, (_, index) => ({ value: index, label: `Row ${index}` })) } });
+    await openField();
+    await waitFor(() => expect(listbox()).toHaveAttribute('data-scrollable'));
+  });
+
+  it('it measures again when the options change: a filter that leaves a few rows lets the wheel through', async () => {
+    const many = Array.from({ length: 12 }, (_, index) => ({ value: index, label: `Row ${index}` }));
+    const user = userEvent.setup();
+    render(Select, { props: { ...named, showSearch: true, options: many } });
+    await user.click(combobox());
+    await waitFor(() => expect(listbox()).toHaveAttribute('data-scrollable'));
+    await user.keyboard('Row 1');
+    await waitFor(() => expect(options()).toHaveLength(3));
+    await waitFor(() => expect(listbox()).not.toHaveAttribute('data-scrollable'));
+  });
+
+  it('it measures again in the next frame, when the layout has settled', async () => {
+    render(Select, { props: field });
+    await openField();
+    expect(listbox()).not.toHaveAttribute('data-scrollable');
+    box = 60;
+    await waitFor(() => expect(listbox()).toHaveAttribute('data-scrollable'));
+  });
+
+  it('a list that is closed again has no scroll to hold', async () => {
+    box = 60;
+    const user = await (async () => {
+      render(Select, { props: field });
+      return openField();
+    })();
+    await waitFor(() => expect(listbox()).toHaveAttribute('data-scrollable'));
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(panelOf()).toHaveAttribute('hidden'));
   });
 });
