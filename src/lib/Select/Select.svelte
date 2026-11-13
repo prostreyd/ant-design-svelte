@@ -2,6 +2,7 @@
   import { onMount, untrack, type Snippet } from 'svelte';
   import type { HTMLAttributes } from 'svelte/elements';
   import Popup from '../internal/popup/Popup.svelte';
+  import { clickable } from '../internal/clickable.js';
   import { resolveOption } from '../internal/options.js';
   import { classList, styleText } from '../internal/semantic.js';
   import { setSelectContext, type Registration } from './context.js';
@@ -799,6 +800,7 @@
       classNames?.listItem
     )}
     style={styleText(styles?.listItem)}
+    use:clickable
     onclick={() => selectEntry(entry)}
     onmousemove={() => {
       if (activeValue === entry.value || isDisabled) return;
