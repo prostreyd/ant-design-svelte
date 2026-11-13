@@ -266,6 +266,26 @@
     scrollToActive();
   });
 
+  // The list keeps the wheel to itself (`overscroll-behavior: contain`) only while it scrolls. A list that does not
+  // scroll would otherwise hold the wheel for nothing, and the page would not move under the cursor. Measured after
+  // each change of what the list shows, and once more in the next frame, when the layout has settled. A list that is
+  // wrongly taken for one that does not scroll lets the wheel through at its end, which does no harm.
+  let listScrolls = $state(false);
+  $effect(() => {
+    void visibleNodes;
+    void popupOpen;
+    void listHeight;
+    const list = listElement;
+    if (!list) {
+      listScrolls = false;
+      return;
+    }
+    const measure = () => (listScrolls = list.scrollHeight > list.clientHeight);
+    measure();
+    const frame = requestAnimationFrame(measure);
+    return () => cancelAnimationFrame(frame);
+  });
+
   // ---- Opening and closing ---------------------------------------------------------------------------------
 
   /** Changes the open state on behalf of the user. The parent may refuse (a function binding). */
@@ -814,6 +834,7 @@
     aria-labelledby={listLabelledBy}
     class={classList('ads-select-list', classNames?.list)}
     style={styleText(`max-height: ${listHeight}px`, styles?.list)}
+    data-scrollable={listScrolls ? '' : undefined}
     bind:this={listElement}
     onscroll={onpopupscroll}
   >
@@ -1410,6 +1431,10 @@
   .ads-select-list {
     position: relative;
     overflow: hidden auto;
+  }
+
+  /* Only a list that scrolls keeps the wheel from the page (see `listScrolls`). */
+  .ads-select-list[data-scrollable] {
     overscroll-behavior: contain;
   }
 
