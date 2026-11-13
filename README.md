@@ -18,7 +18,7 @@ Ant Design.
 
 ## Status
 
-Version `0.5.0`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Select` (with `SelectOption` and `SelectOptGroup`), `Switch`. More components are planned.
+Version `0.5.1`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Select` (with `SelectOption` and `SelectOptGroup`), `Switch`. More components are planned.
 
 ## Installation
 

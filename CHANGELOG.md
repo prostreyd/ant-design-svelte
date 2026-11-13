@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-13
+
 ### Fixed
 
 - `Select`: an open drop-down list no longer lags behind its field while the page scrolls. The list used to be placed
