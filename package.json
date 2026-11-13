@@ -59,6 +59,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:affected": "node scripts/test-affected.mjs",
     "test:floor": "node scripts/floor/run.mjs",
     "test:docs": "npm run verify -w docs && npm run test:e2e -w docs",
     "test:mutation": "node scripts/mutation-test.mjs",
