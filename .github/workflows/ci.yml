@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  # Every pushed branch, not only main: the full run is the safety net of the smart local checks (`npm run test:affected`),
+  # so it has to be green on the branch before the branch is merged or released (CLAUDE.md 8a). A tag does not start it.
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
 
 permissions:
