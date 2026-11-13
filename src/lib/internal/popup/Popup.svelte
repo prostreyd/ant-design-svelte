@@ -106,6 +106,11 @@
   let leaveToken = 0;
   let leaveCleanup: (() => void) | null = null;
   let lastPlacement: PopupPlacement | null = null;
+  // The translation of the last placement: exactly as computed, and as written (rounded to a device pixel). The
+  // panel's rectangle minus the written one is where its containing block starts.
+  let exact: { x: number; y: number } | null = null;
+  let appliedX = 0;
+  let appliedY = 0;
 
   function cancelLeave(): void {
     leaveToken++;
@@ -117,8 +122,14 @@
     cancelLeave();
     shown = false;
     if (destroyOnHidden) mounted = false;
-    if (panel) delete panel.dataset.positioned;
+    if (panel) {
+      delete panel.dataset.positioned;
+      panel.style.transform = '';
+    }
     lastPlacement = null;
+    exact = null;
+    appliedX = 0;
+    appliedY = 0;
   }
 
   /** Plays the leave animation and hides the panel when it ends; at once when there is no animation. */
@@ -221,6 +232,21 @@
   }
 
   const round = (value: number) => Math.round(value * 100) / 100;
+  /** A transform is not snapped to the pixel grid as a `left` or a `top` is, and text drawn between pixels blurs. */
+  const snap = (value: number) => Math.round(value * window.devicePixelRatio) / window.devicePixelRatio;
+
+  /** Writes a `data-` attribute only when it changes: a write of the same value still costs a style recalculation. */
+  function setData(element: HTMLElement, name: string, value: string): void {
+    if (element.dataset[name] !== value) element.dataset[name] = value;
+  }
+
+  /** The anchor stays where it is on the screen when the page scrolls: it is a point, or inside a fixed element. */
+  function anchoredToViewport(): boolean {
+    for (let node: Element | null = anchorElement; node; node = node.parentElement) {
+      if (getComputedStyle(node).position === 'fixed') return true;
+    }
+    return anchorElement === null;
+  }
 
   /** Measures and places the panel. Runs only while the panel exists and is shown. */
   function update(): void {
@@ -230,13 +256,18 @@
     const computed = getComputedStyle(element);
     const arrowSize = arrowOn ? parseFloat(computed.getPropertyValue('--ads-popup-arrow-size')) || 8 : 0;
 
+    // The panel is in the same space as its anchor: in the page, so that the page moves both in the same frame
+    // (decision 13), unless the anchor stays on the screen, and then so does the panel.
+    element.toggleAttribute('data-fixed', anchoredToViewport());
     if (matchWidth === false) element.style.minWidth = '';
     else element.style.minWidth = `${Math.max(typeof matchWidth === 'number' ? matchWidth : 0, box.width)}px`;
-    // Measure the natural size: at the origin the panel has the whole viewport to lay out in.
-    element.style.left = '0px';
-    element.style.top = '0px';
     const view = document.documentElement;
+    // A panel sits at the corner of its containing block, which may be narrow: it is still as wide as it would be
+    // on a fixed panel, that is, up to the viewport.
+    element.style.maxWidth = `${view.clientWidth}px`;
     const rtl = getComputedStyle(anchorElement ?? element).direction === 'rtl';
+    // Where the containing block starts, in the viewport: where the panel is, less what was added to put it there.
+    const origin = element.getBoundingClientRect();
 
     const result = computePlacement({
       anchor: box,
@@ -249,8 +280,16 @@
       arrow: arrowOn ? { size: arrowSize, pointAtCenter, edge: 16 } : null
     });
 
-    element.style.left = `${round(result.x)}px`;
-    element.style.top = `${round(result.y)}px`;
+    // Nothing is written when the placement did not change: while the page scrolls the two numbers differ only by
+    // the noise of the arithmetic, and a rounding flipping between two pixels would shake the panel.
+    const x = result.x - (origin.left - appliedX);
+    const y = result.y - (origin.top - appliedY);
+    if (exact === null || Math.abs(x - exact.x) > 0.01 || Math.abs(y - exact.y) > 0.01) {
+      exact = { x, y };
+      appliedX = snap(x);
+      appliedY = snap(y);
+      element.style.transform = `translate(${appliedX}px, ${appliedY}px)`;
+    }
     if (result.arrow !== null) {
       // The arrow is positioned against the padding box of the frame. Take the border off, so that it still
       // points at the right place and sits on the outer edge of a frame that has one.
@@ -268,9 +307,9 @@
       element.style.setProperty('--ads-popup-arrow-offset', `${round(result.arrow - startBorder)}px`);
       element.style.setProperty('--ads-popup-arrow-shift', `${facingBorder}px`);
     }
-    element.dataset.positioned = '';
-    frameElement.dataset.placement = result.placement;
-    frameElement.dataset.side = result.side;
+    setData(element, 'positioned', '');
+    setData(frameElement, 'placement', result.placement);
+    setData(frameElement, 'side', result.side);
     if (lastPlacement !== result.placement) {
       lastPlacement = result.placement;
       untrack(() => onplacement?.(result.placement));
@@ -360,11 +399,18 @@
 {/if}
 
 <style>
+  /* In the page, with the anchor: the page scrolls both in the same frame. Moved by `transform`, from the corner. */
   .ads-popup {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
+    width: max-content;
     box-sizing: border-box;
+  }
+
+  /* An anchor that stays on the screen (a point, or inside a fixed element) gets a panel that stays too. */
+  .ads-popup[data-fixed] {
+    position: fixed;
   }
 
   /* Hidden until the first placement, so the panel never shows at the origin. */
