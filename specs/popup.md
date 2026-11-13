@@ -102,7 +102,8 @@ Vue and Angular write `contextmenu`, React `contextMenu`: React's spelling is th
 ## How the three libraries build it (public information only)
 
 Asked on 2026-11-11: how does Ant Design build the popup, and does the approach fit us? The
-implementation source is **not read** (CLAUDE.md section 3 forbids reading it in order to adapt it), so
+implementation source was **not read for this section** (it was read once later, for one question: see
+"Source consulted" under decision 13), so
 this section rests on published package manifests, the published README of the React trigger package and
 the documentation pages above. It shows the technique, not the code. The Angular CDK overlay
 documentation (<https://material.angular.dev/cdk/overlay/overview>) could not be read: the page is
@@ -403,6 +404,18 @@ costs scrolling performance.
   Firefox 159 and WebKit 27.2 all answer `CSS.supports` for it) but absent at the library's floor.
 - **C (close on scroll) is not taken:** none of the three libraries does it by default.
 
+**Source consulted** (the section the project rules ask for when the source of Ant Design was read).
+Date 2026-11-12; question: how the popups of the three libraries follow the scroll of the page; allowed by the
+maintainer for this question only. The technique, a panel in page coordinates, was already visible in the black-box
+measurement of the public demos (a `position: absolute` panel in a wrapper in `body`) before any source was opened.
+Read, by the main session (there was no separate reader), and deleted afterwards: the scroll watcher and the
+collection of scrolling ancestors in the React trigger package, the key lines of its alignment hook, and the
+reposition scroll strategy and the exact-position part of the connected position strategy of the Angular CDK.
+Confirmed: React and Vue listen to the scroll of the window and of the scrolling ancestors of the anchor and align
+again; Angular applies the position again on every scroll event. Different in ours: a `transform` with a measured
+origin, no write below 0.01 px, rounding to a device pixel, a fixed panel for fixed anchors and points, and a
+`max-width`. Nothing was copied.
+
 **Select, found while checking this.** The list had `overscroll-behavior: contain` always, so with the cursor
 over an open list that does not scroll the wheel did not move the page in Chromium and WebKit (Firefox did).
 The property is now applied only while the list really scrolls (`data-scrollable`, measured after each
@@ -462,7 +475,9 @@ in Playwright (`e2e/popup.spec.ts`).
   that need a real browser for geometry, in all three engines (see "Implementation notes").
 - **Decision 13** (2026-11-12): the panel follows the page scroll without a repositioning step (A and B above);
   CSS anchor positioning is deferred to v1.1+ by the maintainer, who also allowed a one-time reading of the
-  Ant Design source for this question (the rule of CLAUDE.md sections 3 and 4a is unchanged).
-- All code is independently authored for Svelte. Ant Design implementation source was not used, and no
-  documentation text is copied: the requirements above are paraphrased from the public API tables and
+  Ant Design source for this question; on 2026-11-13 the project rules turned it into a standing permission to
+  study single mechanisms, on conditions (the decision first, nothing copied, a record in the specification).
+- All code is independently authored for Svelte. Ant Design implementation source was not used for the
+  requirements and the primitive's design; it was read once afterwards for one question (see "Source consulted"
+  under decision 13). No code and no documentation text is copied: the requirements above are paraphrased from the public API tables and
   notes. API inspired by Ant Design (MIT); the implementation is original for Svelte.
