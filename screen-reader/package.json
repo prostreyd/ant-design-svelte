@@ -1,0 +1,11 @@
+{
+  "name": "screen-reader-pilot",
+  "private": true,
+  "description": "Pilot: real screen reader (Orca) tests with Guidepup. Own dependencies, not part of the library.",
+  "scripts": { "test": "playwright test" },
+  "devDependencies": {
+    "@guidepup/guidepup": "0.40.0",
+    "@guidepup/playwright": "0.21.0",
+    "@playwright/test": "1.65.0"
+  }
+}
