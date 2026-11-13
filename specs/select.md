@@ -671,3 +671,14 @@ text of the specification are marked **(addition)** and are in the tables above 
   text went from `a10` to `a10 b11`). So Select is at parity where they speak and ahead of all three on the number of matches and
   the empty result; none of the four announces the toggling of an option in a field that searches. A built-in announcement for
   it needs a text of its own and a way to translate it, so it belongs with the locale mechanism reserved for v1.1.
+
+## Implementation notes (2026-11-13): the list and the page scroll
+
+Found while looking at the lag of an open list under a scrolling page (decision 13 of `specs/popup.md`): the list had
+`overscroll-behavior: contain` all the time, and a list with nothing to scroll then held the wheel for nothing, so
+the page did not move under the cursor in Chromium and WebKit. The property is now set only while the list scrolls
+(`data-scrollable` on the listbox, measured after each change of the options, of the open state and of `listHeight`,
+and once more in the next frame). Tests: `tests/SelectPopup.test.ts` (the attribute, jsdom) and `e2e/select.spec.ts`
+(the wheel, in the three engines; at the end of a list that scrolls the wheel is asserted in Chromium and WebKit only:
+Firefox 159 under automation lets the wheel through there on a plain page as well, so that engine is checked through
+the computed `overscroll-behavior-y`).

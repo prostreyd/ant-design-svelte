@@ -9,6 +9,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Fixed
+
+- `Select`: an open drop-down list no longer lags behind its field while the page scrolls. The list used to be placed
+  against the window and moved again after each scroll event, one frame late; it is now placed in the page, next to its
+  field, so the browser moves both together. A field inside a fixed element (and a point anchor) keeps a list that stays
+  on the screen with it. A field inside a scrolling element is still followed one frame late, as in Ant Design.
+- `Select`: with the cursor over an open list that has nothing to scroll (a few options), the mouse wheel moved nothing
+  in Chromium and WebKit, because the list held the wheel for itself. A list holds the wheel only while it scrolls.
+- `Select`: a `container` that has a CSS `transform`, `filter` or `contain` no longer shifts the list away from its
+  field.
+
+### Changed
+
+- The internal popup panel is moved with `transform` from the corner of its containing block, is as wide as the viewport
+  at most, and is rounded to a device pixel; it writes nothing while the placement does not change. No public prop changed.
+
 ## [0.5.0] - 2026-11-12
 
 ### Added
