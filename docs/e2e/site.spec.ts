@@ -7,6 +7,7 @@ import { demos as checkboxDemos } from '../src/docs/data/checkbox.ts';
 import { demos as inputDemos } from '../src/docs/data/input.ts';
 import { demos as selectDemos } from '../src/docs/data/select.ts';
 import { demos as switchDemos } from '../src/docs/data/switch.ts';
+import { demos as tooltipDemos } from '../src/docs/data/tooltip.ts';
 import { allPages, localize, type SitePath } from '../src/docs/pages.ts';
 
 const axeSource = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
@@ -248,8 +249,8 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Input', 'Checkbox', 'Switch', 'Select'];
-    const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'Radio', 'DatePicker', 'Form', 'Table', 'Tooltip', 'Modal', 'Drawer', 'Message', 'Notification'];
+    const READY = ['Button', 'Input', 'Checkbox', 'Switch', 'Select', 'Tooltip'];
+    const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'Radio', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Message', 'Notification'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
       await open(page, 'components/');
@@ -383,11 +384,13 @@ test.describe('home page', () => {
     await expect(now).toContainText('Checkbox');
     await expect(now).toContainText('Switch');
     await expect(now).toContainText('Select');
-    // The ready components follow the order of the sidebar: Button, Input, Checkbox, Switch, Select.
+    await expect(now).toContainText('Tooltip');
+    // The ready components follow the order of the sidebar: Button, Input, Checkbox, Switch, Select, Tooltip.
     await expect(now.locator('.chips').nth(1)).toContainText('variant');
     await expect(now.locator('.chips').nth(2)).toContainText('classNames');
     await expect(now.locator('.chips').nth(3)).toContainText('classNames');
     await expect(now.locator('.chips').nth(4)).toContainText('showSearch');
+    await expect(now.locator('.chips').nth(5)).toContainText('placement');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -1102,6 +1105,120 @@ test.describe('Checkbox page', () => {
   test('is listed in the components menu', async ({ page }) => {
     await open(page, 'components/');
     await expect(page.getByRole('navigation', { name: 'Components' }).getByRole('link', { name: /^Checkbox/ })).toBeVisible();
+  });
+});
+
+test.describe('Tooltip page', () => {
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    test.slow();
+    await open(page, 'components/tooltip/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(tooltipDemos.length);
+
+    for (let i = 0; i < tooltipDemos.length; i++) {
+      const demo = examples.nth(i);
+      await expect(demo.locator('.demo-pre .ads-tooltip-trigger').first()).toBeAttached();
+
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/tooltip/${String(i + 1).padStart(2, '0')}-${tooltipDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('placement demo: the buttons stand in a ring, and each tip is on the side its name says and covers no other button', async ({ page }) => {
+    test.slow();
+    await open(page, 'components/tooltip/');
+    const demo = demoOf(page, 'Placement').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const cases = [
+      ['TL', 'topLeft'], ['Top', 'top'], ['TR', 'topRight'],
+      ['LT', 'leftTop'], ['Left', 'left'], ['LB', 'leftBottom'],
+      ['RT', 'rightTop'], ['Right', 'right'], ['RB', 'rightBottom'],
+      ['BL', 'bottomLeft'], ['Bottom', 'bottom'], ['BR', 'bottomRight']
+    ] as const;
+
+    // The ring: a row on top, a column on each side, a row at the bottom, and nothing in the middle.
+    const at = async (label: string) => {
+      const box = await demo.getByRole('button', { name: label, exact: true }).boundingBox();
+      return { x: box!.x, y: box!.y, right: box!.x + box!.width, bottom: box!.y + box!.height };
+    };
+    const [tl, top, tr, lt, left, lb, rt, right, rb, bl, bottom, br] = await Promise.all(cases.map(([label]) => at(label)));
+    for (const row of [[tl, top, tr], [bl, bottom, br]]) expect(new Set(row.map((box) => Math.round(box.y))).size).toBe(1);
+    expect(top.y).toBeLessThan(left.y);
+    expect(bottom.y).toBeGreaterThan(left.y);
+    // The left column is flush with its left edge, the right one with its right edge.
+    expect(new Set([lt, left, lb].map((box) => Math.round(box.x))).size).toBe(1);
+    expect(new Set([rt, right, rb].map((box) => Math.round(box.right))).size).toBe(1);
+    for (const column of [[lt, left, lb], [rt, right, rb]]) {
+      expect(column[0].y).toBeLessThan(column[1].y);
+      expect(column[1].y).toBeLessThan(column[2].y);
+    }
+    expect(left.right).toBeLessThan(top.x);
+    expect(right.x).toBeGreaterThan(top.right);
+
+    for (const [label, placement] of cases) {
+      await page.mouse.move(2, 2);
+      const button = demo.getByRole('button', { name: label, exact: true });
+      await button.hover();
+      // The tip that belongs to this button: the one its aria-describedby points at (the tip of the last button may still
+      // be leaving).
+      await expect(button, placement).toHaveAttribute('aria-describedby', /ads-tooltip-/);
+      await expect(page.locator(`[id="${(await button.getAttribute('aria-describedby'))!.split(' ').pop()}"]`)).toHaveText(placement);
+      const result = await button.evaluate((element) => {
+        const frame = document.getElementById((element.getAttribute('aria-describedby') ?? '').split(' ').pop()!)!;
+        const t = frame.getBoundingClientRect();
+        const covered = [...element.closest('.demo-pre')!.querySelectorAll('button')]
+          .filter((other) => other !== element)
+          .filter((other) => {
+            const r = other.getBoundingClientRect();
+            return !(r.right <= t.left || r.left >= t.right || r.bottom <= t.top || r.top >= t.bottom);
+          })
+          .map((other) => other.textContent!.trim());
+        const arrow = frame.querySelector('.ads-popup-arrow')!.getBoundingClientRect();
+        const box = frame.querySelector('.ads-tooltip')!.getBoundingClientRect();
+        // Where the arrow is along the edge it stands on, from the start of that edge (left, or top).
+        const along = frame.dataset.side === 'left' || frame.dataset.side === 'right' ? arrow.y - box.y : arrow.x - box.x;
+        const length = frame.dataset.side === 'left' || frame.dataset.side === 'right' ? box.height : box.width;
+        return { placement: frame.dataset.placement, covered, inside: t.left >= 0 && t.right <= innerWidth && t.top >= 0, along, length };
+      });
+      expect(result.placement, `${label}: the placement used`).toBe(placement);
+      expect(result.covered, `${label}: the buttons its tip covers`).toEqual([]);
+      expect(result.inside, `${label}: inside the window`).toBe(true);
+      // The arrow of an aligned placement is at its end of the edge, as far from it as the corner is round (6 px) and 8 px
+      // more above or below the button, 7 px more beside it: the middle of the arrow is 14 or 13 px from that end.
+      const side = ['top', 'bottom', 'left', 'right'].find((name) => placement.startsWith(name))!;
+      const aligned = placement.slice(side.length);
+      const edge = side === 'left' || side === 'right' ? 13 : 14;
+      // The width of a tip is a fraction of a pixel and the placement reads it as a whole number: a pixel of slack.
+      const wanted = aligned === '' ? result.length / 2 : aligned === 'Top' || aligned === 'Left' ? edge : result.length - edge;
+      expect(Math.abs(result.along - wanted), `${label}: the arrow is ${result.along}px along a tip of ${result.length}px, expected ${wanted}`).toBeLessThanOrEqual(1.5);
+    }
+  });
+
+  test('color demo: the preset tips keep their text readable and the arrow has the color of the box', async ({ page }) => {
+    await open(page, 'components/tooltip/');
+    const demo = demoOf(page, 'Colors').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    for (const name of ['yellow', 'blue', 'purple']) {
+      await page.mouse.move(2, 2);
+      await demo.getByRole('button', { name, exact: true }).hover();
+      const tip = page.locator('.ads-popup:not([hidden]) .ads-tooltip').filter({ hasText: `${name} tip` });
+      await expect(tip).toHaveCount(1);
+      const painted = await tip.evaluate((box) => {
+        const rgb = (value: string) => value.match(/[\d.]+/g)!.slice(0, 3).map(Number);
+        const lin = (c: number) => ((c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+        const lum = ([r, g, b]: number[]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+        const style = getComputedStyle(box);
+        const arrow = getComputedStyle(box.closest('.ads-popup-frame')!.querySelector('.ads-popup-arrow > span')!);
+        const [a, b] = [lum(rgb(style.color)), lum(rgb(style.backgroundColor))].sort((x, y) => y - x);
+        return { ratio: (a + 0.05) / (b + 0.05), same: arrow.backgroundColor === style.backgroundColor };
+      });
+      expect(painted.ratio, `${name} contrast`).toBeGreaterThanOrEqual(4.5);
+      expect(painted.same, `${name} arrow`).toBe(true);
+    }
   });
 });
 

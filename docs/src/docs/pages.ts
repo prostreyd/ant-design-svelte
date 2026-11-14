@@ -35,7 +35,8 @@ export const componentPages: PageDef[] = [
   { path: '/components/checkbox/', section: 'components', title: 'cb.title', description: 'seo.checkbox' },
   { path: '/components/input/', section: 'components', title: 'in.title', description: 'seo.input' },
   { path: '/components/select/', section: 'components', title: 'sel.title', description: 'seo.select' },
-  { path: '/components/switch/', section: 'components', title: 'sw.title', description: 'seo.switch' }
+  { path: '/components/switch/', section: 'components', title: 'sw.title', description: 'seo.switch' },
+  { path: '/components/tooltip/', section: 'components', title: 'tt.title', description: 'seo.tooltip' }
 ];
 
 export const allPages: PageDef[] = [homePage, ...docsPages, ...componentPages];
@@ -90,7 +91,7 @@ export const componentGroups: ComponentGroup[] = [
     title: 'g.display',
     items: [
       { name: 'Table', note: 'n.table', phase: 'later' },
-      { name: 'Tooltip', note: 'n.tooltip', phase: 'later' }
+      { name: 'Tooltip', note: 'n.tooltip', phase: 'now', path: '/components/tooltip/' }
     ]
   },
   {

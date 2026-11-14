@@ -33,7 +33,8 @@
     Input: ['value', 'variant', 'status', 'allowClear', 'showCount', 'prefix', 'classNames', 'styles'],
     Checkbox: ['checked', 'indeterminate', 'disabled', 'value', 'options', 'classNames', 'styles'],
     Switch: ['checked', 'onchange', 'size', 'loading', 'disabled', 'classNames', 'styles'],
-    Select: ['value', 'mode', 'options', 'showSearch', 'allowClear', 'maxTagCount', 'classNames']
+    Select: ['value', 'mode', 'options', 'showSearch', 'allowClear', 'maxTagCount', 'classNames'],
+    Tooltip: ['title', 'placement', 'trigger', 'arrow', 'color', 'open', 'classNames']
   };
 </script>
 

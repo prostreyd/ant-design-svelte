@@ -184,7 +184,7 @@ describe('page registry', () => {
     const names = componentGroups.flatMap((group) => group.items.map((item) => item.name));
     expect(new Set(names).size).toBe(names.length);
     expect([...componentsIn('now'), ...componentsIn('next'), ...componentsIn('later')].sort()).toEqual([...names].sort());
-    expect(componentsIn('now')).toEqual(['Button', 'Input', 'Checkbox', 'Switch', 'Select']);
+    expect(componentsIn('now')).toEqual(['Button', 'Input', 'Checkbox', 'Switch', 'Select', 'Tooltip']);
   });
 
   it('has a localized note for every component', () => {
