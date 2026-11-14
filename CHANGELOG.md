@@ -9,6 +9,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- `Tooltip`: a short text tip for an element, built on the popup of the library. 12 placements that flip at the edge of
+  the screen, an arrow (`pointAtCenter`), `hover`, `focus`, `click` and `contextMenu` triggers with delays in seconds,
+  `bind:open` and `onopenchange`, `title` as text, a number or a snippet, `zIndex`, `container`, `destroyOnHidden`,
+  `classNames` and `styles` for the `root`, `container` and `arrow` parts, and `anchor` to place the tip at an element
+  you hold. The 13 preset colors and any CSS color work as `color`; the text is black or white, whichever contrasts
+  more, so it reaches 4.5:1 (Ant Design draws white on every preset, which is below 4.5:1 on most of them). The tip has
+  `role="tooltip"`, the trigger gets `aria-describedby` only while it is shown, it opens on keyboard focus as well as on
+  hover (the default `trigger` is `['hover', 'focus']`; Ant Design for React: hover only), `Escape` closes it, and the
+  pointer may rest in it. Not checked with a real screen reader or on a real touch device. The page with examples, the
+  API and the design tokens is on the documentation site, in English, Russian and Chinese.
+
 ### Documentation
 
 - The rules for AI assistants now ask to run, on the developer's machine, only the checks that a change affects
