@@ -1109,6 +1109,12 @@ test.describe('Checkbox page', () => {
 });
 
 test.describe('Tooltip page', () => {
+  // The tip scales up when it opens (0.8 to 1 in 0.2 s). A rectangle read in the first frames is a rectangle of the scaled tip:
+  // on the slow runner of CI the placement test read 11.2 px for an arrow that is 14 px from the edge. No animation, no such frame.
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+  });
+
   const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
 
   test('every example is the real component and shows its own source', async ({ page }) => {
