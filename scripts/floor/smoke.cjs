@@ -4,8 +4,8 @@
 //
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
-// It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page and the Select
-// lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab and
+// the Tooltip lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -312,6 +312,90 @@ async function homePage(context) {
   await page.close();
 }
 
+async function tooltipPage(context) {
+  const page = await newPage(context, base + '/#tooltip');
+  await page.waitForSelector(idOf('main'));
+  await settle(page);
+  const TIP = '[role="tooltip"]';
+  const shown = () => page.evaluate((sel) => Array.from(document.querySelectorAll(sel)).some((tip) => tip.getBoundingClientRect().width > 0), TIP);
+
+  await check('tooltip: hovering the trigger opens the tip above it, inside the viewport, and leaving closes it', async () => {
+    const trigger = await rectOf(page, idOf('main'));
+    await page.mouse.move(trigger.x + trigger.width / 2, trigger.y + trigger.height / 2);
+    await settle(page);
+    if (!(await shown())) return 'the tip did not open on hover';
+    const tip = await rectOf(page, `${PANEL} .ads-tooltip`);
+    const above = tip.bottom <= trigger.y + 0.5;
+    const centered = Math.abs(tip.x + tip.width / 2 - (trigger.x + trigger.width / 2)) < 1.5;
+    const inside = tip.x >= 0 && tip.right <= VIEWPORT.width && tip.y >= 0;
+    await page.mouse.move(900, 700);
+    await settle(page);
+    const closed = !(await shown());
+    return [above && centered && inside && closed, `above ${above}, centered ${centered}, inside ${inside}, closed ${closed}`];
+  });
+
+  await check('tooltip: the tip does not move the trigger or its neighbour', async () => {
+    const before = [await rectOf(page, idOf('main')), await rectOf(page, idOf('neighbor'))];
+    const trigger = before[0];
+    await page.mouse.move(trigger.x + trigger.width / 2, trigger.y + trigger.height / 2);
+    await settle(page);
+    const during = [await rectOf(page, idOf('main')), await rectOf(page, idOf('neighbor'))];
+    await page.mouse.move(900, 700);
+    await settle(page);
+    const moved = before.some((r, i) => Math.abs(r.x - during[i].x) > 0.01 || Math.abs(r.y - during[i].y) > 0.01 || Math.abs(r.width - during[i].width) > 0.01);
+    return [!moved, moved ? 'something moved' : 'nothing moved'];
+  });
+
+  await check('tooltip: keyboard focus opens it, aria-describedby points at it, Escape closes it and focus stays', async () => {
+    await page.focus(idOf('main'));
+    await settle(page);
+    if (!(await shown())) return 'focus did not open it';
+    const id = await page.evaluate((sel) => document.querySelector(sel + ':not([hidden]) ' + '[role="tooltip"]').id, '.ads-popup');
+    const described = await attributeOf(page, idOf('main'), 'aria-describedby');
+    await page.keyboard.press('Escape');
+    await settle(page);
+    const closed = !(await shown());
+    const stays = await page.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-testid') === 'main');
+    const removed = (await attributeOf(page, idOf('main'), 'aria-describedby')) === null;
+    return [described === id && closed && stays && removed, `describedby ${described === id}, closed ${closed}, focus stays ${stays}, attribute removed ${removed}`];
+  });
+
+  await check('tooltip: a disabled button still opens the tip on hover (specs/tooltip.md, P8)', async () => {
+    const trigger = await rectOf(page, idOf('disabled'));
+    await page.mouse.move(trigger.x + trigger.width / 2, trigger.y + trigger.height / 2);
+    await settle(page);
+    const open = await shown();
+    await page.mouse.move(900, 700);
+    await settle(page);
+    return [open, open ? 'opened' : 'the engine does not pass the mouse events of a disabled button to the wrapper'];
+  });
+
+  await check('tooltip: the preset colors are painted, with a readable text color', async () => {
+    await page.evaluate(() => window.__tooltipLab.set({ open: true, color: 'blue' }));
+    await settle(page);
+    const painted = await page.evaluate(() => {
+      const box = document.querySelector('.ads-popup:not([hidden]) .ads-tooltip');
+      const style = getComputedStyle(box);
+      return { background: style.backgroundColor, color: style.color };
+    });
+    await page.evaluate(() => window.__tooltipLab.set({ open: false, color: undefined }));
+    await settle(page);
+    return [painted.background === 'rgb(22, 119, 255)' && painted.color === 'rgb(0, 0, 0)', `${painted.background} with ${painted.color}`];
+  });
+
+  await check('tooltip: a custom color gets a contrasting text color', async () => {
+    await page.evaluate(() => window.__tooltipLab.set({ open: true, color: '#87d068' }));
+    await settle(page);
+    const painted = await page.evaluate(() => {
+      const style = getComputedStyle(document.querySelector('.ads-popup:not([hidden]) .ads-tooltip'));
+      return { background: style.backgroundColor, color: style.color };
+    });
+    await page.evaluate(() => window.__tooltipLab.set({ open: false, color: undefined }));
+    return [painted.background === 'rgb(135, 208, 104)' && painted.color === 'rgb(0, 0, 0)', `${painted.background} with ${painted.color}`];
+  });
+  await page.close();
+}
+
 async function selectPage(context) {
   const page = await newPage(context, base + '/#select');
   await page.waitForSelector(idOf('single'));
@@ -398,6 +482,7 @@ async function selectPage(context) {
   try {
     await homePage(context);
     await selectPage(context);
+    await tooltipPage(context);
   } catch (error) {
     record('run', false, `threw: ${String(error && error.message ? error.message : error).split('\n')[0]}`);
   }

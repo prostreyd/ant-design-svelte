@@ -9,6 +9,7 @@ export { default as CheckboxGroup } from './Checkbox/CheckboxGroup.svelte';
 export { default as Select } from './Select/Select.svelte';
 export { default as SelectOption } from './Select/SelectOption.svelte';
 export { default as SelectOptGroup } from './Select/SelectOptGroup.svelte';
+export { default as Tooltip } from './Tooltip/Tooltip.svelte';
 export { default as Input } from './Input/Input.svelte';
 export { default as InputOTP } from './Input/InputOTP.svelte';
 export { default as InputPassword } from './Input/InputPassword.svelte';
@@ -80,3 +81,14 @@ export type {
   ButtonSize,
   ButtonType
 } from './Button/types.js';
+export { TOOLTIP_PRESET_COLORS } from './Tooltip/types.js';
+export type {
+  TooltipArrow,
+  TooltipClassNames,
+  TooltipContainer,
+  TooltipPlacement,
+  TooltipPresetColor,
+  TooltipSemanticName,
+  TooltipStyles,
+  TooltipTrigger
+} from './Tooltip/types.js';

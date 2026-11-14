@@ -95,7 +95,12 @@
   --ads-popover-z-index: 1030;
   --ads-dropdown-z-index: 1050;
   --ads-tooltip-z-index: 1070;
-  --ads-popup-arrow-size: 8px;
+
+  /* Tooltip: the sizes of the Ant Design token documentation (React 6.7.0, checked on 2026-11-13). */
+  --ads-tooltip-radius: 6px;
+  --ads-tooltip-padding: 6px 8px;
+  --ads-tooltip-min-height: 32px;
+  --ads-tooltip-max-width: 250px;
 
   /* Switch */
   --ads-switch-height: 22px;
@@ -262,6 +267,42 @@
   --ads-select-tag-color-disabled: rgba(0, 0, 0, 0.25);
   --ads-select-group-label-color: rgba(0, 0, 0, 0.45);
   --ads-select-empty-color: rgba(0, 0, 0, 0.45);
+
+  /*
+   * Tooltip colors: the values measured on the Ant Design demo (React 6.7.0, 2026-11-13, light theme). The text of a
+   * preset is the one of black and white that contrasts more with its background (specs/tooltip.md, decision 3b), so
+   * every pair reaches 4.5:1 here, in the dark theme and with `tokens-accessible.css`, which needs no entry for it.
+   */
+  /* The 85% black of Ant Design (colorBgSpotlight), over a white page: 38 in each channel. Opaque on purpose, so that the arrow
+     can overlap the box by a pixel without a darker line (see the arrow of the popup). */
+  --ads-tooltip-bg: #262626;
+  --ads-tooltip-color: #ffffff;
+  --ads-tooltip-preset-pink: #eb2f96;
+  --ads-tooltip-preset-pink-text: #000000;
+  --ads-tooltip-preset-red: #f5222d;
+  --ads-tooltip-preset-red-text: #000000;
+  --ads-tooltip-preset-yellow: #fadb14;
+  --ads-tooltip-preset-yellow-text: #000000;
+  --ads-tooltip-preset-orange: #fa8c16;
+  --ads-tooltip-preset-orange-text: #000000;
+  --ads-tooltip-preset-cyan: #13c2c2;
+  --ads-tooltip-preset-cyan-text: #000000;
+  --ads-tooltip-preset-green: #52c41a;
+  --ads-tooltip-preset-green-text: #000000;
+  --ads-tooltip-preset-blue: #1677ff;
+  --ads-tooltip-preset-blue-text: #000000;
+  --ads-tooltip-preset-purple: #722ed1;
+  --ads-tooltip-preset-purple-text: #ffffff;
+  --ads-tooltip-preset-geekblue: #2f54eb;
+  --ads-tooltip-preset-geekblue-text: #ffffff;
+  --ads-tooltip-preset-magenta: #eb2f96;
+  --ads-tooltip-preset-magenta-text: #000000;
+  --ads-tooltip-preset-volcano: #fa541c;
+  --ads-tooltip-preset-volcano-text: #000000;
+  --ads-tooltip-preset-gold: #faad14;
+  --ads-tooltip-preset-gold-text: #000000;
+  --ads-tooltip-preset-lime: #a0d911;
+  --ads-tooltip-preset-lime-text: #000000;
 }
 
 :root[data-theme='dark'] {
@@ -370,4 +411,33 @@
   --ads-select-tag-color-disabled: rgba(255, 255, 255, 0.3);
   --ads-select-group-label-color: rgba(255, 255, 255, 0.55);
   --ads-select-empty-color: rgba(255, 255, 255, 0.55);
+
+  --ads-tooltip-bg: #424242;
+  --ads-tooltip-color: #ffffff;
+  --ads-tooltip-preset-pink: #cb2b83;
+  --ads-tooltip-preset-pink-text: #ffffff;
+  --ads-tooltip-preset-red: #d32029;
+  --ads-tooltip-preset-red-text: #ffffff;
+  --ads-tooltip-preset-yellow: #d8bd14;
+  --ads-tooltip-preset-yellow-text: #000000;
+  --ads-tooltip-preset-orange: #d87a16;
+  --ads-tooltip-preset-orange-text: #000000;
+  --ads-tooltip-preset-cyan: #13a8a8;
+  --ads-tooltip-preset-cyan-text: #000000;
+  --ads-tooltip-preset-green: #49aa19;
+  --ads-tooltip-preset-green-text: #000000;
+  --ads-tooltip-preset-blue: #1668dc;
+  --ads-tooltip-preset-blue-text: #ffffff;
+  --ads-tooltip-preset-purple: #642ab5;
+  --ads-tooltip-preset-purple-text: #ffffff;
+  --ads-tooltip-preset-geekblue: #2b4acb;
+  --ads-tooltip-preset-geekblue-text: #ffffff;
+  --ads-tooltip-preset-magenta: #cb2b83;
+  --ads-tooltip-preset-magenta-text: #ffffff;
+  --ads-tooltip-preset-volcano: #d84a1b;
+  --ads-tooltip-preset-volcano-text: #000000;
+  --ads-tooltip-preset-gold: #d89614;
+  --ads-tooltip-preset-gold-text: #000000;
+  --ads-tooltip-preset-lime: #8bbb11;
+  --ads-tooltip-preset-lime-text: #000000;
 }

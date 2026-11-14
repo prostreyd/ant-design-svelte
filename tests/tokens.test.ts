@@ -468,3 +468,74 @@ describe('select tokens: contrast', () => {
     }
   });
 });
+
+describe('tooltip tokens (specs/tooltip.md)', () => {
+  const presets = ['pink', 'red', 'yellow', 'orange', 'cyan', 'green', 'blue', 'purple', 'geekblue', 'magenta', 'volcano', 'gold', 'lime'];
+  // The backgrounds measured on the Ant Design demo (React 6.7.0, 2026-11-13, Chromium 158).
+  const measured: Record<string, [string, string]> = {
+    pink: ['#eb2f96', '#cb2b83'],
+    red: ['#f5222d', '#d32029'],
+    yellow: ['#fadb14', '#d8bd14'],
+    orange: ['#fa8c16', '#d87a16'],
+    cyan: ['#13c2c2', '#13a8a8'],
+    green: ['#52c41a', '#49aa19'],
+    blue: ['#1677ff', '#1668dc'],
+    purple: ['#722ed1', '#642ab5'],
+    geekblue: ['#2f54eb', '#2b4acb'],
+    magenta: ['#eb2f96', '#cb2b83'],
+    volcano: ['#fa541c', '#d84a1b'],
+    gold: ['#faad14', '#d89614'],
+    lime: ['#a0d911', '#8bbb11']
+  };
+
+  it('the 13 presets have their background and text in the light and the dark theme, 26 backgrounds in all', () => {
+    expect(presets.length * 2).toBe(26);
+    for (const name of presets) {
+      for (const [theme, tokens] of [['light', light], ['dark', darkTheme]] as const) {
+        expect(tokens.has(`--ads-tooltip-preset-${name}`), `${theme} ${name}`).toBe(true);
+        expect(tokens.has(`--ads-tooltip-preset-${name}-text`), `${theme} ${name} text`).toBe(true);
+      }
+    }
+  });
+
+  it('the backgrounds are the ones measured on the Ant Design demo, in both themes', () => {
+    for (const name of presets) {
+      expect(normalize(light.get(`--ads-tooltip-preset-${name}`)!), `light ${name}`).toBe(measured[name][0]);
+      expect(normalize(darkTheme.get(`--ads-tooltip-preset-${name}`)!), `dark ${name}`).toBe(measured[name][1]);
+    }
+  });
+
+  it('every preset text reaches 4.5:1 on its background: light, dark and with the accessible file', () => {
+    for (const [theme, tokens] of [['light', light], ['light with tokens-accessible.css', lightAccessible], ['dark', darkTheme]] as const) {
+      for (const name of presets) {
+        expect(ratio(tokens, `--ads-tooltip-preset-${name}-text`, `--ads-tooltip-preset-${name}`), `${theme} ${name}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it('the text of a preset is the one of black and white that contrasts more (decision 3b)', () => {
+    for (const [theme, tokens] of [['light', light], ['dark', darkTheme]] as const) {
+      for (const name of presets) {
+        const text = tokens.get(`--ads-tooltip-preset-${name}-text`)!;
+        const other = text === '#ffffff' ? '#000000' : '#ffffff';
+        const own = ratio(tokens, `--ads-tooltip-preset-${name}-text`, `--ads-tooltip-preset-${name}`);
+        const withOther = new Map(tokens).set('--other', other);
+        expect(own, `${theme} ${name}`).toBeGreaterThanOrEqual(ratio(withOther, '--other', `--ads-tooltip-preset-${name}`));
+      }
+    }
+  });
+
+  it('the default box reaches 4.5:1: white on #262626 (85% black on a white page), and on #424242 in the dark theme', () => {
+    expect(normalize(light.get('--ads-tooltip-bg')!)).toBe('#262626');
+    expect(ratio(light, '--ads-tooltip-color', '--ads-tooltip-bg')).toBeGreaterThan(15);
+    expect(ratio(darkTheme, '--ads-tooltip-color', '--ads-tooltip-bg')).toBeGreaterThan(10);
+  });
+
+  it('the sizes are the ones measured on the Ant Design demo', () => {
+    expect(light.get('--ads-tooltip-radius')).toBe('6px');
+    expect(light.get('--ads-tooltip-padding')).toBe('6px 8px');
+    expect(light.get('--ads-tooltip-min-height')).toBe('32px');
+    expect(light.get('--ads-tooltip-max-width')).toBe('250px');
+    expect(light.get('--ads-tooltip-z-index')).toBe('1070');
+  });
+});

@@ -172,3 +172,34 @@ test.describe('Select in forced colors', () => {
     expect(await computed(tag, 'border-top-color')).not.toBe(canvas);
   });
 });
+
+test.describe('Forced colors: Tooltip (specs/tooltip.md)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/#tooltip');
+    await page.waitForFunction(() => Boolean((window as unknown as { __tooltipLab?: unknown }).__tooltipLab));
+    await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+    expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
+    await page.evaluate(() => (window as unknown as { __tooltipLab: { set(p: unknown): void } }).__tooltipLab.set({ open: true }));
+    await expect(page.locator('.ads-tooltip:visible')).toBeVisible();
+  });
+
+  test('the box has a border in a system color, so it does not melt into the page', async ({ page }) => {
+    const box = page.locator('.ads-tooltip:visible');
+    const canvas = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    expect(await computed(box, 'border-top-width')).toBe('1px');
+    expect(await computed(box, 'border-top-style')).toBe('solid');
+    expect(await computed(box, 'border-top-color')).not.toBe(canvas);
+  });
+
+  test('the arrow is filled with a system color, so it is visible and matches the border of the box', async ({ page }) => {
+    const arrow = page.locator('[role="tooltip"]:visible .ads-popup-arrow > span');
+    const canvas = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    expect(await computed(arrow, 'background-color')).not.toBe(canvas);
+    expect(await computed(arrow, 'background-color')).toBe(await computed(page.locator('.ads-tooltip:visible'), 'border-top-color'));
+  });
+
+  test('the text differs from the box behind it', async ({ page }) => {
+    const box = page.locator('.ads-tooltip:visible');
+    expect(await computed(box, 'color')).not.toBe(await computed(box, 'background-color'));
+  });
+});
