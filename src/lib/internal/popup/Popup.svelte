@@ -2,7 +2,7 @@
   import { untrack, type Snippet } from 'svelte';
   import type { HTMLAttributes } from 'svelte/elements';
   import { resolveOption } from '../options.js';
-  import { classList } from '../semantic.js';
+  import { classList, styleText, type SemanticStyle } from '../semantic.js';
   import { registerLayer } from './layers.js';
   import { computePlacement, type Box } from './placement.js';
   import {
@@ -56,6 +56,14 @@
     id?: string;
     /** Extra classes of the frame. */
     class?: string;
+    /** Extra classes of the root, the positioned element that holds the frame (Tooltip `classNames.root`). */
+    rootClass?: string;
+    /** Inline styles of the root, set one property at a time so they never wipe the placement. */
+    rootStyle?: SemanticStyle;
+    /** Extra classes of the arrow. */
+    arrowClass?: string;
+    /** Inline style of the arrow. */
+    arrowStyle?: SemanticStyle;
     /** Inline style of the frame. */
     style?: string;
     onmousedown?: HTMLAttributes<HTMLDivElement>['onmousedown'];
@@ -84,6 +92,10 @@
     id,
     class: customClass,
     style: customStyle,
+    rootClass,
+    rootStyle,
+    arrowClass,
+    arrowStyle,
     onmousedown,
     children,
     ...rest
@@ -95,7 +107,7 @@
   const arrowOn = $derived(arrow !== false);
   const pointAtCenter = $derived(typeof arrow === 'object' && arrow.pointAtCenter);
   const frameId = $derived(id ?? `ads-popup-${uid}`);
-  const panelClass = $derived(`ads-popup ads-popup-${resolvedLayer}`);
+  const panelClass = $derived(classList('ads-popup', `ads-popup-${resolvedLayer}`, rootClass));
 
   /** The panel exists in the DOM: from the first opening (never on the server), until `destroyOnHidden` removes it. */
   let mounted = $state(false);
@@ -221,6 +233,19 @@
     if (panel) panel.style.zIndex = zIndex === undefined ? '' : String(zIndex);
   });
 
+  // The styles of the root are written one property at a time: a `style` attribute written by Svelte would wipe the
+  // transform, the z-index and the sizes that the placement writes on the same element. The ones that left the
+  // object are removed again.
+  let appliedRootStyle: string[] = [];
+  $effect(() => {
+    const element = panel;
+    if (!element) return;
+    const next = Object.entries(rootStyle ?? {}).filter(([, value]) => value !== '' && value !== undefined && value !== null);
+    for (const name of appliedRootStyle) if (!next.some(([key]) => key === name)) element.style.removeProperty(name);
+    for (const [name, value] of next) element.style.setProperty(name, String(value));
+    appliedRootStyle = next.map(([name]) => name);
+  });
+
   function measureAnchor(): Box {
     if (anchorElement) {
       const rect = anchorElement.getBoundingClientRect();
@@ -248,13 +273,31 @@
     return anchorElement === null;
   }
 
+  /** The height of the arrow in px, for the placement (the shape in the css is a little lower: its tip is rounded). */
+  const ARROW_SIZE = 8;
+
+  /**
+   * The largest corner radius of the frame or of what is inside it, in px (the box of a Tooltip is inside the frame). The
+   * arrow of an aligned placement stands further from the edge when the corner is rounder. A radius in per cent counts as its
+   * number, which for a pill pushes the arrow to the middle, where it belongs.
+   */
+  function cornerRadius(frame: HTMLElement): number {
+    let largest = 0;
+    for (const element of [frame, ...Array.from(frame.children)]) {
+      const style = getComputedStyle(element);
+      for (const corner of [style.borderTopLeftRadius, style.borderTopRightRadius, style.borderBottomRightRadius, style.borderBottomLeftRadius]) {
+        largest = Math.max(largest, parseFloat(corner) || 0);
+      }
+    }
+    return largest;
+  }
+
   /** Measures and places the panel. Runs only while the panel exists and is shown. */
   function update(): void {
     const element = panel as HTMLElement;
     const frameElement = frame as HTMLElement;
     const box = measureAnchor();
-    const computed = getComputedStyle(element);
-    const arrowSize = arrowOn ? parseFloat(computed.getPropertyValue('--ads-popup-arrow-size')) || 8 : 0;
+    const arrowSize = arrowOn ? ARROW_SIZE : 0;
 
     // The panel is in the same space as its anchor: in the page, so that the page moves both in the same frame
     // (decision 13), unless the anchor stays on the screen, and then so does the panel.
@@ -277,7 +320,11 @@
       offset: offset ?? (arrowOn ? arrowSize + 2 : 4),
       autoAdjustOverflow,
       rtl,
-      arrow: arrowOn ? { size: arrowSize, pointAtCenter, edge: 16 } : null
+      // The middle of the arrow of an aligned placement, from the aligned edge: the radius of the corner and 8 px above or below
+      // the anchor (14 px at the radius 6, as in Ant Design Vue), and the radius and 7 px beside it, where the tip is one line
+      // high and the arrow has to be seen near the top or the bottom without looking like a piece stuck on at the corner
+      // (13 px at the radius 6; the 10 px of the Vue demo left a notch at the corner of a tip with a translucent edge).
+      arrow: arrowOn ? { size: arrowSize, pointAtCenter, edge: cornerRadius(frameElement) + 8, sideEdge: cornerRadius(frameElement) + 7 } : null
     });
 
     // Nothing is written when the placement did not change: while the page scrolls the two numbers differ only by
@@ -392,7 +439,7 @@
     >
       {@render children?.()}
       {#if arrowOn}
-        <div class="ads-popup-arrow" aria-hidden="true"><span></span></div>
+        <div class="ads-popup-arrow" aria-hidden="true"><span class={arrowClass} style={styleText(arrowStyle)}></span></div>
       {/if}
     </div>
   </div>
@@ -489,7 +536,12 @@
     }
   }
 
-  /* The arrow is the middle of a rotated square on the edge of the frame that faces the anchor. */
+  /*
+   * The arrow is a triangle that stands on the outer edge of the frame that faces the anchor: as wide as two sizes and one
+   * size high, so its sides are at 45 degrees. It is only the half that sticks out. (It used to be a whole rotated
+   * square behind the frame, and a frame with a translucent background showed the other half through it, as a darker
+   * diamond inside the box.) The wrapper is a point at the edge; each side below places the triangle against it.
+   */
   .ads-popup-arrow {
     position: absolute;
     width: 0;
@@ -497,15 +549,66 @@
     pointer-events: none;
   }
 
+  /*
+   * The arrow is a soft bump on the outer edge of the frame that faces the anchor, as in Ant Design: a rounded tip and
+   * concave edges that flare out at the base, so that its base flows into the edge of the frame and into the curve of a
+   * rounded corner beside it. A straight triangle with a flat base cannot do that: close to a rounded corner it leaves a
+   * notch, and the base is a hairline away from the frame. It is 16 px wide at the base and about 7 px high; the shape is
+   * drawn once, for this size, and cut out of a box with `clip-path`. (It used to be a whole rotated square behind the frame,
+   * which a translucent frame showed through as a darker diamond.) The wrapper is a point at the edge; each side below
+   * places the shape against it.
+   *
+   * The base of the shape goes one pixel into the frame, past its edge (only the base: beside it the frame has a rounded corner
+   * and the shape must not stick out of it). Browsers put the edge of a box and the edge of a clipped shape
+   * on pixels by different rules, and at a pixel ratio such as 125% or 150% they miss each other by a device pixel, which
+   * leaves a hairline of the page between the arrow and the frame. The overlap closes it, and it is not seen where the
+   * frame and the arrow have the same opaque color. A translucent color (a custom `color` of a Tooltip with an alpha) shows
+   * the overlap as a slightly darker line.
+   */
   .ads-popup-arrow > span {
     position: absolute;
     top: 0;
     left: 0;
-    z-index: -1;
-    width: calc(var(--ads-popup-arrow-size) * 1.4142);
-    height: calc(var(--ads-popup-arrow-size) * 1.4142);
     background: var(--ads-popup-arrow-bg, currentColor);
-    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  /* Colors are replaced by the system colors: the arrow is filled with the color of the border of the box. */
+  @media (forced-colors: active) {
+    .ads-popup-arrow > span {
+      background: CanvasText;
+    }
+  }
+
+  /* The panel is above the anchor: the arrow is on its bottom edge and points down. The base is at (9.5, 1) of the box. */
+  .ads-popup-frame[data-side='top'] > .ads-popup-arrow > span {
+    width: 19px;
+    height: 8.5px;
+    transform: translate(-9.5px, -1px);
+    clip-path: path('M 0.2574 1 A 3 3 0 0 1 2.3787 1.8787 L 8.0858 7.5858 A 2 2 0 0 0 10.9142 7.5858 L 16.6213 1.8787 A 3 3 0 0 1 18.7426 1 L 17.5 1 L 17.5 0 L 1.5 0 L 1.5 1 Z');
+  }
+
+  /* Below the anchor: on the top edge, pointing up. The base is at (9.5, 7.5). */
+  .ads-popup-frame[data-side='bottom'] > .ads-popup-arrow > span {
+    width: 19px;
+    height: 8.5px;
+    transform: translate(-9.5px, -7.5px);
+    clip-path: path('M 18.7426 7.5 A 3 3 0 0 1 16.6213 6.6213 L 10.9142 0.9142 A 2 2 0 0 0 8.0858 0.9142 L 2.3787 6.6213 A 3 3 0 0 1 0.2574 7.5 L 1.5 7.5 L 1.5 8.5 L 17.5 8.5 L 17.5 7.5 Z');
+  }
+
+  /* To the left of the anchor: on the right edge, pointing right. The base is at (1, 9.5). */
+  .ads-popup-frame[data-side='left'] > .ads-popup-arrow > span {
+    width: 8.5px;
+    height: 19px;
+    transform: translate(-1px, -9.5px);
+    clip-path: path('M 1 18.7426 A 3 3 0 0 1 1.8787 16.6213 L 7.5858 10.9142 A 2 2 0 0 0 7.5858 8.0858 L 1.8787 2.3787 A 3 3 0 0 1 1 0.2574 L 1 1.5 L 0 1.5 L 0 17.5 L 1 17.5 Z');
+  }
+
+  /* To the right of the anchor: on the left edge, pointing left. The base is at (7.5, 9.5). */
+  .ads-popup-frame[data-side='right'] > .ads-popup-arrow > span {
+    width: 8.5px;
+    height: 19px;
+    transform: translate(-7.5px, -9.5px);
+    clip-path: path('M 7.5 0.2574 A 3 3 0 0 1 6.6213 2.3787 L 0.9142 8.0858 A 2 2 0 0 0 0.9142 10.9142 L 6.6213 16.6213 A 3 3 0 0 1 7.5 18.7426 L 7.5 17.5 L 8.5 17.5 L 8.5 1.5 L 7.5 1.5 Z');
   }
 
   .ads-popup-frame[data-side='top'] > .ads-popup-arrow {

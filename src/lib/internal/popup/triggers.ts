@@ -26,6 +26,9 @@ export interface PopupTriggerOptions {
   disabled?: boolean;
 }
 
+/** How long after a touch the mouse events are the compatibility events of that touch, in milliseconds. */
+const TOUCH_COMPAT_MS = 800;
+
 export function popupTriggers(options: PopupTriggerOptions): Attachment<HTMLElement> {
   return (anchor) => {
     if (options.disabled || options.trigger.length === 0) return;
@@ -64,12 +67,22 @@ export function popupTriggers(options: PopupTriggerOptions): Attachment<HTMLElem
       panel.addEventListener('mouseleave', leavePanel);
     };
 
+    // A finger has no "leaving". After a tap the browser sends compatibility mouse events (`mouseenter`, then at once
+    // `mouseleave`), and the second one would close what the first one opened. The tip of a tap stays until a tap
+    // somewhere else, or `Escape`, or the focus leaving (the popup closes it on an outside tap).
+    let touchedAt = -Infinity;
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === 'touch') touchedAt = performance.now();
+    };
+    const afterTouch = () => performance.now() - touchedAt < TOUCH_COMPAT_MS;
+
     const onMouseEnter = () => {
       bindPanel();
       enter();
     };
     const onMouseLeave = () => {
       bindPanel();
+      if (afterTouch()) return;
       leave();
     };
     const onFocusIn = () => request(true, 0);
@@ -92,6 +105,7 @@ export function popupTriggers(options: PopupTriggerOptions): Attachment<HTMLElem
       listeners.push([type, listener]);
     };
     if (has('hover')) {
+      add('pointerdown', onPointerDown as EventListener);
       add('mouseenter', onMouseEnter);
       add('mouseleave', onMouseLeave);
     }

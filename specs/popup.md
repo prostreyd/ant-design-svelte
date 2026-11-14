@@ -299,7 +299,7 @@ opening, because each panel is appended to its container when it is shown.
 
 Files: `src/lib/internal/popup/` has `types.ts`, `placement.ts` (the pure placement math), `layers.ts` (the
 registry), `triggers.ts` (the trigger helper) and `Popup.svelte`. Tokens `--ads-popover-z-index`,
-`--ads-dropdown-z-index`, `--ads-tooltip-z-index` and `--ads-popup-arrow-size` are in `tokens.css`. Tests:
+`--ads-dropdown-z-index` and `--ads-tooltip-z-index` are in `tokens.css`. Tests:
 150 unit tests in four files (`tests/popupPlacement.test.ts`, `popupLayers.test.ts`, `popupTriggers.test.ts`,
 `Popup.test.ts`, with the harnesses in `tests/fixtures/`) at 100% of branches, and 48 browser tests in
 `e2e/popup.spec.ts` against the lab `e2e/fixtures/PopupLab.svelte` (open at `/#popup`).
@@ -363,6 +363,68 @@ Still open or not handled:
   `position: fixed` panel, so the coordinates would be off.~~ Handled since 0.5.1 (decision 13): the panel
   measures where its own containing block starts, so any container works.
 - Firefox and WebKit, as above.
+
+## Added for the Tooltip (2026-11-13)
+
+The Tooltip ([tooltip.md](tooltip.md)) is the first component to use `popupTriggers`, and it asked for three small additive
+changes (nothing public: the primitive is internal):
+
+- `Popup` takes `rootClass` and `rootStyle` (the positioned element) and `arrowClass` and `arrowStyle` (the arrow). The root
+  style is written one property at a time with `setProperty`, because a `style` attribute written by Svelte would wipe the
+  transform, the z-index and the sizes that the placement writes on the same element; properties that left the object are
+  removed. The arrow gets an outline in `forced-colors: active`, so it does not melt into the page.
+- `popupTriggers`: after a tap the browser sends compatibility mouse events (`mouseenter`, then at once `mouseleave`), and
+  the second closed what the focus had opened 100 ms before. A `mouseleave` that comes within 800 ms of a touch `pointerdown`
+  on the anchor is ignored; a mouse or a pen press does not hold anything open. A tap elsewhere still closes the popup through
+  the outside-press rule below (decision 14). Found by a browser test of the Tooltip that watched the tip half a second after
+  the tap (`e2e/tooltip.spec.ts`, `e2e/tooltip-touch.chromium.spec.ts`); unit tests in `tests/popupTriggers.test.ts`.
+
+## The arrow (changed 2026-11-13 and 2026-11-14, after the Tooltip was looked at)
+
+What the maintainer saw in the Tooltip, in the order it was found, and what the primitive does now:
+
+- **The arrow was a whole rotated square behind the frame**, and a frame with a translucent background showed the other half
+  through it as a darker diamond inside the box (pixel values 5 against 38).
+- **An aligned arrow in the middle of a one-line tip.** The arrow of an aligned placement stood 16 px from the aligned edge,
+  and a tip beside the trigger is one line high, 32 px, so `rightTop`, `right` and `rightBottom` looked the same. The placement
+  math takes a second distance, `sideEdge`, for panels beside the anchor.
+- **A gap between the arrow and the box at the corner.** With the arrow close to the edge a straight triangle with a flat base
+  starts inside the curve of the rounded corner, where the edge of the frame curves away from it. Two fixes were tried and
+  rejected by the maintainer: a square corner next to the arrow, and an arrow so far from the edge that its base stands past
+  the curve (radius + 2 px), which puts it in the middle of a one-line tip again. The maintainer then showed the Ant Design
+  Vue demo, where the same arrow stands near the top with round corners, and asked why that works.
+- **Why it works there (measured on the public demo, 2026-11-14, Ant Design Vue 4.x).** The tip has the same radius (6 px), padding
+  and height (34 px) as ours, and the arrow has the same size (16 px wide at the base, about 7 px high), 10 px from the edge
+  for `rightTop` (14 px from the left for `topLeft`). What differs is the **shape**: it is not a straight triangle but a soft
+  bump, with a rounded tip (radius about 2 px) and concave edges that flare out into the edge of the frame at the base. The
+  flare flows into the curve of the rounded corner, so there is no notch and no flat base to leave a gap.
+
+What the primitive does now:
+
+- The arrow is drawn as that bump (tip radius 2 px, flare radius 3 px, 16 px at the base, 7.2 px high), once, for all four
+  sides, as a `clip-path: path()` of a box of 19 x 8.5 px (Chrome 88, Firefox 71 and Safari 13.1 and later). The size
+  token `--ads-popup-arrow-size` is gone: the shape is fixed.
+- The middle of an aligned arrow is at **the corner radius + 8 px** from the aligned edge above or below the anchor, and at
+  **the radius + 7 px** beside it (14 and 13 px at the radius 6), never closer than 8 px to the end of the edge. Above or
+  below the anchor 14 px is what the Vue demo has; beside it the Vue demo has 10 px, and the maintainer saw that on a tip with a
+  translucent edge the bump then sits too low or too high, close to the corner, and looks like a separate piece
+  (2026-11-14, `rightBottom`): moved 3 px toward the middle, to 13 px. The popup reads the largest corner radius of the frame and of the boxes inside it (`cornerRadius()`), so a rounder
+  corner moves the arrow further from the edge. The corners keep their radius.
+- **A hairline of the page between the arrow and the box at a fractional pixel ratio** (125%, 150%) in Chromium, Firefox
+  and WebKit: the edge of the box and the base of the shape are put on pixels by different rules and miss each other by a device
+  pixel. A computed overlap did not work, because Firefox paints the box one device pixel away from where it says it is. The
+  base of the shape now goes **one CSS pixel into the frame always** (only the base; beside it the frame has its rounded
+  corner), which is hidden where the frame and the arrow have the same opaque color; a translucent color shows it as a slightly
+  darker line. For that the default light background of the Tooltip is the opaque `#262626` (the 85% black of Ant Design over
+  a white page). Tried and dropped: a straight triangle (clipped, or made of borders, which Firefox draws as two polygons and
+  leaves a faint line along the axis at a fractional ratio).
+- In forced colors the arrow is filled with `CanvasText`, the color of the border of the box.
+
+Tests: `tests/Popup.test.ts` (the offset for the radii 0, 4, 6 and 8, above and beside the anchor, and a radius on the box
+inside the frame), `tests/popupPlacement.test.ts` (`sideEdge`), `e2e/popup.spec.ts` (the distance from the edge, the one pixel into
+the frame), `e2e/tooltip.spec.ts` (the distance for each aligned placement at the radii 4, 6 and 8, the corners keep their radius, and
+"the arrow and the box are one piece": pixels at the base, in three engines at the pixel ratios 1, 1.25, 1.5, 2 and 3), and the site
+test of the placement demo (the arrow of each of the 12 placements).
 
 ## Dismissal on a touch screen (decision 14, 2026-11-13)
 

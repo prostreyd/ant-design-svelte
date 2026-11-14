@@ -230,6 +230,28 @@ describe('Popup: placement (R1, R2, R4, R5, R6, R15)', () => {
     expect(panelOf()!.style.getPropertyValue('--ads-popup-arrow-offset')).toBe('50px');
   });
 
+  it('an aligned arrow stands further from the edge when the corner is rounder: the radius and 8px above or below the anchor', async () => {
+    // Never closer than 8 px: the arrow is at least that far from the end of the edge it stands on.
+    for (const [radius, offset] of [[0, 8], [4, 12], [6, 14], [8, 16]] as const) {
+      const { unmount } = await mountOpen({ arrow: true, placement: 'bottomLeft', style: `border-radius: ${radius}px` });
+      expect(panelOf()!.style.getPropertyValue('--ads-popup-arrow-offset'), `radius ${radius}`).toBe(`${offset}px`);
+      unmount();
+    }
+  });
+
+  it('beside the anchor it is the radius and 7px, so that a one-line tip shows it near the top or the bottom', async () => {
+    for (const [radius, offset] of [[0, 8], [4, 11], [6, 13], [8, 15]] as const) {
+      const { unmount } = await mountOpen({ arrow: true, placement: 'leftTop', style: `border-radius: ${radius}px` });
+      expect(panelOf()!.style.getPropertyValue('--ads-popup-arrow-offset'), `radius ${radius}`).toBe(`${offset}px`);
+      unmount();
+    }
+  });
+
+  it('the radius of the box inside the frame counts too', async () => {
+    await mountOpen({ arrow: true, placement: 'bottomLeft', mode: 'inner-radius' });
+    expect(panelOf()!.style.getPropertyValue('--ads-popup-arrow-offset')).toBe('14px');
+  });
+
   it('no arrow by default', async () => {
     await mountOpen();
     expect(frameOf()!.querySelector('.ads-popup-arrow')).toBeNull();

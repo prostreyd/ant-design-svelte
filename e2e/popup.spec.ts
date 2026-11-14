@@ -397,10 +397,32 @@ test.describe('arrow (R6)', () => {
 
   test('an aligned placement keeps it near the edge; pointAtCenter points at the anchor', async ({ page }) => {
     await lab(page, { placement: 'bottomLeft', arrow: true, open: true });
-    near((await rect(arrowOf(page))).x, (await rect(frame(page))).x + 16);
+    // The frame of the lab is square: the arrow is at the least distance from the end of its edge, 8 px.
+    near((await rect(arrowOf(page))).x, (await rect(frame(page))).x + 8);
     await lab(page, { arrow: { pointAtCenter: true } });
     const anchor = await rect(page.getByTestId('anchor'));
     near((await rect(arrowOf(page))).x, anchor.x + anchor.width / 2);
+  });
+
+  test('a panel beside the anchor puts the arrow at its aligned end, at the least distance from the corner of a square frame', async ({ page }) => {
+    for (const [placement, fromTop] of [['leftTop', true], ['rightTop', true], ['leftBottom', false], ['rightBottom', false]] as const) {
+      await lab(page, { placement, arrow: true, open: true });
+      const panel = await rect(frame(page));
+      const arrow = await rect(arrowOf(page));
+      near(fromTop ? arrow.y - panel.y : panel.y + panel.height - arrow.y, 8);
+    }
+  });
+
+  test('the arrow is only the part that sticks out, and its base goes one pixel into the frame', async ({ page }) => {
+    for (const placement of ['top', 'bottom', 'left', 'right', 'leftTop', 'bottomRight']) {
+      await lab(page, { placement, arrow: true, open: true });
+      const panel = await rect(frame(page));
+      const shape = await rect(arrowOf(page).locator('span'));
+      const overlapX = Math.min(panel.x + panel.width, shape.x + shape.width) - Math.max(panel.x, shape.x);
+      const overlapY = Math.min(panel.y + panel.height, shape.y + shape.height) - Math.max(panel.y, shape.y);
+      // The base goes a pixel into the frame, so that no hairline of the page is left between them.
+      expect(Math.max(0, Math.min(overlapX, overlapY)), placement).toBeLessThanOrEqual(1.25);
+    }
   });
 
   test('stays on the anchor after the panel was shifted', async ({ page }) => {

@@ -170,6 +170,18 @@ describe('placement: arrow (R6)', () => {
     expect(at({ placement: 'rightBottom', arrow }).arrow).toBe(84);
   });
 
+  it('a panel beside the anchor uses sideEdge, one above or below it uses edge', () => {
+    const sided = { ...arrow, edge: 14, sideEdge: 10 };
+    expect(at({ placement: 'leftTop', arrow: sided }).arrow).toBe(10);
+    expect(at({ placement: 'rightBottom', arrow: sided }).arrow).toBe(90);
+    expect(at({ placement: 'topLeft', arrow: sided }).arrow).toBe(14);
+    expect(at({ placement: 'bottomRight', arrow: sided }).arrow).toBe(186);
+  });
+
+  it('without sideEdge a panel beside the anchor uses edge as well', () => {
+    expect(at({ placement: 'leftBottom', arrow }).arrow).toBe(84);
+  });
+
   it('pointAtCenter points at the middle of the anchor for an aligned placement', () => {
     expect(at({ placement: 'topLeft', arrow: { ...arrow, pointAtCenter: true } }).arrow).toBe(50);
   });

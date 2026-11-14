@@ -10,7 +10,7 @@
     /** The anchor button lays out right to left. */
     rtl?: boolean;
     /** `veto`: a function binding that never accepts a change of `open` (a fully controlled popup). */
-    mode?: 'bind' | 'veto' | 'empty';
+    mode?: 'bind' | 'veto' | 'empty' | 'inner-radius';
     /** A second container: the button `swap-container` switches to it while the popup is open. */
     swapTo?: HTMLElement;
   }
@@ -33,6 +33,11 @@
 <span data-testid="has-panel">{panel ? 'yes' : 'no'}</span>
 {#if mode === 'empty'}
   <Popup bind:open {anchor} bind:panel {...rest} />
+{:else if mode === 'inner-radius'}
+  <!-- The rounded box is inside the frame, as the box of a Tooltip is. -->
+  <Popup bind:open {anchor} bind:panel {...rest}>
+    <div data-testid="content" style="border-radius: 6px">Content</div>
+  </Popup>
 {:else if mode === 'veto'}
   <Popup bind:open={() => open, () => {}} {anchor} bind:panel {...rest}>
     <span data-testid="content">Content</span>

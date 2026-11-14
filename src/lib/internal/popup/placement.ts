@@ -64,8 +64,14 @@ export interface ArrowInput {
   size: number;
   /** Point at the middle of the anchor even for an aligned placement. */
   pointAtCenter: boolean;
-  /** Distance from the aligned edge of the panel to the middle of the arrow, for an aligned placement. */
+  /** Distance from the aligned edge of the panel to the middle of the arrow, for an aligned placement above or below the anchor. */
   edge: number;
+  /**
+   * The same for a panel beside the anchor (`leftTop`, `rightBottom`, ...). Those panels are usually one line high, so the
+   * distance of the other axis would put the arrow in the middle and `rightTop`, `right` and `rightBottom` would look the
+   * same. Defaults to `edge`.
+   */
+  sideEdge?: number;
 }
 
 export interface PlacementInput {
@@ -159,7 +165,8 @@ export function computePlacement(input: PlacementInput): PlacementResult {
     const anchorCenter = anchorStart + anchorSize / 2;
     let wanted = anchorCenter;
     if (align !== 'center' && !input.arrow.pointAtCenter) {
-      wanted = align === 'start' ? input.arrow.edge : panelSize - input.arrow.edge;
+      const edge = horizontal ? input.arrow.edge : (input.arrow.sideEdge ?? input.arrow.edge);
+      wanted = align === 'start' ? edge : panelSize - edge;
       // An arrow that would point past the anchor points at its middle instead.
       if (wanted < anchorStart || wanted > anchorStart + anchorSize) wanted = anchorCenter;
     }

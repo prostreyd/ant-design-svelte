@@ -120,6 +120,50 @@ describe('popupTriggers: hover (R8)', () => {
   });
 });
 
+describe('popupTriggers: the compatibility mouse events of a tap', () => {
+  const press = (pointerType: string) => {
+    const event = new Event('pointerdown', { bubbles: true });
+    Object.defineProperty(event, 'pointerType', { value: pointerType });
+    anchor.dispatchEvent(event);
+  };
+
+  it('a mouseleave right after a touch does not close what the tap opened', () => {
+    attach({ trigger: ['hover'] });
+    press('touch');
+    fire(anchor, 'mouseenter');
+    vi.advanceTimersByTime(100);
+    expect(setOpen).toHaveBeenCalledTimes(1);
+    fire(anchor, 'mouseleave');
+    vi.advanceTimersByTime(1000);
+    expect(setOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('a mouseleave a while after the touch is a real one and closes it', () => {
+    attach({ trigger: ['hover'] });
+    press('touch');
+    fire(anchor, 'mouseenter');
+    vi.advanceTimersByTime(900);
+    fire(anchor, 'mouseleave');
+    vi.advanceTimersByTime(100);
+    expect(setOpen).toHaveBeenLastCalledWith(false, { source: 'trigger' });
+  });
+
+  it('a mouse or a pen press does not hold the tip open', () => {
+    for (const pointerType of ['mouse', 'pen']) {
+      setOpen.mockClear();
+      isOpen = false;
+      attach({ trigger: ['hover'] });
+      press(pointerType);
+      fire(anchor, 'mouseenter');
+      vi.advanceTimersByTime(100);
+      fire(anchor, 'mouseleave');
+      vi.advanceTimersByTime(100);
+      expect(setOpen.mock.calls.map((call) => call[0]), pointerType).toEqual([true, false]);
+      cleanup?.();
+    }
+  });
+});
+
 describe('popupTriggers: focus', () => {
   it('opens on focus and closes on blur, with no delay', () => {
     attach({ trigger: ['focus'] });
