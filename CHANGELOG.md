@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-15
+
 ### Added
 
 - `Tooltip`: a short text tip for an element, built on the popup of the library. 12 placements that flip at the edge of
