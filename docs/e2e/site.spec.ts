@@ -1187,9 +1187,12 @@ test.describe('Radio page', () => {
     await solid.getByRole('radio', { name: 'Chengdu' }).click({ force: true });
     await expect(solid.getByRole('radio', { name: 'Chengdu' })).toBeChecked();
     await expect(outline.getByRole('radio', { name: 'Shanghai' })).toBeChecked();
-    const fill = await solid.locator('label.ads-radio-button-checked').first().evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(fill).not.toBe('rgb(255, 255, 255)');
-    expect(fill).not.toBe('rgba(0, 0, 0, 0)');
+    // The fill changes over 0.2 s after the click, and the first frame still has the old color (white in WebKit): wait for the final
+    // color instead of reading it once.
+    const checked = solid.locator('label.ads-radio-button-checked');
+    await expect(checked).toHaveCount(1);
+    await expect(checked).not.toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await expect(checked).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   });
 
   test('size demo: the buttons are 40, 32 and 24 px high, and the aliases are the medium size', async ({ page }) => {
