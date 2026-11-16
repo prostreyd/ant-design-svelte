@@ -9,6 +9,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- `Radio`, `RadioButton` and `RadioGroup`: one choice out of several that are all visible. A radio is a native
+  `<input type="radio">` in a `<label>`; the group renders `options` (strings, numbers, booleans or objects with a text or
+  snippet `label`, `disabled`, `title`, `id`, `required`, `class`, `style` and `onchange`) or holds your own `Radio` and
+  `RadioButton` elements. `bind:value` and `bind:checked`, `onchange`, a function binding that lets the parent refuse a
+  choice (the previous radio is put back), `optionType="button"`, `buttonStyle` (`outline` or `solid`), `size` (`middle` and
+  `default` are aliases of `medium`), `orientation` and `vertical`, `block`, `disabled`, `name`, `classNames` and `styles` for
+  the parts of each component, and `focus()` and `blur()`. `value` is a string, a number or a boolean; `null` and
+  `undefined` mean nothing is selected. The group is `role="radiogroup"`, and its inputs share one native name, so the
+  browser gives it the keyboard behavior of a radio group: one Tab stop on the selected radio, arrow keys that move and
+  select (at the ends Chromium and Firefox wrap around and WebKit stops), and Space. A group without a `name` makes a
+  unique one and is never submitted with a form (React submits its random name). The accessible colors, the dark theme
+  and forced-colors modes are covered; selecting never changes the size of a control. Not checked with NVDA, JAWS or
+  VoiceOver (a public report says VoiceOver may stop twice on a label that wraps the input and its text, the shape used
+  here) or on a real touch device; Orca is checked by an automated test. The page with examples, the API and the design
+  tokens is on the documentation site, in English, Russian and Chinese.
+
+### Documentation
+
+- The pages of `Switch`, `Checkbox`, `Input` and `Select` no longer have the "Focus and blur" example. `focus()` and `blur()` (and
+  the `cursor` and `preventScroll` options of `Input`) stay in the methods table of each page, and their tests stay. The page of
+  `Radio` has none either.
+  The rules for AI assistants say the same for the pages of new components: a method with no visible result is a row of the
+  API table and a test, not an example.
+
 ## [0.6.0] - 2026-11-15
 
 ### Added

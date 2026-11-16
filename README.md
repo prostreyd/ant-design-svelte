@@ -18,7 +18,7 @@ Ant Design.
 
 ## Status
 
-Version `0.6.0`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Select` (with `SelectOption` and `SelectOptGroup`), `Switch`, `Tooltip`. More components are planned.
+Version `0.6.0`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Radio` (with `RadioButton` and `RadioGroup`), `Select` (with `SelectOption` and `SelectOptGroup`), `Switch`, `Tooltip`. More components are planned.
 
 ## Browser support
 
@@ -60,12 +60,14 @@ Vite in `tests/packaging`; other bundlers are not covered.
 See the [Button](https://prostreyd.github.io/ant-design-svelte/components/button/),
 [Checkbox](https://prostreyd.github.io/ant-design-svelte/components/checkbox/),
 [Input](https://prostreyd.github.io/ant-design-svelte/components/input/),
+[Radio](https://prostreyd.github.io/ant-design-svelte/components/radio/),
 [Select](https://prostreyd.github.io/ant-design-svelte/components/select/),
 [Switch](https://prostreyd.github.io/ant-design-svelte/components/switch/) and
 [Tooltip](https://prostreyd.github.io/ant-design-svelte/components/tooltip/) pages of the documentation site for
 examples and the API tables, or [`src/lib/Button/README.md`](./src/lib/Button/README.md),
 [`src/lib/Checkbox/README.md`](./src/lib/Checkbox/README.md),
 [`src/lib/Input/README.md`](./src/lib/Input/README.md),
+[`src/lib/Radio/README.md`](./src/lib/Radio/README.md),
 [`src/lib/Select/README.md`](./src/lib/Select/README.md),
 [`src/lib/Switch/README.md`](./src/lib/Switch/README.md) and
 [`src/lib/Tooltip/README.md`](./src/lib/Tooltip/README.md) in the repository.
