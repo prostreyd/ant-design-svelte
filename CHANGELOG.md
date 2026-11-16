@@ -23,6 +23,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   the `Tooltip`: in the right column a tip on the right turned to the left, and the demo no longer showed the right placements).
 - On the page of `Input`, the examples "One-time code" and "One-time code options" show each `InputOTP` on a line of its own,
   with a short caption of the option it shows, instead of mixing the fields, their texts and each other in one flow.
+- On the examples of every component page, the button that shows the code now looks different when the code is shown: the
+  brackets `< >` turn into brackets with a slash `</>` (as in the demos of Ant Design) and the button keeps a tinted background,
+  so the state can be read without pointing at it. Before, only the colour of the same glyph changed.
+- The left menu and the menu on a phone show the names of the components in English only (`Button`, `Radio`, `Select`),
+  without the Russian or Chinese translation beside them. The translated note stays in the heading of each component page.
+  The rules for AI assistants say both, and the site tests check them in all three languages.
 
 ## [0.7.0] - 2026-11-16
 
