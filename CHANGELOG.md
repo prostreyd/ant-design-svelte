@@ -16,6 +16,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   control it names, its output under it, no loose text beside the controls), every component with a state of its own (two
   groups do not share a bound variable unless the example is about a shared value), and the page is checked on the built site
   by clicking in each group in both themes, with a site test that the groups are independent.
+- On every page of a component the examples stand in two columns in the order of reading (1 | 2, 3 | 4) and one column on a
+  phone. They used to flow in CSS columns, so a block that did not fit jumped to the top of the other column and the order
+  depended on the heights, the language and the width. The rules for AI assistants forbid CSS columns for the list of examples,
+  and a site test checks the order on every component page. A demo that needs room takes both columns (the placement demo of
+  the `Tooltip`: in the right column a tip on the right turned to the left, and the demo no longer showed the right placements).
 - On the page of `Input`, the examples "One-time code" and "One-time code options" show each `InputOTP` on a line of its own,
   with a short caption of the option it shows, instead of mixing the fields, their texts and each other in one flow.
 
