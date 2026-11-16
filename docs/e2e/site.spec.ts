@@ -1415,6 +1415,76 @@ test.describe('Tooltip page', () => {
   });
 });
 
+// The demos of a component page stand in two columns in the order of reading (1 | 2, 3 | 4, ...), a demo marked `wide` takes a whole
+// row, and on a phone there is one column. With CSS columns a block jumped to the top of the other column when it did not fit, and
+// the order depended on the heights.
+test.describe('demos of a component page: reading order', () => {
+  const componentPaths = allPages.map((entry) => entry.path).filter((path) => path.startsWith('/components/') && path !== '/components/');
+  const boxesOf = (page: Page) =>
+    page.locator('section.demo').evaluateAll((demos) =>
+      demos.map((demo) => {
+        const r = demo.getBoundingClientRect();
+        return { x: r.x, width: r.width, top: r.top + scrollY, bottom: r.bottom + scrollY, wide: demo.classList.contains('wide') };
+      })
+    );
+
+  test.describe('on a laptop', () => {
+    test.use({ viewport: { width: 1440, height: 900 } });
+    for (const path of componentPaths) {
+      test(`${path}: the demos fill the rows 1 | 2, 3 | 4, ... from the left, and a wide demo takes a row alone`, async ({ page }) => {
+        await open(page, rel(path));
+        const boxes = await boxesOf(page);
+        expect(boxes.length).toBeGreaterThan(1);
+        const left = Math.min(...boxes.map((box) => box.x));
+        const column = Math.max(...boxes.filter((box) => !box.wide).map((box) => box.width));
+        let slot = 0; // 0: the next demo opens a row on the left, 1: it completes the row on the right
+        let above = 0; // the bottom of the rows before the current one
+        let rowTop = 0;
+        let rowBottom = 0;
+        boxes.forEach((box, i) => {
+          const name = `demo ${i + 1}`;
+          if (box.wide) {
+            above = Math.max(above, rowBottom);
+            expect(Math.abs(box.x - left), `${name} (wide) starts at the left edge`).toBeLessThan(1);
+            expect(box.width, `${name} (wide) is wider than a column`).toBeGreaterThan(column + 100);
+            expect(box.top, `${name} (wide) starts below the rows before`).toBeGreaterThanOrEqual(above - 1);
+            rowTop = box.top;
+            rowBottom = box.bottom;
+            slot = 0;
+          } else if (slot === 0) {
+            above = Math.max(above, rowBottom);
+            expect(Math.abs(box.x - left), `${name} is in the left column`).toBeLessThan(1);
+            expect(box.top, `${name} starts below the rows before`).toBeGreaterThanOrEqual(above - 1);
+            rowTop = box.top;
+            rowBottom = box.bottom;
+            slot = 1;
+          } else {
+            expect(box.x, `${name} is in the right column`).toBeGreaterThan(left + 100);
+            expect(Math.abs(box.top - rowTop), `${name} starts in the row of the demo before`).toBeLessThan(1);
+            rowBottom = Math.max(rowBottom, box.bottom);
+            slot = 0;
+          }
+        });
+      });
+    }
+  });
+
+  test.describe('on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+    for (const path of componentPaths) {
+      test(`${path}: one column, in order`, async ({ page }) => {
+        await open(page, rel(path));
+        const boxes = await boxesOf(page);
+        expect(boxes.length).toBeGreaterThan(1);
+        boxes.forEach((box, i) => {
+          expect(Math.abs(box.x - boxes[0].x), `demo ${i + 1} is in the one column`).toBeLessThan(1);
+          if (i > 0) expect(box.top, `demo ${i + 1} is below demo ${i}`).toBeGreaterThanOrEqual(boxes[i - 1].bottom - 1);
+        });
+      });
+    }
+  });
+});
+
 test.describe('installation tabs', () => {
   test('arrow keys move the focus between the package managers and change the command', async ({ page }) => {
     await open(page, 'docs/getting-started/');

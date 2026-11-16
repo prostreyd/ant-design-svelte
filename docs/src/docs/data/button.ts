@@ -1,7 +1,7 @@
 // Data of the Button page. The API and token tables are checked against the source by tests/docs.
 export type L10n = Record<'en' | 'ru' | 'zh', string>;
 
-export interface DemoMeta { slug: string; title: L10n; description: L10n; surface?: boolean; column?: boolean }
+export interface DemoMeta { slug: string; title: L10n; description: L10n; surface?: boolean; column?: boolean; /** The demo takes both columns of the page (it needs room, or it is wider than a column can hold). */ wide?: boolean }
 export const demos: DemoMeta[] = [
   { slug: "types", title: { en: "Types", ru: "Типы", zh: "按钮类型" }, description: { en: "Five kinds: primary, default, dashed, text and link.", ru: "Пять видов: основная, обычная, пунктирная, текстовая и ссылка.", zh: "五种按钮：主按钮、默认按钮、虚线按钮、文本按钮和链接按钮。" } },
   { slug: "sizes", title: { en: "Sizes", ru: "Размеры", zh: "按钮尺寸" }, description: { en: "large, medium and small. The value middle is accepted as a compatibility alias of medium.", ru: "large, medium и small. Значение middle принимается как совместимый алиас medium.", zh: "large、medium 与 small 三种尺寸。middle 作为 medium 的兼容别名仍可使用。" } },

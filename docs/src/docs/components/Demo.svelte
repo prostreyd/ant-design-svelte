@@ -14,7 +14,8 @@
     code,
     example: Example,
     surface = false,
-    column = false
+    column = false,
+    wide = false
   }: {
     id: string;
     title: string;
@@ -23,6 +24,8 @@
     example: Component;
     surface?: boolean;
     column?: boolean;
+    /** The demo takes both columns of the page. */
+    wide?: boolean;
   } = $props();
 
   const t = useT();
@@ -30,7 +33,7 @@
   const copier = createCopier();
 </script>
 
-<section class="demo" class:open aria-labelledby="demo-{id}">
+<section class="demo" class:open class:wide aria-labelledby="demo-{id}">
   <div class="demo-pre" class:surface class:col={column}>
     <Example />
   </div>

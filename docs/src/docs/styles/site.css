@@ -198,9 +198,13 @@ nav.crumbs li + li::before { content: "/"; margin: 0 6px; }
 .pager small { display: block; color: var(--ads-color-text-secondary); font-size: 12px; }
 .pager .next { text-align: right; margin-left: auto; }
 
-/* ---- demos (two-column masonry) ---- */
-.demos { column-count: 2; column-gap: 16px; }
-.demo { break-inside: avoid; margin: 0 0 16px; border: 1px solid var(--s-border); border-radius: 8px; background: var(--ads-color-bg-container); transition: box-shadow .2s; }
+/* ---- demos: two columns in reading order (1 | 2, 3 | 4, ...) ----
+   A grid, not CSS columns: with `column-count` a block that does not fit moves to the top of the next column, so the order
+   (down the left column, then down the right one) and the place of every block depend on the heights, the language and the
+   width. In a grid a demo never changes its column; a short demo leaves room under it, which is the price. */
+.demos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.demo { margin: 0; border: 1px solid var(--s-border); border-radius: 8px; background: var(--ads-color-bg-container); transition: box-shadow .2s; }
+.demo.wide { grid-column: 1 / -1; }
 .demo:hover { box-shadow: var(--s-shadow); }
 .demo-pre { padding: 36px 20px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .demo-pre.col { flex-direction: column; align-items: stretch; }
@@ -285,7 +289,7 @@ table.api { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   .ftr-in { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 640px) {
-  .demos { column-count: 1; } .cards, .road { grid-template-columns: 1fr; }
+  .demos { grid-template-columns: minmax(0, 1fr); } .cards, .road { grid-template-columns: 1fr; }
   .hdr-act .chip.ver-chip, .search kbd { display: none; }
   /* Dropped from the narrow layout, but still the accessible name of the link. */
   .hdr .logo span:nth-child(2) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
