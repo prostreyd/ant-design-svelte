@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-16
+
 ### Added
 
 - `Radio`, `RadioButton` and `RadioGroup`: one choice out of several that are all visible. A radio is a native

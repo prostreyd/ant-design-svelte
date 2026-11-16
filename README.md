@@ -18,7 +18,7 @@ Ant Design.
 
 ## Status
 
-Version `0.6.0`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Radio` (with `RadioButton` and `RadioGroup`), `Select` (with `SelectOption` and `SelectOptGroup`), `Switch`, `Tooltip`. More components are planned.
+Version `0.7.0`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Radio` (with `RadioButton` and `RadioGroup`), `Select` (with `SelectOption` and `SelectOptGroup`), `Switch`, `Tooltip`. More components are planned.
 
 ## Browser support
 
