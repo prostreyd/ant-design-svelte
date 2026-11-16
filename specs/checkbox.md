@@ -300,7 +300,7 @@ leaves `indeterminate` alone).
 
 `docs/` page at `/components/checkbox/` (en, ru, zh). One live example per item; the API, methods
 and design tokens tables are compared with the sources by `tests/docs/checkbox-page.test.ts`,
-which also checks that every prop and method appears in at least one example.
+which also checks that every prop appears in at least one example (the methods are in the API table only).
 
 | Example | Spec items |
 |---|---|
@@ -311,9 +311,10 @@ which also checks that every prop and method appears in at least one example.
 | `05-group` | `options` as strings, numbers and objects (`disabled`, `title`, snippet `label`, option `onchange`), `name`, `bind:value`, group `onchange`, group `disabled` |
 | `06-layout` ("Custom layout") | `children` markup with a grid inside `CheckboxGroup` |
 | `07-semantic` | `classNames`, `styles` of both components, `class`, `style` |
-| `08-methods` ("Focus and blur") | `focus()`, `blur()` |
-| `09-labels` | accessible name: `children`, `aria-label`, `aria-labelledby`, external `<label for>`, `aria-describedby`, `title` |
-| `10-native` | `name`, `value`, `required` in a `<form>`; the submitted `FormData`; the state reset in `onreset` |
+| `08-labels` | accessible name: `children`, `aria-label`, `aria-labelledby`, external `<label for>`, `aria-describedby`, `title` |
+| `09-native` | `name`, `value`, `required` in a `<form>`; the submitted `FormData`; the state reset in `onreset` |
+
+The methods `focus()` and `blur()` are in the API table of the page and have no example of their own (the rule of 2026-11-16: a method with no visible result is not a demo); the unit tests and the browser tests of the methods stay.
 
 ## Список тестов
 

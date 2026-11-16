@@ -244,11 +244,6 @@ describe('Select page: examples', () => {
     }
   });
 
-  it('every method is called in an example', () => {
-    for (const row of methodRows) expect(code, row.name).toContain(`.${row.name}(`);
-    expect(code).toContain('preventScroll');
-  });
-
   it('every value of mode, size, variant, status and placement is shown', () => {
     for (const alias of ['SelectMode', 'SelectSize', 'SelectVariant', 'SelectStatus', 'SelectPlacement']) {
       for (const value of union(alias)) expect(code, `${alias} ${value}`).toContain(value);
@@ -256,7 +251,7 @@ describe('Select page: examples', () => {
   });
 
   it('every part of classNames and styles is used', () => {
-    const semantic = exampleSources[files.find((file) => file.includes('12-semantic'))!];
+    const semantic = exampleSources[files.find((file) => file.endsWith('-semantic.svelte'))!];
     const classNames = /classNames=\{\{([\s\S]*?)\}\}/.exec(semantic)?.[1] ?? '';
     const styles = /styles=\{\{([\s\S]*?)\n {2}\}\}/.exec(semantic)?.[1] ?? '';
     for (const part of union('SelectSemanticName')) {
@@ -265,7 +260,7 @@ describe('Select page: examples', () => {
   });
 
   it('the markup example inserts, moves and ignores options', () => {
-    const markup = exampleSources[files.find((file) => file.includes('13-children'))!];
+    const markup = exampleSources[files.find((file) => file.endsWith('-children.svelte'))!];
     expect(markup).toContain('{#each');
     expect(markup).toContain('{#if');
     expect(markup).toContain('options={');

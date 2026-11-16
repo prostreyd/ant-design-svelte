@@ -515,10 +515,11 @@ the source by a test, as for the other components; every prop appears in an exam
 | `07-custom` | `optionRender`, `labelRender`, `tagRender`, `popupRender` |
 | `08-popup` | `placement`, `popupMatchSelectWidth`, `listHeight`, `container` (a Select in a popover), `open` and `onopenchange`, `onpopupscroll` |
 | `09-control` | a function binding that refuses a change, `onselect`, `onclear`, `onfocus`, `onblur`, `oninputkeydown` |
-| `10-methods` ("Focus and blur") | `focus()`, `blur()` |
-| `11-labels` | accessible name: `<label for>`, `aria-label`, `aria-labelledby`, `aria-describedby` |
-| `12-semantic` | `classNames`, `styles`, `class`, `style` |
-| `13-children` | `SelectOption` and `SelectOptGroup` as children, options inserted by `{#each}` and `{#if}`, `options` taking precedence |
+| `10-labels` | accessible name: `<label for>`, `aria-label`, `aria-labelledby`, `aria-describedby` |
+| `11-semantic` | `classNames`, `styles`, `class`, `style` |
+| `12-children` | `SelectOption` and `SelectOptGroup` as children, options inserted by `{#each}` and `{#if}`, `options` taking precedence |
+
+The methods `focus()` and `blur()` are in the API table of the page and have no example of their own (the rule of 2026-11-16: a method with no visible result is not a demo); the unit tests and the browser tests of the methods stay.
 
 ## Список тестов (planned, final after the decisions)
 

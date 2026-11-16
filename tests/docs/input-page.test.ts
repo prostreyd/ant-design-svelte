@@ -250,15 +250,6 @@ describe('Input page: examples', () => {
     });
   }
 
-  it('every method is called in an example', () => {
-    for (const row of methodRows) expect(code, row.name).toContain(`.${row.name}(`);
-  });
-
-  it('every cursor value and preventScroll of focus() is shown', () => {
-    for (const value of ['start', 'end', 'all']) expect(code).toContain(`cursor: '${value}'`);
-    expect(code).toContain('preventScroll');
-  });
-
   it('every demo has a title and a description in three languages', () => {
     for (const demo of demos) {
       for (const lang of ['en', 'ru', 'zh'] as const) {

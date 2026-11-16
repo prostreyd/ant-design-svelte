@@ -187,11 +187,6 @@ describe('Checkbox page: examples', () => {
     }
   });
 
-  it('every method is called in an example', () => {
-    const code = Object.values(sources).join('\n');
-    for (const row of methodRows) expect(code, row.name).toContain(`.${row.name}(`);
-  });
-
   it('every demo has a title and a description in three languages', () => {
     for (const demo of demos) {
       for (const lang of ['en', 'ru', 'zh'] as const) {

@@ -204,7 +204,7 @@ the documentation does not give it.
 
 `docs/` page at `/components/switch/` (en, ru, zh). One live example per item; the API, methods and
 design tokens tables are compared with the source by `tests/docs/switch-page.test.ts`, which also
-checks that every prop and method appears in at least one example.
+checks that every prop appears in at least one example (the methods are in the API table only).
 
 | Example | Spec items |
 |---|---|
@@ -215,11 +215,9 @@ checks that every prop and method appears in at least one example.
 | `05-loading` | `loading`, focus kept, ignored activation |
 | `06-control` | function binding, `onclick` with `preventDefault()` |
 | `07-semantic` | `classNames`, `styles` (including custom properties), `class`, `style` |
-| `08-methods` ("Focus and blur") | `focus()`, `blur()` |
-| `09-labels` | accessible name: `<label for>`, `aria-label`, `aria-labelledby`, `aria-describedby`, `title` |
+| `08-labels` | accessible name: `<label for>`, `aria-label`, `aria-labelledby`, `aria-describedby`, `title` |
 
-The demo of the methods is titled "Focus and blur", not "Methods": a page may not have two landmark
-regions with the same name (the demo section and the methods table).
+The methods `focus()` and `blur()` are in the API table of the page and have no example of their own (the rule of 2026-11-16: a method with no visible result is not a demo); the unit tests and the browser tests of the methods stay.
 
 ## Список тестов
 

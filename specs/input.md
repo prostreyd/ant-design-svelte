@@ -432,9 +432,10 @@ every prop of every table is used on its own component in an example and that ev
 | `16-otp` | `InputOTP`: `value`, `length`, `onchange`, `oninput` |
 | `17-otp-options` | `mask`, `formatter`, `separator` (text, snippet), `size`, `variant`, `status`, `disabled`, `autocomplete` |
 | `18-semantic` | `classNames`, `styles`, `class`, `style` of all four visible families |
-| `19-methods` | `focus()` with `preventScroll` and each `cursor`, `blur()` |
-| `20-labels` | accessible names: `<label for>`, `aria-label`, `aria-labelledby`, `aria-describedby`, `title`, count and `aria-describedby` |
-| `21-native` | `name`, `required`, `type` in a `<form>`; the submitted `FormData`; the state reset in `onreset` |
+| `19-labels` | accessible names: `<label for>`, `aria-label`, `aria-labelledby`, `aria-describedby`, `title`, count and `aria-describedby` |
+| `20-native` | `name`, `required`, `type` in a `<form>`; the submitted `FormData`; the state reset in `onreset` |
+
+The methods `focus()` and `blur()` are in the API table of the page and have no example of their own (the rule of 2026-11-16: a method with no visible result is not a demo); the unit tests and the browser tests of the methods stay.
 
 ## Список тестов
 
