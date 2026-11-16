@@ -9,6 +9,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Documentation
+
+- The rules for AI assistants say how the examples of a component page are laid out and what state they keep: every group and
+  every separate control on its own line (as in the demos of Ant Design), texts and controls not mixed (a caption above the
+  control it names, its output under it, no loose text beside the controls), every component with a state of its own (two
+  groups do not share a bound variable unless the example is about a shared value), and the page is checked on the built site
+  by clicking in each group in both themes, with a site test that the groups are independent.
+- On the page of `Input`, the examples "One-time code" and "One-time code options" show each `InputOTP` on a line of its own,
+  with a short caption of the option it shows, instead of mixing the fields, their texts and each other in one flow.
+
 ## [0.7.0] - 2026-11-16
 
 ### Added
