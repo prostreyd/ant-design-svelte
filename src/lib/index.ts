@@ -6,6 +6,9 @@ export { default as Button } from './Button/Button.svelte';
 export { default as Switch } from './Switch/Switch.svelte';
 export { default as Checkbox } from './Checkbox/Checkbox.svelte';
 export { default as CheckboxGroup } from './Checkbox/CheckboxGroup.svelte';
+export { default as Radio } from './Radio/Radio.svelte';
+export { default as RadioButton } from './Radio/RadioButton.svelte';
+export { default as RadioGroup } from './Radio/RadioGroup.svelte';
 export { default as Select } from './Select/Select.svelte';
 export { default as SelectOption } from './Select/SelectOption.svelte';
 export { default as SelectOptGroup } from './Select/SelectOptGroup.svelte';
@@ -67,6 +70,23 @@ export type {
   CheckboxStyles,
   CheckboxValue
 } from './Checkbox/types.js';
+export type {
+  RadioButtonClassNames,
+  RadioButtonSemanticName,
+  RadioButtonStyle,
+  RadioButtonStyles,
+  RadioClassNames,
+  RadioGroupClassNames,
+  RadioGroupSemanticName,
+  RadioGroupStyles,
+  RadioOption,
+  RadioOptionType,
+  RadioOrientation,
+  RadioSemanticName,
+  RadioSize,
+  RadioStyles,
+  RadioValue
+} from './Radio/types.js';
 export type {
   SwitchClassNames,
   SwitchSemanticName,

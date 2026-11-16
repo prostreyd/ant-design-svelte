@@ -46,6 +46,11 @@
   /* #4096ff is 2.99:1 against a white page and 2.99:1 behind the white check mark: just under 3:1. */
   --ads-checkbox-checked-bg-hover: #0958d9;
 
+  /* Radio: the same two values as the checkbox; the button text and the checked button follow `primary-text` and `primary-solid`. */
+  --ads-radio-border: #737373;
+  --ads-radio-checked-bg-hover: #0958d9;
+  --ads-radio-button-border: #737373;
+
   /*
    * Input: the boundary of an outlined or underlined field is 4.74:1 against a white page (3:1 is needed) and
    * stays 3:1 or more on hover and focus; the placeholder is 5.3:1 against white and 4.9:1 on the filled

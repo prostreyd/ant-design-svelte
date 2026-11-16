@@ -90,6 +90,7 @@
   --ads-motion-duration-spinner-reduced: 2.5s;
   --ads-motion-ease: cubic-bezier(0.645, 0.045, 0.355, 1);
   --ads-motion-ease-out-back: cubic-bezier(0.12, 0.4, 0.29, 1.46);
+  --ads-motion-ease-in-out-circ: cubic-bezier(0.78, 0.14, 0.15, 0.86);
 
   /* Popup layers (internal popup primitive): the order of the Ant Design token table. */
   --ads-popover-z-index: 1030;
@@ -165,6 +166,47 @@
   --ads-checkbox-disabled-bg: rgba(0, 0, 0, 0.04);
   --ads-checkbox-disabled-border: #d9d9d9;
   --ads-checkbox-disabled-check-color: rgba(0, 0, 0, 0.25);
+
+  /*
+   * Radio: the dimensions of the Ant Design token documentation, and the ones measured on the public React demo
+   * (6.7.0, 2026-11-15) where the table is silent or stale: the dot is 6px (the table says `dotSize` 8), the
+   * label has 8px on both sides, the buttons are 24, 32 and 40px high with 7, 15 and 15px of padding.
+   */
+  --ads-radio-size: 16px;
+  --ads-radio-dot-size: 6px;
+  --ads-radio-border-width: 1px;
+  --ads-radio-font-size: 14px;
+  --ads-radio-line-height: 1.5714;
+  --ads-radio-label-padding: 8px;
+  --ads-radio-group-gap: 8px;
+  --ads-radio-button-padding-inline: 15px;
+  --ads-radio-button-padding-inline-sm: 7px;
+
+  /*
+   * Radio colors. In the light theme the values are the ones of the Ant Design token documentation and of the
+   * measurements. The unchecked border is 1.41:1 against a white page (3:1 is needed for a part of a control),
+   * the hover fill `#4096ff` 2.99:1 against the page and behind the white dot, and the text of an outline
+   * button 4.10:1 (4.5:1): `tokens-accessible.css` darkens them. The dark theme below keeps the ratios without it.
+   * The checked button borrows the `primary-text` and `primary-solid` tokens, so it follows them in every set.
+   */
+  --ads-radio-bg: #ffffff;
+  --ads-radio-border: #d9d9d9;
+  --ads-radio-border-hover: #1677ff;
+  --ads-radio-checked-bg: #1677ff;
+  --ads-radio-checked-bg-hover: #4096ff;
+  --ads-radio-dot-color: #ffffff;
+  --ads-radio-disabled-bg: rgba(0, 0, 0, 0.04);
+  --ads-radio-disabled-border: #d9d9d9;
+  --ads-radio-disabled-dot-color: rgba(0, 0, 0, 0.25);
+  --ads-radio-button-bg: #ffffff;
+  --ads-radio-button-checked-bg: #ffffff;
+  --ads-radio-button-border: #d9d9d9;
+  --ads-radio-button-color: rgba(0, 0, 0, 0.88);
+  --ads-radio-button-disabled-bg: rgba(0, 0, 0, 0.04);
+  --ads-radio-button-disabled-border: #d9d9d9;
+  --ads-radio-button-disabled-color: rgba(0, 0, 0, 0.25);
+  --ads-radio-button-checked-disabled-bg: rgba(0, 0, 0, 0.15);
+  --ads-radio-button-checked-disabled-color: rgba(0, 0, 0, 0.25);
 
   /* Input: the dimensions and colors of the Ant Design token tables (read 2026-11-11). */
   --ads-input-font-size: 14px;
@@ -371,6 +413,26 @@
   --ads-checkbox-disabled-bg: rgb(255 255 255 / 8%);
   --ads-checkbox-disabled-border: #424242;
   --ads-checkbox-disabled-check-color: rgb(255 255 255 / 30%);
+
+  /* The radio keeps 3:1 for the border on the page and for the dot on the fill, and 4.5:1 for the button text. */
+  --ads-radio-bg: #141414;
+  --ads-radio-border: #737373;
+  --ads-radio-border-hover: #4096ff;
+  --ads-radio-checked-bg: #3a8aff;
+  --ads-radio-checked-bg-hover: #3283f5;
+  --ads-radio-dot-color: #141414;
+  --ads-radio-disabled-bg: rgb(255 255 255 / 8%);
+  --ads-radio-disabled-border: #424242;
+  --ads-radio-disabled-dot-color: rgb(255 255 255 / 30%);
+  --ads-radio-button-bg: #141414;
+  --ads-radio-button-checked-bg: #141414;
+  --ads-radio-button-border: #737373;
+  --ads-radio-button-color: rgb(255 255 255 / 88%);
+  --ads-radio-button-disabled-bg: rgb(255 255 255 / 8%);
+  --ads-radio-button-disabled-border: #424242;
+  --ads-radio-button-disabled-color: rgb(255 255 255 / 30%);
+  --ads-radio-button-checked-disabled-bg: rgb(255 255 255 / 15%);
+  --ads-radio-button-checked-disabled-color: rgb(255 255 255 / 30%);
 
   /* The input keeps 3:1 for the border, 4.5:1 for the placeholder and the count, 3:1 for the icons. */
   --ads-input-bg: #141414;

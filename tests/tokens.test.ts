@@ -137,6 +137,38 @@ describe('default light tokens', () => {
     '--ads-checkbox-group-gap': '8px',
     '--ads-checkbox-font-size': '14px',
     '--ads-checkbox-line-height': '1.5714',
+    // Radio: the component tokens of the React page (radioSize, dotColorDisabled, wrapperMarginInlineEnd, buttonPaddingInline,
+    // buttonCheckedBgDisabled, buttonCheckedColorDisabled, buttonBg, buttonColor) and the global ones the checkbox
+    // lists; the dot (6px), the label padding (8px on both sides) and the button heights were measured on the public demo
+    // of React 6.7.0 on 2026-11-15, where the table says `dotSize` 8.
+    '--ads-radio-size': '16px',
+    '--ads-radio-dot-size': '6px',
+    '--ads-radio-border-width': '1px',
+    '--ads-radio-font-size': '14px',
+    '--ads-radio-line-height': '1.5714',
+    '--ads-radio-label-padding': '8px',
+    '--ads-radio-group-gap': '8px',
+    '--ads-radio-button-padding-inline': '15px',
+    '--ads-radio-button-padding-inline-sm': '7px',
+    '--ads-radio-bg': '#ffffff',
+    '--ads-radio-border': '#d9d9d9',
+    '--ads-radio-border-hover': '#1677ff',
+    '--ads-radio-checked-bg': '#1677ff',
+    '--ads-radio-checked-bg-hover': '#4096ff',
+    '--ads-radio-dot-color': '#ffffff',
+    '--ads-radio-disabled-bg': 'rgba(0, 0, 0, 0.04)',
+    '--ads-radio-disabled-border': '#d9d9d9',
+    '--ads-radio-disabled-dot-color': 'rgba(0, 0, 0, 0.25)',
+    '--ads-radio-button-bg': '#ffffff',
+    '--ads-radio-button-checked-bg': '#ffffff',
+    '--ads-radio-button-border': '#d9d9d9',
+    '--ads-radio-button-color': 'rgba(0, 0, 0, 0.88)',
+    '--ads-radio-button-disabled-bg': 'rgba(0, 0, 0, 0.04)',
+    '--ads-radio-button-disabled-border': '#d9d9d9',
+    '--ads-radio-button-disabled-color': 'rgba(0, 0, 0, 0.25)',
+    '--ads-radio-button-checked-disabled-bg': 'rgba(0, 0, 0, 0.15)',
+    '--ads-radio-button-checked-disabled-color': 'rgba(0, 0, 0, 0.25)',
+    '--ads-motion-ease-in-out-circ': 'cubic-bezier(0.78, 0.14, 0.15, 0.86)',
     // Input: the component tokens (activeBg, activeBorderColor, activeShadow, addonBg, errorActiveShadow, hoverBg,
     // hoverBorderColor, inputFontSize*, paddingBlock*, paddingInline*, warningActiveShadow) and the global tokens
     // colorBorder, colorBorderDisabled, colorBgContainerDisabled, colorFillTertiary, colorError, colorErrorBg,
@@ -211,6 +243,12 @@ describe('default light tokens', () => {
     expect(ratio(light, '--ads-checkbox-checked-bg-hover', '--ads-color-bg-container')).toBeLessThan(3);
   });
 
+  it('radio: the default unchecked border and checked hover fill are below 3:1 against the page, which is why the accessible file darkens them', () => {
+    expect(ratio(light, '--ads-radio-border', '--ads-color-bg-container')).toBeLessThan(3);
+    expect(ratio(light, '--ads-radio-button-border', '--ads-color-bg-container')).toBeLessThan(3);
+    expect(ratio(light, '--ads-radio-checked-bg-hover', '--ads-color-bg-container')).toBeLessThan(3);
+  });
+
   it('has a pressed color for the switch that equals the hover color (the documentation names none)', () => {
     expect(light.get('--ads-switch-track-on-active')).toBe(light.get('--ads-switch-track-on-hover'));
     expect(light.get('--ads-switch-track-off-active')).toBe(light.get('--ads-switch-track-off-hover'));
@@ -222,8 +260,8 @@ describe('accessible tokens (tokens-accessible.css)', () => {
     for (const token of accessible.keys()) expect(light.has(token), token).toBe(true);
   });
 
-  it('changes the -solid, -text, link, switch, checkbox, input and select tokens, and nothing else', () => {
-    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color))$/;
+  it('changes the -solid, -text, link, switch, checkbox, radio, input and select tokens, and nothing else', () => {
+    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color))$/;
     for (const token of accessible.keys()) expect(token, token).toMatch(allowed);
   });
 
@@ -283,6 +321,35 @@ describe('accessible tokens (tokens-accessible.css)', () => {
   it('checkbox: the indeterminate bar reaches 3:1 against the box', () => {
     expect(ratio(lightAccessible, '--ads-checkbox-indeterminate-color', '--ads-checkbox-bg')).toBeGreaterThanOrEqual(3);
   });
+
+  it('radio: the border and the hover border reach 3:1 against the page, the button border too', () => {
+    for (const token of ['--ads-radio-border', '--ads-radio-border-hover', '--ads-radio-button-border']) {
+      expect(ratio(lightAccessible, token, '--ads-color-bg-container'), token).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('radio: the checked fill, also on hover, reaches 3:1 against the page and the dot reaches 3:1 on it', () => {
+    for (const fill of ['--ads-radio-checked-bg', '--ads-radio-checked-bg-hover']) {
+      expect(ratio(lightAccessible, fill, '--ads-color-bg-container'), `${fill} on the page`).toBeGreaterThanOrEqual(3);
+      expect(ratio(lightAccessible, '--ads-radio-dot-color', fill), `dot on ${fill}`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('radio: the text of a button reaches 4.5:1 on its background in every state', () => {
+    expect(ratio(lightAccessible, '--ads-radio-button-color', '--ads-radio-button-bg'), 'rest').toBeGreaterThanOrEqual(4.5);
+    for (const color of ['--ads-color-primary-text', '--ads-color-primary-text-hover', '--ads-color-primary-text-active']) {
+      expect(ratio(lightAccessible, color, '--ads-radio-button-checked-bg'), color).toBeGreaterThanOrEqual(4.5);
+    }
+    for (const fill of ['--ads-color-primary-solid', '--ads-color-primary-solid-hover', '--ads-color-primary-solid-active']) {
+      expect(ratio(lightAccessible, '--ads-color-text-inverse', fill), fill).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('radio: the checked button border reaches 3:1 against the page', () => {
+    for (const border of ['--ads-color-primary-text', '--ads-color-primary-text-hover', '--ads-color-primary-solid']) {
+      expect(ratio(lightAccessible, border, '--ads-color-bg-container'), border).toBeGreaterThanOrEqual(3);
+    }
+  });
 });
 
 describe('dark theme (no extra file needed)', () => {
@@ -331,6 +398,35 @@ describe('dark theme (no extra file needed)', () => {
 
   it('checkbox: the indeterminate bar reaches 3:1 against the box', () => {
     expect(ratio(darkTheme, '--ads-checkbox-indeterminate-color', '--ads-checkbox-bg')).toBeGreaterThanOrEqual(3);
+  });
+
+  it('radio: the border and the hover border reach 3:1 against the page, the button border too', () => {
+    for (const token of ['--ads-radio-border', '--ads-radio-border-hover', '--ads-radio-button-border']) {
+      expect(ratio(darkTheme, token, '--ads-color-bg-container'), token).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('radio: the checked fill, also on hover, reaches 3:1 against the page and the dot reaches 3:1 on it', () => {
+    for (const fill of ['--ads-radio-checked-bg', '--ads-radio-checked-bg-hover']) {
+      expect(ratio(darkTheme, fill, '--ads-color-bg-container'), `${fill} on the page`).toBeGreaterThanOrEqual(3);
+      expect(ratio(darkTheme, '--ads-radio-dot-color', fill), `dot on ${fill}`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('radio: the text of a button reaches 4.5:1 on its background in every state', () => {
+    expect(ratio(darkTheme, '--ads-radio-button-color', '--ads-radio-button-bg'), 'rest').toBeGreaterThanOrEqual(4.5);
+    for (const color of ['--ads-color-primary-text', '--ads-color-primary-text-hover', '--ads-color-primary-text-active']) {
+      expect(ratio(darkTheme, color, '--ads-radio-button-checked-bg'), color).toBeGreaterThanOrEqual(4.5);
+    }
+    for (const fill of ['--ads-color-primary-solid', '--ads-color-primary-solid-hover', '--ads-color-primary-solid-active']) {
+      expect(ratio(darkTheme, '--ads-color-text-inverse', fill), fill).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('radio: the checked button border reaches 3:1 against the page', () => {
+    for (const border of ['--ads-color-primary-text', '--ads-color-primary-text-hover', '--ads-color-primary-solid']) {
+      expect(ratio(darkTheme, border, '--ads-color-bg-container'), border).toBeGreaterThanOrEqual(3);
+    }
   });
 });
 
