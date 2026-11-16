@@ -29,6 +29,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 - The left menu and the menu on a phone show the names of the components in English only (`Button`, `Radio`, `Select`),
   without the Russian or Chinese translation beside them. The translated note stays in the heading of each component page.
   The rules for AI assistants say both, and the site tests check them in all three languages.
+- The rules for AI assistants describe working on several components at once: a new component is made in its own
+  `git worktree` on a branch `feat/<name>` from `origin/main` (the main folder is shared by the chats and is not touched),
+  with its own ports for the tests, no heavy runs in two chats at the same time, additive edits in the files that every
+  component changes, and, before the merge, the current `main` merged into the branch (not rebased, force-push is
+  forbidden), a new green CI, the version counted from `main` at the moment of the merge, and the worktree removed after
+  the release. A short request such as "let's make the `Menu` component" is now enough to start.
 
 ## [0.7.0] - 2026-11-16
 
