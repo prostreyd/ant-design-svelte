@@ -120,6 +120,62 @@ test.describe('Forced colors (Windows High Contrast)', () => {
   });
 });
 
+test.describe('Forced colors: Radio (specs/radio.md)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+    expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
+  });
+
+  /** The mark of a radio: the span after its input. */
+  const markOf = (testId: string, page: Page) =>
+    page.getByTestId(testId).locator('xpath=following-sibling::span[contains(@class, "ads-radio-icon")]');
+  const labelOf = (testId: string, page: Page) => page.getByTestId(testId).locator('xpath=ancestor::label');
+  /** The button of a radio button: the label around its input, found by the group and the name. */
+  const buttonOf = (page: Page, group: string, name: string) =>
+    page.getByRole('radiogroup', { name: group, exact: true }).getByRole('radio', { name, exact: true }).locator('xpath=ancestor::label');
+
+  test('radio: a checked radio shows its dot and an unchecked one does not, and the dot differs from the mark behind it', async ({ page }) => {
+    expect(await computed(markOf('rd-on', page), 'opacity', '::after')).toBe('1');
+    expect(await computed(markOf('rd-off', page), 'opacity', '::after')).toBe('0');
+    const dot = await computed(markOf('rd-on', page), 'background-color', '::after');
+    expect(dot).not.toBe(await computed(markOf('rd-on', page), 'background-color'));
+    expect(dot).not.toBe('rgba(0, 0, 0, 0)');
+  });
+
+  test('radio: the ring of a checked radio differs from the ring of an unchecked one', async ({ page }) => {
+    expect(await computed(markOf('rd-on', page), 'border-top-color')).not.toBe(await computed(markOf('rd-off', page), 'border-top-color'));
+  });
+
+  test('radio: a disabled radio, its dot and its label use the disabled system color', async ({ page }) => {
+    expect(await computed(markOf('rd-disabled', page), 'border-top-color')).not.toBe(await computed(markOf('rd-off', page), 'border-top-color'));
+    expect(await computed(labelOf('rd-disabled', page), 'color')).not.toBe(await computed(labelOf('rd-off', page), 'color'));
+    // A disabled, checked radio keeps a dot, and it is not the enabled one.
+    expect(await computed(markOf('rd-disabled-on', page), 'opacity', '::after')).toBe('1');
+    expect(await computed(markOf('rd-disabled-on', page), 'background-color', '::after')).not.toBe(await computed(markOf('rd-on', page), 'background-color', '::after'));
+    expect(await computed(markOf('rd-disabled-on', page), 'border-top-color')).not.toBe(await computed(markOf('rd-on', page), 'border-top-color'));
+  });
+
+  test('button: a checked button differs from an unchecked one in its background and its text', async ({ page }) => {
+    const checked = buttonOf(page, 'Outline', 'Outline B');
+    const unchecked = buttonOf(page, 'Outline', 'Outline A');
+    expect(await computed(checked, 'background-color')).not.toBe(await computed(unchecked, 'background-color'));
+    expect(await computed(checked, 'color')).not.toBe(await computed(checked, 'background-color'));
+    const solid = buttonOf(page, 'Solid', 'Solid B');
+    expect(await computed(solid, 'background-color')).not.toBe(await computed(buttonOf(page, 'Solid', 'Solid A'), 'background-color'));
+  });
+
+  test('button: a disabled button, and a disabled checked one, are different from the enabled ones and from each other', async ({ page }) => {
+    const enabled = buttonOf(page, 'Outline', 'Outline A');
+    const off = buttonOf(page, 'Disabled buttons', 'Disabled B');
+    const on = buttonOf(page, 'Disabled buttons', 'Disabled A');
+    expect(await computed(off, 'color')).not.toBe(await computed(enabled, 'color'));
+    expect(await computed(off, 'border-top-color')).not.toBe(await computed(enabled, 'border-top-color'));
+    expect(await computed(on, 'background-color')).not.toBe(await computed(off, 'background-color'));
+    expect(await computed(on, 'background-color')).not.toBe(await computed(buttonOf(page, 'Outline', 'Outline B'), 'background-color'));
+  });
+});
+
 test.describe('Select in forced colors', () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });

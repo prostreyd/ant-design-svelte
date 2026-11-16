@@ -5,6 +5,7 @@ import '$lib/tokens-accessible.css';
 import { mount } from 'svelte';
 import App from './App.svelte';
 import PopupLab from './PopupLab.svelte';
+import RadioLab from './RadioLab.svelte';
 import SelectLab from './SelectLab.svelte';
 import TooltipLab from './TooltipLab.svelte';
 
@@ -13,7 +14,7 @@ if (!target) {
   throw new Error('Root element #app not found');
 }
 
-// `/#popup` opens the lab of the popup primitive, `/#select` the one of the Select and `/#tooltip` the one of the
-// Tooltip; every other URL is the component page.
-const pages: Record<string, typeof App> = { '#popup': PopupLab, '#select': SelectLab, '#tooltip': TooltipLab };
+// `/#popup` opens the lab of the popup primitive, `/#select` the one of the Select, `/#tooltip` the one of the
+// Tooltip and `/#radio` the one of the Radio; every other URL is the component page.
+const pages: Record<string, typeof App> = { '#popup': PopupLab, '#select': SelectLab, '#tooltip': TooltipLab, '#radio': RadioLab };
 mount(pages[location.hash] ?? App, { target });

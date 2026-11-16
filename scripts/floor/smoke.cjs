@@ -4,8 +4,8 @@
 //
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
-// It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab and
-// the Tooltip lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab, the
+// Tooltip lab and the Radio lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -396,6 +396,102 @@ async function tooltipPage(context) {
   await page.close();
 }
 
+async function radioPage(context) {
+  const page = await newPage(context, base + '/#radio');
+  await page.waitForSelector(idOf('lab-fruit'));
+  await settle(page);
+  const inputs = (group) => `${idOf(group)} input[type="radio"]`;
+  const checkedOf = (group) =>
+    page.evaluate((sel) => Array.from(document.querySelectorAll(sel)).filter((input) => input.checked).map((input) => input.value).join(','), inputs(group));
+  const activeValue = () => page.evaluate(() => {
+    const active = document.activeElement;
+    return active && active.type === 'radio' ? active.value : active ? active.tagName : 'none';
+  });
+
+  // First, on the page as it was made: the Tab order. A group is one Tab stop, on the checked radio.
+  await check('radio: a group is one Tab stop, on the checked radio, and the focus ring is drawn on its mark', async () => {
+    await page.focus(idOf('lab-before'));
+    await page.keyboard.press('Tab');
+    const single = await activeValue();
+    await page.keyboard.press('Tab');
+    const fruit = await activeValue();
+    const ring = await page.evaluate(() => {
+      const mark = document.activeElement.nextElementSibling;
+      const style = getComputedStyle(mark);
+      return style.outlineStyle + ' ' + style.outlineWidth;
+    });
+    await page.keyboard.press('Tab');
+    const size = await activeValue();
+    return [single === 'on' && fruit === 'Pear' && size === 'Medium' && ring.indexOf('solid') === 0, `single ${single}, fruit group ${fruit}, size group ${size}, ring ${ring}`];
+  });
+
+  await check('radio: the arrow keys move the selection inside a group and leave the other groups alone', async () => {
+    await page.focus(`${idOf('lab-fruit')} input[value="Pear"]`);
+    await page.keyboard.press('ArrowRight');
+    const afterRight = await checkedOf('lab-fruit');
+    const focused = await activeValue();
+    await page.keyboard.press('ArrowLeft');
+    const afterLeft = await checkedOf('lab-fruit');
+    const size = await checkedOf('lab-size');
+    return [afterRight === 'Orange' && focused === 'Orange' && afterLeft === 'Pear' && size === 'Medium', `right ${afterRight} (focus ${focused}), left ${afterLeft}, size group ${size}`];
+  });
+
+  await check('radio: a click selects a radio and unchecks the previous one, in the view and in the state', async () => {
+    await page.click(`${idOf('lab-fruit')} input[value="Apple"]`);
+    const checked = await checkedOf('lab-fruit');
+    const state = await textOf(page, idOf('lab-value'));
+    return [checked === 'Apple' && state === 'Apple', `checked ${checked}, state ${state}`];
+  });
+
+  await check('radio: selecting does not change a size or move a neighbour', async () => {
+    const read = () =>
+      page.evaluate(() =>
+        Array.from(document.querySelectorAll('main label')).map((label) => {
+          const r = label.getBoundingClientRect();
+          return [r.x, r.y + window.scrollY, r.width, r.height].map((value) => Math.round(value * 100) / 100).join(',');
+        }).join(' | ')
+      );
+    const before = await read();
+    await page.click(`${idOf('lab-fruit')} input[value="Orange"]`);
+    await page.click(`${idOf('lab-size')} input[value="Large"]`);
+    const after = await read();
+    return [before === after, before === after ? 'same boxes' : 'a box moved'];
+  });
+
+  await check('radio button: the buttons are 32px high, share a border, and only the outer corners are round', async () => {
+    const info = await page.evaluate((sel) => {
+      return Array.from(document.querySelectorAll(sel)).map((input) => {
+        const label = input.parentElement;
+        const r = label.getBoundingClientRect();
+        const style = getComputedStyle(label);
+        return { height: r.height, x: r.x, right: r.right, left: style.borderTopLeftRadius, rightRadius: style.borderTopRightRadius, border: style.borderTopWidth };
+      });
+    }, inputs('lab-size'));
+    const heights = info.every((item) => Math.abs(item.height - 32) < 0.5);
+    const corners = info[0].left === '6px' && info[0].rightRadius === '0px' && info[1].left === '0px' && info[1].rightRadius === '0px' && info[2].rightRadius === '6px';
+    const shared = Math.abs(info[1].x - (info[0].right - 1)) < 0.5;
+    return [info.length === 3 && heights && corners && shared, `heights ${info.map((item) => item.height).join(',')}, corners ${info.map((item) => item.left + '/' + item.rightRadius).join(' ')}, overlap ${shared}`];
+  });
+
+  await check('radio button: the checked solid button is filled', async () => {
+    // The fill changes over 0.2 s after the click of the check before.
+    await settle(page);
+    const color = await page.evaluate((sel) => getComputedStyle(document.querySelector(sel).parentElement).backgroundColor, `${idOf('lab-size')} input:checked`);
+    // The pointer is still over the button after the click, so the fill may be the hover shade; it must be a fill.
+    return [color !== 'rgb(255, 255, 255)' && color !== 'rgba(0, 0, 0, 0)', color];
+  });
+
+  await check('radio: a group without a name has no form owner, and its arrow keys still work', async () => {
+    await page.click(`${idOf('lab-vertical')} input[value="Free"]`);
+    await page.keyboard.press('ArrowDown');
+    const checked = await checkedOf('lab-vertical');
+    const owner = await page.evaluate((sel) => Array.from(document.querySelectorAll(sel)).map((input) => input.form === null).join(','), inputs('lab-vertical'));
+    return [checked === 'Team' && owner === 'true,true', `checked ${checked}, no form owner ${owner}`];
+  });
+
+  await page.close();
+}
+
 async function selectPage(context) {
   const page = await newPage(context, base + '/#select');
   await page.waitForSelector(idOf('single'));
@@ -483,6 +579,7 @@ async function selectPage(context) {
     await homePage(context);
     await selectPage(context);
     await tooltipPage(context);
+    await radioPage(context);
   } catch (error) {
     record('run', false, `threw: ${String(error && error.message ? error.message : error).split('\n')[0]}`);
   }

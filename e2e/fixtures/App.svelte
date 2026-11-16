@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Checkbox, CheckboxGroup, Input, InputOTP, InputPassword, InputSearch, InputTextArea, Switch } from '$lib';
+  import { Button, Checkbox, CheckboxGroup, Input, InputOTP, InputPassword, InputSearch, InputTextArea, Radio, RadioGroup, Switch, Tooltip } from '$lib';
 
   let clicks = $state(0);
   let busy = $state(false);
@@ -12,6 +12,13 @@
   let layoutDisabled = $state(false);
   let layoutIndeterminate = $state(false);
   let groupValue = $state<string[]>(['b']);
+
+  let radioChanges = $state(0);
+  let keysOne = $state<string | undefined>('k1b');
+  let layoutValue = $state<string | undefined>('Happy');
+  let layoutButtonValue = $state<string | undefined>('Happy');
+  let layoutRadioDisabled = $state(false);
+  const wide = 'A considerably longer label than the others';
 
   let clearText = $state('abc');
   let searchLog = $state('');
@@ -166,6 +173,60 @@
   <output data-testid="group-value">{groupValue.join(',')}</output>
 </section>
 
+<!-- Radio states, used by the Radio visual, behavior and contrast tests. -->
+<section class="start" data-testid="radios">
+  <Radio data-testid="rd-off">Off</Radio>
+  <Radio data-testid="rd-on" checked>On</Radio>
+  <Radio data-testid="rd-disabled" disabled>Disabled</Radio>
+  <Radio data-testid="rd-disabled-on" disabled checked>Disabled and on</Radio>
+  <Radio data-testid="rd-bare" aria-label="No label" />
+  <Radio data-testid="rd-counted" onchange={() => radioChanges++}>Counted</Radio>
+  <Radio data-testid="rd-long">A considerably longer label than the others</Radio>
+</section>
+<output data-testid="radio-changes">{radioChanges}</output>
+
+<!-- Radio buttons: every look and size. The labels are unique on the page, so a role query finds one button. -->
+<section class="start" data-testid="radio-buttons">
+  <RadioGroup data-testid="rg-outline" aria-label="Outline" optionType="button" value="outline-b" options={[{ label: 'Outline A', value: 'outline-a' }, { label: 'Outline B', value: 'outline-b' }, { label: 'Outline C', value: 'outline-c', disabled: true }]} />
+  <RadioGroup data-testid="rg-solid" aria-label="Solid" optionType="button" buttonStyle="solid" value="solid-b" options={[{ label: 'Solid A', value: 'solid-a' }, { label: 'Solid B', value: 'solid-b' }, { label: 'Solid C', value: 'solid-c', disabled: true }]} />
+  <RadioGroup data-testid="rg-large" aria-label="Large" optionType="button" size="large" value="large-a" options={[{ label: 'Large A', value: 'large-a' }, { label: 'Large B', value: 'large-b' }]} />
+  <RadioGroup data-testid="rg-small" aria-label="Small" optionType="button" size="small" value="small-a" options={[{ label: 'Small A', value: 'small-a' }, { label: 'Small B', value: 'small-b' }]} />
+  <RadioGroup data-testid="rg-disabled" aria-label="Disabled buttons" optionType="button" disabled value="disabled-a" options={[{ label: 'Disabled A', value: 'disabled-a' }, { label: 'Disabled B', value: 'disabled-b' }]} />
+  <RadioGroup data-testid="rg-disabled-solid" aria-label="Disabled solid" optionType="button" buttonStyle="solid" disabled value="dsolid-a" options={[{ label: 'DSolid A', value: 'dsolid-a' }, { label: 'DSolid B', value: 'dsolid-b' }]} />
+  <RadioGroup data-testid="rg-vertical-buttons" aria-label="Vertical buttons" optionType="button" orientation="vertical" value="vb-b" options={[{ label: 'VB A', value: 'vb-a' }, { label: 'VB B', value: 'vb-b' }, { label: 'VB C', value: 'vb-c' }]} />
+</section>
+
+<!-- Keyboard: Tab, arrow keys and focus between groups. keys-2 has no selected value. -->
+<section class="start" data-testid="radio-keys">
+  <input data-testid="keys-before" aria-label="Before the groups" />
+  <RadioGroup data-testid="keys-1" aria-label="Keys one" bind:value={keysOne} options={['k1a', 'k1b', 'k1c']} />
+  <RadioGroup data-testid="keys-2" aria-label="Keys two" options={['k2a', 'k2b', 'k2c']} />
+  <RadioGroup data-testid="keys-3" aria-label="Keys three" value="k3a" options={['k3a', { label: 'k3b', value: 'k3b', disabled: true }, 'k3c']} />
+  <input data-testid="keys-after" aria-label="After the groups" />
+  <output data-testid="keys-value">{keysOne}</output>
+</section>
+
+<!--
+  Labels of different widths, buttons of both sizes and one radio without a label: selecting, and disabling,
+  must not change a size or move a neighbour.
+-->
+<section class="start" data-testid="radio-layout">
+  <RadioGroup data-testid="rl-plain" aria-label="Layout plain" bind:value={layoutValue} disabled={layoutRadioDisabled} options={['Happy', 'Sad', wide]} />
+  <RadioGroup data-testid="rl-buttons" aria-label="Layout buttons" optionType="button" bind:value={layoutButtonValue} disabled={layoutRadioDisabled} options={['Happy', 'Sad', wide]} />
+  <RadioGroup data-testid="rl-small" aria-label="Layout small" optionType="button" buttonStyle="solid" size="small" value="Sad" options={['Happy', 'Sad']} />
+  <Radio data-testid="rl-bare" aria-label="Bare" />
+  <span data-testid="rl-after">after</span>
+  <button type="button" data-testid="rl-toggle-disabled" onclick={() => (layoutRadioDisabled = !layoutRadioDisabled)}>disabled</button>
+</section>
+
+<section class="start" data-testid="radio-vertical">
+  <RadioGroup data-testid="rv-plain" aria-label="Vertical plain" orientation="vertical" options={['Vertical one', 'Vertical two', 'Vertical three']} />
+  <span data-testid="rv-after">after</span>
+</section>
+
+<section class="start" data-testid="radio-tooltip">
+  <Tooltip title="Radio tip"><Radio data-testid="rt-radio">Radio with a tooltip</Radio></Tooltip>
+</section>
 
 <!-- Input states, used by the Input visual, behavior and contrast tests. -->
 <section data-testid="inputs" class="inputs">
@@ -259,6 +320,10 @@
     gap: 12px;
     padding: 24px;
     width: 640px;
+  }
+
+  .start {
+    align-items: flex-start;
   }
 
   .inputs {

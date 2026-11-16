@@ -2,7 +2,8 @@
 
 Tests that drive a real screen reader, Orca with Firefox, through [Guidepup](https://www.guidepup.dev/) and assert on
 what it says: the name and the state of a control and how the state changes after Space. They cover the Switch and the
-Checkbox on the e2e fixtures (`e2e/fixtures`). This folder has its own `package.json`; it is not part of `npm test`.
+Checkbox on the e2e fixtures (`e2e/fixtures`), and the Radio on its lab (`/#radio`): one test, because Orca keeps its state
+from one test to the next. Orca says nothing for a one-letter name, so the lab uses words. This folder has its own `package.json`; it is not part of `npm test`.
 
 Orca runs on Linux only. Guidepup tests it with Firefox: in our attempt Chromium did not register with the accessibility
 bus. The log is what Orca sends to speech, not what a person hears.
@@ -19,6 +20,9 @@ docker run --rm --network host --ipc=host -v "$PWD":/project -w /project/screen-
   -e PLAYWRIGHT_BROWSERS_PATH=/project/tmp/screen-reader/browsers guidepup-pilot \
   bash -c "npm ci && npx playwright install firefox && xvfb-run -a dbus-run-session -- npx playwright test"
 ```
+
+If `xvfb-run` waits for ever inside the container (it did once, with the test never starting), start the display by hand instead:
+`bash -c "(Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp &) ; sleep 3; export DISPLAY=:99; dbus-run-session -- npx playwright test"`.
 
 Not port 4190: Firefox blocks it. `@guidepup/playwright` 0.21.0 does not work with `@guidepup/guidepup` 0.40.0 for
 `navigateToWebContent()`, so `helpers.ts` has its own `toWebContent()`.
