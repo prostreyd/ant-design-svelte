@@ -32,6 +32,7 @@
     Button: ['type', 'size', 'shape', 'loading', 'danger', 'ghost', 'href'],
     Input: ['value', 'variant', 'status', 'allowClear', 'showCount', 'prefix', 'classNames', 'styles'],
     Checkbox: ['checked', 'indeterminate', 'disabled', 'value', 'options', 'classNames', 'styles'],
+    Radio: ['value', 'options', 'optionType', 'buttonStyle', 'size', 'orientation', 'block', 'classNames'],
     Switch: ['checked', 'onchange', 'size', 'loading', 'disabled', 'classNames', 'styles'],
     Select: ['value', 'mode', 'options', 'showSearch', 'allowClear', 'maxTagCount', 'classNames'],
     Tooltip: ['title', 'placement', 'trigger', 'arrow', 'color', 'open', 'classNames']

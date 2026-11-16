@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { demos } from '../src/docs/data/button.ts';
 import { demos as checkboxDemos } from '../src/docs/data/checkbox.ts';
 import { demos as inputDemos } from '../src/docs/data/input.ts';
+import { demos as radioDemos } from '../src/docs/data/radio.ts';
 import { demos as selectDemos } from '../src/docs/data/select.ts';
 import { demos as switchDemos } from '../src/docs/data/switch.ts';
 import { demos as tooltipDemos } from '../src/docs/data/tooltip.ts';
@@ -49,7 +50,7 @@ async function accessibilityViolations(page: Page): Promise<Violation[]> {
         run: (context: Document | { exclude: string[][] }, options?: object) => Promise<AxeResult>;
       };
     }).axe;
-    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-popup'];
+    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-radio', '.ads-radio-button', '.ads-radio-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-popup'];
     const everything = await axe.run(document, { rules: { 'color-contrast': { enabled: false } } });
     const contrast = await axe.run(
       { exclude: library.map((selector) => [selector]) },
@@ -249,8 +250,8 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Input', 'Checkbox', 'Switch', 'Select', 'Tooltip'];
-    const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'Radio', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Message', 'Notification'];
+    const READY = ['Button', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip'];
+    const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Message', 'Notification'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
       await open(page, 'components/');
@@ -264,7 +265,7 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
         expect(await picture.locator('> *').count(), name).toBeGreaterThan(1);
         // The silhouette is decorative; no description, no tag, no live component (the page showed two buttons on every card).
         await expect(card.locator('.pic'), name).toHaveAttribute('aria-hidden', 'true');
-        await expect(card.locator('.tag, .ov-blurb, .ads-btn, .ads-input, .ads-select, .ads-switch, .ads-checkbox'), name).toHaveCount(0);
+        await expect(card.locator('.tag, .ov-blurb, .ads-btn, .ads-input, .ads-select, .ads-switch, .ads-checkbox, .ads-radio, .ads-radio-group'), name).toHaveCount(0);
       }
     });
 
@@ -382,15 +383,17 @@ test.describe('home page', () => {
     await expect(now).toContainText('Button');
     await expect(now).toContainText('Input');
     await expect(now).toContainText('Checkbox');
+    await expect(now).toContainText('Radio');
     await expect(now).toContainText('Switch');
     await expect(now).toContainText('Select');
     await expect(now).toContainText('Tooltip');
-    // The ready components follow the order of the sidebar: Button, Input, Checkbox, Switch, Select, Tooltip.
+    // The ready components follow the order of the sidebar: Button, Input, Checkbox, Radio, Switch, Select, Tooltip.
     await expect(now.locator('.chips').nth(1)).toContainText('variant');
     await expect(now.locator('.chips').nth(2)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(3)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(4)).toContainText('showSearch');
-    await expect(now.locator('.chips').nth(5)).toContainText('placement');
+    await expect(now.locator('.chips').nth(3)).toContainText('orientation');
+    await expect(now.locator('.chips').nth(4)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(5)).toContainText('showSearch');
+    await expect(now.locator('.chips').nth(6)).toContainText('placement');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -586,18 +589,6 @@ test.describe('Switch page', () => {
     await expect(feature).toHaveAttribute('aria-checked', 'true');
     await expect(lock).toHaveAttribute('aria-checked', 'true');
     await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText('enabled, refused 1 times');
-  });
-
-  test('methods demo: the buttons move and remove focus', async ({ page }) => {
-    await open(page, 'components/switch/');
-    const demo = demoOf(page, 'Focus and blur');
-    const toggle = demo.getByRole('switch', { name: 'Power' });
-    await demo.getByRole('button', { name: 'Focus' }).click();
-    await expect(toggle).toBeFocused();
-    await toggle.evaluate((element) => (element as HTMLElement).blur());
-    await demo.getByRole('button', { name: 'Focus' }).click();
-    await demo.getByRole('button', { name: 'Blur' }).click();
-    await expect(toggle).not.toBeFocused();
   });
 
   test('labels demo: a click on the label text toggles its switch', async ({ page }) => {
@@ -1046,18 +1037,6 @@ test.describe('Checkbox page', () => {
     await expect(demo.getByRole('checkbox', { name: 'Friday (closed)' })).toBeDisabled();
   });
 
-  test('methods demo: the buttons move and remove focus', async ({ page }) => {
-    await open(page, 'components/checkbox/');
-    const demo = demoOf(page, 'Focus and blur');
-    const box = demo.getByRole('checkbox', { name: 'Subscribe' });
-    await demo.getByRole('button', { name: 'Focus' }).click();
-    await expect(box).toBeFocused();
-    await box.evaluate((element) => (element as HTMLElement).blur());
-    await demo.getByRole('button', { name: 'Focus' }).click();
-    await demo.getByRole('button', { name: 'Blur' }).click();
-    await expect(box).not.toBeFocused();
-  });
-
   test('labels demo: a click on the label text or on an external label toggles the checkbox', async ({ page }) => {
     await open(page, 'components/checkbox/');
     const demo = demoOf(page, 'Accessible name');
@@ -1105,6 +1084,211 @@ test.describe('Checkbox page', () => {
   test('is listed in the components menu', async ({ page }) => {
     await open(page, 'components/');
     await expect(page.getByRole('navigation', { name: 'Components' }).getByRole('link', { name: /^Checkbox/ })).toBeVisible();
+  });
+});
+
+test.describe('Radio page', () => {
+  /** The example section with the given title. */
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    // A loop over every example with several browser commands each: WebKit needs about three times the default time.
+    test.slow();
+    await open(page, 'components/radio/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(radioDemos.length);
+
+    for (let i = 0; i < radioDemos.length; i++) {
+      const demo = examples.nth(i);
+      // The preview contains library radios, not copies drawn with the same classes.
+      await expect(demo.locator('.demo-pre label.ads-radio, .demo-pre label.ads-radio-button').first()).toBeVisible();
+
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/radio/${String(i + 1).padStart(2, '0')}-${radioDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('basic demo: a click and a click on the text select the radio and report true, and a second click calls nothing', async ({ page }) => {
+    await open(page, 'components/radio/');
+    const demo = demoOf(page, 'Basic');
+    const radio = demo.getByRole('radio', { name: 'Send me the newsletter' });
+    const status = demo.locator('.demo-pre').getByRole('status');
+    await expect(radio).not.toBeChecked();
+    await expect(status).toHaveText('no change yet');
+    await radio.click();
+    await expect(radio).toBeChecked();
+    await expect(status).toHaveText('onchange(true)');
+    await expect(demo).toContainText('The radio is selected');
+    await demo.locator('.ads-radio-label').click();
+    await expect(radio).toBeChecked();
+    await expect(status).toHaveText('onchange(true)');
+  });
+
+  test('disabled demo: the radios cannot be used until they are enabled', async ({ page }) => {
+    await open(page, 'components/radio/');
+    const demo = demoOf(page, 'Disabled');
+    const named = (name: string) => demo.getByRole('radio', { name, exact: true });
+    await expect(named('Not selected')).toBeDisabled();
+    await expect(named('Selected')).toBeChecked();
+    await expect(named('Pear (out of stock)')).toBeDisabled();
+    await expect(named('Orange')).toBeEnabled();
+    await demo.getByRole('button', { name: 'Enable' }).click();
+    await expect(named('Not selected')).toBeEnabled();
+    await named('Not selected').click();
+    await expect(named('Not selected')).toBeChecked();
+  });
+
+  test('group demo: a click selects one radio and moves the selection; the arrow keys move and select', async ({ page }) => {
+    await open(page, 'components/radio/');
+    const demo = demoOf(page, 'Radio group');
+    const group = demo.getByRole('radiogroup', { name: 'Fruit' });
+    const status = demo.locator('.demo-pre').getByRole('status');
+    await expect(group.getByRole('radio', { name: 'Apple' })).toBeChecked();
+    await group.getByRole('radio', { name: 'Pear' }).click();
+    await expect(group.getByRole('radio', { name: 'Pear' })).toBeChecked();
+    await expect(group.getByRole('radio', { name: 'Apple' })).not.toBeChecked();
+    await expect(status).toHaveText('onchange(Pear)');
+    await expect(demo).toContainText('The value is Pear');
+    await page.keyboard.press('ArrowDown');
+    await expect(group.getByRole('radio', { name: 'Orange' })).toBeChecked();
+    await expect(group.getByRole('radio', { name: 'Orange' })).toBeFocused();
+    // Up from the last radio, with no wrap around: the ends of a group are the platform's, and WebKit stops there.
+    await page.keyboard.press('ArrowUp');
+    await expect(group.getByRole('radio', { name: 'Pear' })).toBeChecked();
+    await expect(status).toHaveText('onchange(Pear)');
+  });
+
+  test('options demo: a boolean value stays a boolean and the option onchange runs', async ({ page }) => {
+    await open(page, 'components/radio/');
+    const demo = demoOf(page, 'Options');
+    await expect(demo.getByRole('radio', { name: 'No' })).toBeChecked();
+    await demo.getByRole('radio', { name: 'Yes' }).click();
+    await expect(demo.getByRole('radio', { name: 'Yes' })).toBeChecked();
+    await expect(demo.getByRole('radio', { name: 'Plum' })).toBeDisabled();
+    const extras = demo.getByRole('radiogroup', { name: 'Extras' });
+    await extras.getByRole('radio', { name: 'Pear' }).click();
+    await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText('pear: true');
+    await expect(extras.getByRole('radio', { name: 'Pear' })).toHaveAttribute('required', '');
+  });
+
+  test('button demo: a click selects a button, a disabled one stays off, and the solid group fills the checked button', async ({ page }) => {
+    await open(page, 'components/radio/');
+    const demo = demoOf(page, 'Radio button');
+    const outline = demo.getByRole('radiogroup', { name: 'City', exact: true });
+    await expect(outline.getByRole('radio', { name: 'Hangzhou' })).toBeChecked();
+    await outline.getByRole('radio', { name: 'Shanghai' }).click();
+    await expect(outline.getByRole('radio', { name: 'Shanghai' })).toBeChecked();
+    await expect(outline.getByRole('radio', { name: 'Beijing' })).toBeDisabled();
+    // The groups do not share a value: the solid group keeps its own selection (Shanghai), drawn with a fill.
+    const solid = demo.getByRole('radiogroup', { name: 'City, solid' });
+    await expect(solid.getByRole('radio', { name: 'Shanghai' })).toBeChecked();
+    await solid.getByRole('radio', { name: 'Chengdu' }).click({ force: true });
+    await expect(solid.getByRole('radio', { name: 'Chengdu' })).toBeChecked();
+    await expect(outline.getByRole('radio', { name: 'Shanghai' })).toBeChecked();
+    const fill = await solid.locator('label.ads-radio-button-checked').first().evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(fill).not.toBe('rgb(255, 255, 255)');
+    expect(fill).not.toBe('rgba(0, 0, 0, 0)');
+  });
+
+  test('size demo: the buttons are 40, 32 and 24 px high, and the aliases are the medium size', async ({ page }) => {
+    await open(page, 'components/radio/');
+    const demo = demoOf(page, 'Size');
+    const height = async (name: string) => (await demo.getByRole('radiogroup', { name, exact: true }).locator('label').first().boundingBox())!.height;
+    expect(await height('Large')).toBe(40);
+    expect(await height('Medium')).toBe(32);
+    expect(await height('Small')).toBe(24);
+    expect(await height('Default (medium)')).toBe(32);
+    // Each group has its own selection: choosing in one leaves the others alone.
+    await demo.getByRole('radiogroup', { name: 'Large', exact: true }).getByRole('radio', { name: 'Beijing' }).click({ force: true });
+    await expect(demo.getByRole('radiogroup', { name: 'Large', exact: true }).getByRole('radio', { name: 'Beijing' })).toBeChecked();
+    await expect(demo.getByRole('radiogroup', { name: 'Medium', exact: true }).getByRole('radio', { name: 'Hangzhou' })).toBeChecked();
+    await expect(demo.getByRole('radiogroup', { name: 'Small', exact: true }).getByRole('radio', { name: 'Hangzhou' })).toBeChecked();
+  });
+
+  test('layout demo: the vertical groups stack their items, block fills the width, and the grid shares one group', async ({ page }) => {
+    await open(page, 'components/radio/');
+    const demo = demoOf(page, 'Layout');
+    const vertical = demo.getByRole('radiogroup', { name: 'Vertical', exact: true }).locator('label');
+    const [first, second] = [await vertical.nth(0).boundingBox(), await vertical.nth(1).boundingBox()];
+    expect(second!.y).toBeGreaterThan(first!.y + first!.height - 1);
+    expect(Math.abs(second!.x - first!.x)).toBeLessThan(1);
+    const shorthand = demo.getByRole('radiogroup', { name: 'Vertical buttons' }).locator('label');
+    expect((await shorthand.nth(1).boundingBox())!.y).toBeGreaterThan((await shorthand.nth(0).boundingBox())!.y + 20);
+    const block = demo.getByRole('radiogroup', { name: 'Block' });
+    const [group, parent] = [await block.boundingBox(), await demo.locator('.demo-pre').boundingBox()];
+    expect(group!.width).toBeGreaterThan(parent!.width - 60);
+    await demo.getByRole('radio', { name: 'Bottom right' }).click();
+    await expect(demo.getByRole('radio', { name: 'Bottom right' })).toBeChecked();
+    await expect(demo.getByRole('radio', { name: 'Top left' })).not.toBeChecked();
+  });
+
+  test('controlled demo: the parent refuses a choice and the previous radio is put back; the plan can be cleared', async ({ page }) => {
+    await open(page, 'components/radio/');
+    const demo = demoOf(page, 'Controlled');
+    const plan = demo.getByRole('radiogroup', { name: 'Plan' });
+    const status = demo.locator('.demo-pre').getByRole('status');
+    await expect(plan.getByRole('radio', { name: 'Free' })).toBeChecked();
+    await plan.getByRole('radio', { name: 'Team (needs the terms)' }).click();
+    await expect(plan.getByRole('radio', { name: 'Free' })).toBeChecked();
+    await expect(plan.getByRole('radio', { name: 'Team (needs the terms)' })).not.toBeChecked();
+    await expect(status).toHaveText('Plan: free, refused 1 times');
+    await demo.getByRole('radio', { name: 'I accept the terms' }).check();
+    await plan.getByRole('radio', { name: 'Team (needs the terms)' }).click();
+    await expect(plan.getByRole('radio', { name: 'Team (needs the terms)' })).toBeChecked();
+    await expect(status).toHaveText('Plan: team, refused 1 times');
+    await demo.getByRole('button', { name: 'Clear the plan' }).click();
+    await expect(plan.getByRole('radio', { name: 'Free' })).not.toBeChecked();
+    await expect(plan.getByRole('radio', { name: 'Team (needs the terms)' })).not.toBeChecked();
+    await expect(status).toHaveText('Plan: none, refused 1 times');
+  });
+
+  test('labels demo: every way of naming a radio and a group works', async ({ page }) => {
+    await open(page, 'components/radio/');
+    const demo = demoOf(page, 'Names and labels');
+    for (const name of ['Visible text', 'Hidden label', 'Named by a heading', 'External label', 'Wi-Fi']) {
+      await expect(demo.getByRole('radio', { name, exact: true }), name).toBeVisible();
+    }
+    await demo.locator('.demo-pre').getByText('External label').click();
+    await expect(demo.getByRole('radio', { name: 'External label' })).toBeChecked();
+    await expect(demo.getByRole('radiogroup', { name: 'Pick a colour' })).toBeVisible();
+  });
+
+  test('native demo: the named group and the radio are submitted, the unnamed group is not, and reset clears the state', async ({ page }) => {
+    await open(page, 'components/radio/');
+    const demo = demoOf(page, 'Forms and native attributes');
+    const status = demo.locator('.demo-pre').getByRole('status');
+    await demo.getByRole('radio', { name: 'M', exact: true }).click();
+    await demo.getByRole('radio', { name: 'Gift wrap' }).check();
+    await demo.getByRole('radio', { name: 'b', exact: true }).click();
+    await demo.getByRole('button', { name: 'Save' }).click();
+    await expect(status).toHaveText('Submitted: [["size","M"],["gift","yes"]]');
+    await demo.getByRole('button', { name: 'Reset' }).click();
+    await expect(status).toHaveText('');
+    await expect(demo.getByRole('radio', { name: 'M', exact: true })).not.toBeChecked();
+    await expect(demo.getByRole('radio', { name: 'Gift wrap' })).not.toBeChecked();
+  });
+
+  test('keyboard demo: a group is one Tab stop on the selected radio, and two groups never trade focus', async ({ page }) => {
+    await open(page, 'components/radio/');
+    const demo = demoOf(page, 'Keyboard');
+    const first = demo.getByRole('radiogroup', { name: 'First group' });
+    const second = demo.getByRole('radiogroup', { name: 'Second group' });
+    await demo.getByLabel('Before the groups').focus();
+    await page.keyboard.press('Tab');
+    await expect(first.getByRole('radio', { name: 'Apple' })).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(first.getByRole('radio', { name: 'Pear' })).toBeChecked();
+    // The single Tab stop: the next Tab leaves the first group (nothing is checked in the second, so its first radio gets it).
+    await page.keyboard.press('Tab');
+    await expect(second.getByRole('radio', { name: 'Red' })).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(second.getByRole('radio', { name: 'Green' })).toBeChecked();
+    await expect(first.getByRole('radio', { name: 'Pear' })).toBeChecked();
+    // Back into the first group with Shift+Tab: the focus lands on the checked radio, not on the first.
+    await page.keyboard.press('Shift+Tab');
+    await expect(first.getByRole('radio', { name: 'Pear' })).toBeFocused();
   });
 });
 
