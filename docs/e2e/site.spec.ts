@@ -114,6 +114,22 @@ test.describe('navigation', () => {
     await expect(componentsSide.getByRole('link', { name: 'Getting started' })).toHaveCount(0);
   });
 
+  for (const lang of LANGS) {
+    test(`the names of the components in the left menu are not translated (${lang})`, async ({ page }) => {
+      await open(page, rel('/components/button/', lang));
+      const side = page.getByRole('navigation', { name: /Components|Компоненты|组件/ });
+      // Only the English name, in every language: no translated note next to it.
+      await expect(side.getByRole('link', { name: 'Button', exact: true })).toBeVisible();
+      await expect(side.getByRole('link', { name: 'Radio', exact: true })).toBeVisible();
+      // A component that is not ready shows its name and the "soon" mark, but no translation.
+      const typography = side.getByText('Typography').first();
+      await expect(typography).toBeVisible();
+      for (const translated of ['Кнопка', 'Флажок', 'Радиокнопка', 'Выбор', '按钮', '多选框', '单选框', '选择器']) {
+        await expect(side.getByText(translated)).toHaveCount(0);
+      }
+    });
+  }
+
   test('components that are not ready are listed but are not links', async ({ page }) => {
     await open(page, 'components/');
     const side = page.getByRole('navigation', { name: 'Components' });
@@ -212,6 +228,19 @@ test.describe('mobile', () => {
     await page.keyboard.press('Escape');
     await expect(menu).toBeHidden();
   });
+
+  for (const lang of LANGS) {
+    test(`the menu on a phone shows the names of the components without translation (${lang})`, async ({ page }) => {
+      await open(page, rel('/components/button/', lang));
+      await page.getByRole('button', { name: /^(Menu|Меню|菜单)$/ }).click();
+      const menu = page.locator('#mobile-nav');
+      await expect(menu).toBeVisible();
+      await expect(menu.getByRole('link', { name: 'Radio', exact: true })).toBeVisible();
+      for (const translated of ['Кнопка', 'Флажок', 'Радиокнопка', 'Выбор', '按钮', '多选框', '单选框', '选择器']) {
+        await expect(menu.getByText(translated)).toHaveCount(0);
+      }
+    });
+  }
 
   test('the menu fills the screen under the header, and every link in it can really be pressed', async ({ page }) => {
     // A link that is "visible" can still be cut off by a panel that is too short: what counts is that the point in
