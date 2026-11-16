@@ -419,6 +419,35 @@ test.describe('Button page', () => {
     }
   });
 
+  test('the code toggle looks different when the code is shown: another glyph and a tinted background', async ({ page }) => {
+    await open(page, 'components/button/');
+    const demo = page.locator('section.demo').first();
+    const toggle = demo.locator('.demo-act .icon-btn').first();
+    const glyph = () => toggle.locator('svg path').evaluateAll((paths) => paths.map((path) => path.getAttribute('d')).join('|'));
+
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const closedGlyph = await glyph();
+    // Not hovered or focused: the background of a closed toggle is plain.
+    await page.mouse.move(0, 0);
+    await expect(toggle).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(demo.locator('.demo-code')).toBeVisible();
+    // The glyph changes (brackets with a slash), and the button stays tinted when the pointer leaves it.
+    expect(await glyph()).not.toBe(closedGlyph);
+    await page.mouse.move(0, 0);
+    await expect(toggle).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(toggle).toHaveAccessibleName('Hide code');
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(await glyph()).toBe(closedGlyph);
+    await page.mouse.move(0, 0);
+    await expect(toggle).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(toggle).toHaveAccessibleName('Show code');
+  });
+
   test('copy puts the source of the example on the clipboard', async ({ page, context, browserName }) => {
     // The permission names are Chromium's: Firefox and WebKit have nothing to grant and let a click write to the
     // clipboard. The page's own call is recorded in every engine (and passed on, so a refusal would show up as

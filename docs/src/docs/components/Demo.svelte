@@ -51,7 +51,8 @@
       title={open ? t('demo.hide') : t('demo.show')}
       onclick={() => (open = !open)}
     >
-      <Icon name="code" />
+      <!-- Two glyphs, as in the demos of Ant Design: brackets while the code is hidden, brackets with a slash while it is shown. -->
+      <Icon name={open ? 'code-slash' : 'code'} />
     </button>
     <button class="icon-btn" type="button" aria-label={t('demo.copy')} title={t('demo.copy')} onclick={() => copier.copy(code)}>
       <Icon name={copier.copied ? 'check' : 'copy'} />

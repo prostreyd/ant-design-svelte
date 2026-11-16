@@ -214,7 +214,7 @@ nav.crumbs li + li::before { content: "/"; margin: 0 6px; }
 .demo-desc { color: var(--ads-color-text-secondary); font-size: 13px; }
 .demo-act { display: flex; justify-content: center; gap: 4px; padding: 4px 0 6px; border-top: 1px dashed var(--s-border); }
 .demo-act .icon-btn { width: 30px; height: 30px; }
-.demo-act .icon-btn[aria-expanded='true'] { color: var(--s-link); }
+.demo-act .icon-btn[aria-expanded='true'] { color: var(--s-link); background: var(--s-primary-soft); }
 .demo-code { display: none; border-top: 1px dashed var(--s-border); }
 .demo.open .demo-code { display: block; }
 pre { margin: 0; padding: 16px 24px; overflow: auto; background: var(--s-code); font-size: 13px; line-height: 1.65; }
