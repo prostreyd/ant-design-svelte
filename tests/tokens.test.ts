@@ -260,8 +260,8 @@ describe('accessible tokens (tokens-accessible.css)', () => {
     for (const token of accessible.keys()) expect(light.has(token), token).toBe(true);
   });
 
-  it('changes the -solid, -text, link, switch, checkbox, radio, input and select tokens, and nothing else', () => {
-    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color)|message-icon-(success|warning))$/;
+  it('changes the -solid, -text, link, switch, checkbox, radio, input, select, message and menu tokens, and nothing else', () => {
+    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color)|message-icon-(success|warning)|menu-(item-selected-color|submenu-selected-color|horizontal-(hover|selected)-color|group-title-color|danger-(color|hover-color|selected-color)|dark-(item-selected-bg|danger-selected-bg|danger-active-bg)))$/;
     for (const token of accessible.keys()) expect(token, token).toMatch(allowed);
   });
 
@@ -696,5 +696,140 @@ describe('message tokens (specs/message.md)', () => {
     for (const token of ['bg', 'color', 'shadow', 'icon-info', 'icon-success', 'icon-error', 'icon-warning', 'close-color', 'close-color-hover', 'close-bg-hover']) {
       expect(dark.has(`--ads-message-${token}`), token).toBe(true);
     }
+  });
+});
+
+describe('menu tokens (specs/menu.md)', () => {
+  // The "Design Token" table of the Ant Design React page (checked 2026-11-16).
+  const documented: Record<string, string> = {
+    '--ads-menu-item-height': '40px',
+    '--ads-menu-item-margin-block': '4px',
+    '--ads-menu-item-margin-inline': '4px',
+    '--ads-menu-item-padding-inline': '16px',
+    '--ads-menu-item-radius': '8px',
+    '--ads-menu-submenu-item-radius': '4px',
+    '--ads-menu-icon-size': '14px',
+    '--ads-menu-icon-gap': '10px',
+    '--ads-menu-collapsed-width': '80px',
+    '--ads-menu-collapsed-icon-size': '16px',
+    '--ads-menu-horizontal-line-height': '46px',
+    '--ads-menu-active-bar-height': '2px',
+    '--ads-menu-group-title-font-size': '14px',
+    '--ads-menu-popup-min-width': '160px',
+    '--ads-menu-bg': '#ffffff',
+    '--ads-menu-popup-bg': '#ffffff',
+    '--ads-menu-submenu-bg': 'rgba(0, 0, 0, 0.02)',
+    '--ads-menu-item-color': 'rgba(0, 0, 0, 0.88)',
+    '--ads-menu-item-hover-bg': 'rgba(0, 0, 0, 0.06)',
+    '--ads-menu-item-active-bg': '#e6f4ff',
+    '--ads-menu-item-selected-bg': '#e6f4ff',
+    '--ads-menu-item-selected-color': '#1677ff',
+    '--ads-menu-item-disabled-color': 'rgba(0, 0, 0, 0.25)',
+    '--ads-menu-group-title-color': 'rgba(0, 0, 0, 0.45)',
+    '--ads-menu-danger-color': '#ff4d4f',
+    '--ads-menu-danger-selected-bg': '#fff2f0',
+    '--ads-menu-horizontal-selected-color': '#1677ff',
+    '--ads-menu-dark-bg': '#001529',
+    '--ads-menu-dark-popup-bg': '#001529',
+    '--ads-menu-dark-submenu-bg': '#000c17',
+    '--ads-menu-dark-item-color': 'rgba(255, 255, 255, 0.65)',
+    '--ads-menu-dark-item-hover-color': '#ffffff',
+    '--ads-menu-dark-item-selected-bg': '#1677ff',
+    '--ads-menu-dark-item-disabled-color': 'rgba(255, 255, 255, 0.25)',
+    '--ads-menu-dark-danger-color': '#ff4d4f',
+    '--ads-menu-dark-danger-selected-bg': '#ff4d4f'
+  };
+
+  for (const [token, value] of Object.entries(documented)) {
+    it(`${token} is ${value}`, () => {
+      expect(normalize(light.get(token) ?? '')).toBe(normalize(value));
+    });
+  }
+
+  /** The color of `foreground` over the layers of a surface: the base token first, then the translucent layers of a state. */
+  function contrast(tokens: Map<string, string>, base: string, foreground: string, ...layers: string[]): number {
+    const white: Rgba = { r: 255, g: 255, b: 255, a: 1 };
+    const background = layers.reduce((below, layer) => over(parse(tokens.get(layer)!), below), over(parse(tokens.get(base)!), white));
+    const color = over(parse(tokens.get(foreground)!), background);
+    const [hi, lo] = [luminance(color), luminance(background)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+
+  /** What each state of a light menu paints: [name, base, foreground, layers]. */
+  const lightPairs: Array<[string, string, string, string[]]> = [
+    ['the item', '--ads-menu-bg', '--ads-menu-item-color', []],
+    ['the item on hover', '--ads-menu-bg', '--ads-menu-item-hover-color', ['--ads-menu-item-hover-bg']],
+    ['the selected item', '--ads-menu-bg', '--ads-menu-item-selected-color', ['--ads-menu-item-selected-bg']],
+    ['a submenu with the selected item', '--ads-menu-bg', '--ads-menu-submenu-selected-color', []],
+    ['the horizontal selected item', '--ads-menu-bg', '--ads-menu-horizontal-selected-color', []],
+    ['the horizontal item on hover', '--ads-menu-bg', '--ads-menu-horizontal-hover-color', []],
+    ['the group title', '--ads-menu-bg', '--ads-menu-group-title-color', []],
+    ['the group title in a submenu', '--ads-menu-bg', '--ads-menu-group-title-color', ['--ads-menu-submenu-bg']],
+    ['the item in a popup', '--ads-menu-popup-bg', '--ads-menu-item-color', []],
+    ['the danger item', '--ads-menu-bg', '--ads-menu-danger-color', []],
+    ['the danger item on hover', '--ads-menu-bg', '--ads-menu-danger-hover-color', ['--ads-menu-item-hover-bg']],
+    ['the selected danger item', '--ads-menu-bg', '--ads-menu-danger-selected-color', ['--ads-menu-danger-selected-bg']]
+  ];
+
+  it('three defaults of the light theme are below 4.5:1, which is why the accessible file darkens them', () => {
+    expect(contrast(light, '--ads-menu-bg', '--ads-menu-item-selected-color', '--ads-menu-item-selected-bg')).toBeLessThan(4.5);
+    expect(contrast(light, '--ads-menu-bg', '--ads-menu-group-title-color')).toBeLessThan(4.5);
+    expect(contrast(light, '--ads-menu-bg', '--ads-menu-danger-color')).toBeLessThan(4.5);
+    expect(contrast(light, '--ads-menu-bg', '--ads-menu-danger-selected-color', '--ads-menu-danger-selected-bg')).toBeLessThan(4.5);
+  });
+
+  it('the dark menu defaults are below 4.5:1 for the selected and danger-selected fills with white text', () => {
+    expect(contrast(light, '--ads-menu-dark-item-selected-bg', '--ads-menu-dark-item-selected-color')).toBeLessThan(4.5);
+    expect(contrast(light, '--ads-menu-dark-danger-selected-bg', '--ads-menu-dark-danger-selected-color')).toBeLessThan(4.5);
+  });
+
+  for (const [theme, tokens] of [['light with the accessible file', lightAccessible], ['dark', darkTheme]] as const) {
+    describe(theme, () => {
+      for (const [name, base, foreground, layers] of lightPairs) {
+        it(`${name} reaches 4.5:1`, () => {
+          expect(contrast(tokens, base, foreground, ...layers)).toBeGreaterThanOrEqual(4.5);
+        });
+      }
+
+      it('the dark menu: the item, the hovered item, the group title, the disabled item are readable, and the fills reach 4.5:1 with white text', () => {
+        expect(contrast(tokens, '--ads-menu-dark-bg', '--ads-menu-dark-item-color')).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(tokens, '--ads-menu-dark-bg', '--ads-menu-dark-item-hover-color')).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(tokens, '--ads-menu-dark-submenu-bg', '--ads-menu-dark-item-color')).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(tokens, '--ads-menu-dark-bg', '--ads-menu-dark-group-title-color')).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(tokens, '--ads-menu-dark-popup-bg', '--ads-menu-dark-item-color')).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(tokens, '--ads-menu-dark-item-selected-bg', '--ads-menu-dark-item-selected-color')).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(tokens, '--ads-menu-dark-bg', '--ads-menu-dark-danger-color')).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(tokens, '--ads-menu-dark-bg', '--ads-menu-dark-danger-hover-color')).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(tokens, '--ads-menu-dark-danger-selected-bg', '--ads-menu-dark-danger-selected-color')).toBeGreaterThanOrEqual(4.5);
+      });
+    });
+  }
+
+  it('the dark theme of the page defines the colors of the light menu again', () => {
+    for (const token of [...light.keys()].filter((name) => /^--ads-menu-(?!dark-)(bg|popup-bg|submenu-bg|split|popup-shadow|item-(color|hover-color|hover-bg|active-bg|selected-color|selected-bg|disabled-color)|submenu-selected-color|group-title-color|danger-.*(color|bg)|horizontal-(hover|selected)-color)$/.test(name))) {
+      expect(dark.has(token), token).toBe(true);
+    }
+  });
+
+  it('the accessible file changes only the colors that missed, in the light menu and in the dark menu', () => {
+    const changed = [...accessible.keys()].filter((token) => token.startsWith('--ads-menu-'));
+    expect(changed.sort()).toEqual([
+      '--ads-menu-danger-color',
+      '--ads-menu-danger-hover-color',
+      '--ads-menu-danger-selected-color',
+      '--ads-menu-dark-danger-active-bg',
+      '--ads-menu-dark-danger-selected-bg',
+      '--ads-menu-dark-item-selected-bg',
+      '--ads-menu-group-title-color',
+      '--ads-menu-horizontal-hover-color',
+      '--ads-menu-horizontal-selected-color',
+      '--ads-menu-item-selected-color',
+      '--ads-menu-submenu-selected-color'
+    ]);
+  });
+
+  it('the z-index of the popups is the dropdown layer, which the primitive sets; the dark menu keeps its colors on a dark page', () => {
+    expect(dark.get('--ads-menu-dark-bg')).toBeUndefined();
+    expect(dark.get('--ads-menu-dark-item-selected-bg')).toBe('#1668dc');
   });
 });

@@ -5,7 +5,7 @@
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
 // It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab, the
-// Tooltip lab, the Radio lab, the grid lab and the Message lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// Tooltip lab, the Radio lab, the grid lab, the Message lab and the Menu lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -766,6 +766,110 @@ async function messagePage(context) {
   await page.close();
 }
 
+async function menuPage(context) {
+  const page = await newPage(context, base + '/#menu');
+  await page.waitForSelector('ul#menu');
+  await settle(page);
+  const item = (key) => `[data-ads-key="${key}"]`;
+  const LIST = `${PANEL} ul.ads-menu-popup-list`;
+  const lab = (patch) => page.evaluate((p) => window.__menuLab.set(p), patch).then(() => settle(page));
+  const near = (a, b, tolerance) => Math.abs(a - b) <= tolerance;
+  const activeKey = () => page.evaluate(() => (document.activeElement && document.activeElement.getAttribute('data-ads-key')) || String(document.activeElement && document.activeElement.id));
+
+  await check('menu: an item is 40px high, and choosing one selects it and moves nothing', async () => {
+    await lab({ mode: 'vertical', boxWidth: 300, selectedKeys: ['home'] });
+    const home = await rectOf(page, item('home'));
+    const before = await rectOf(page, item('plain'));
+    await page.click(item('plain'));
+    await settle(page);
+    const after = await rectOf(page, item('plain'));
+    const checked = await attributeOf(page, item('plain'), 'aria-checked');
+    const same = before.x === after.x && before.y === after.y && before.width === after.width && before.height === after.height;
+    return [near(home.height, 40, 0.5) && checked === 'true' && same, `height ${home.height}, aria-checked ${checked}, moved ${!same}`];
+  });
+
+  await check('menu: the pointer on a title opens a popup on its right, inside the viewport, and leaving closes it', async () => {
+    const title = await rectOf(page, item('products'));
+    await page.mouse.move(title.x + title.width / 2, title.y + title.height / 2);
+    await page.waitForTimeout(600);
+    const popup = await rectOf(page, LIST);
+    if (!popup) return 'the popup did not open on hover';
+    const right = popup.x >= title.right - 1;
+    const aligned = near(popup.y, title.y, 2);
+    const inside = popup.right <= VIEWPORT.width && popup.bottom <= VIEWPORT.height;
+    await page.mouse.move(900, 700);
+    await page.waitForTimeout(700);
+    const closed = (await rectOf(page, LIST)) === null;
+    return [right && aligned && inside && closed, `title ${Math.round(title.x)}-${Math.round(title.right)}, popup x ${Math.round(popup.x)} y ${Math.round(popup.y)} (title y ${Math.round(title.y)}), closed ${closed}`];
+  });
+
+  await check('menu: Tab enters the menu on an item and :focus-visible draws the ring; the arrows move; ArrowRight opens a popup and focuses its first item', async () => {
+    await page.focus('#before');
+    await page.keyboard.press('Shift+Tab');
+    const entered = await activeKey();
+    const ring = await page.evaluate(() => {
+      const style = getComputedStyle(document.activeElement);
+      return style.outlineStyle + ' ' + style.outlineWidth;
+    });
+    await page.keyboard.press('ArrowDown');
+    const next = await activeKey();
+    await page.focus(item('products'));
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(700);
+    const inPopup = await activeKey();
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+    const back = await activeKey();
+    return [entered === 'plain' && ring.indexOf('solid') === 0 && next === 'home' && inPopup === 'p1' && back === 'products', `entered ${entered}, ring ${ring}, arrow ${next}, popup ${inPopup}, escape ${back}`];
+  });
+
+  await check('menu: a closed inline submenu cannot take focus, and an open one can', async () => {
+    await lab({ mode: 'inline', boxWidth: 300, openKeys: [] });
+    await page.waitForTimeout(500);
+    const closed = await page.evaluate(() => {
+      var element = document.querySelector('[data-ads-key="p1"]');
+      element.focus();
+      return document.activeElement === element;
+    });
+    await page.click(item('products'));
+    await page.waitForTimeout(700);
+    const opened = await page.evaluate(() => {
+      var element = document.querySelector('[data-ads-key="p1"]');
+      element.focus();
+      return document.activeElement === element;
+    });
+    return [!closed && opened, `closed submenu took focus: ${closed}, open submenu took focus: ${opened}`];
+  });
+
+  await check('menu: a collapsed menu is 80px wide, and an item shows its label as a tip', async () => {
+    await lab({ mode: 'inline', boxWidth: 256, openKeys: [], collapsed: true });
+    await page.waitForTimeout(900);
+    const width = (await rectOf(page, 'ul#menu')).width;
+    const home = await rectOf(page, item('home'));
+    await page.mouse.move(home.x + home.width / 2, home.y + home.height / 2);
+    await page.waitForTimeout(900);
+    const tip = await page.evaluate((panel) => {
+      var element = document.querySelector(panel + ' .ads-menu-tip');
+      return element ? element.textContent.trim() : null;
+    }, PANEL);
+    await page.mouse.move(900, 700);
+    return [near(width, 80, 1) && tip === 'Home', `width ${width}, tip ${tip}`];
+  });
+
+  await check('menu: a bar that is too narrow shows the "…" item and hides the entries that do not fit', async () => {
+    await lab({ mode: 'horizontal', boxWidth: 300, collapsed: false });
+    await page.waitForTimeout(400);
+    const state = await page.evaluate(() => {
+      var more = document.querySelector('ul#menu > li[data-ads-more]');
+      var hidden = document.querySelectorAll('ul#menu > li[data-ads-top][data-ads-hidden]').length;
+      return { more: more && !more.hasAttribute('data-ads-hidden'), hidden: hidden, fits: more ? more.getBoundingClientRect().right <= document.querySelector('ul#menu').getBoundingClientRect().right + 1 : false };
+    });
+    return [state.more && state.hidden > 0 && state.fits, `more shown ${state.more}, hidden entries ${state.hidden}, inside the bar ${state.fits}`];
+  });
+
+  await page.close();
+}
+
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await playwright[engine].launch();
@@ -784,6 +888,7 @@ async function messagePage(context) {
     await radioPage(context);
     await gridPage(context);
     await messagePage(context);
+    await menuPage(context);
   } catch (error) {
     record('run', false, `threw: ${String(error && error.message ? error.message : error).split('\n')[0]}`);
   }
