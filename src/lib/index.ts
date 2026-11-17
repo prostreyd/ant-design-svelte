@@ -1,6 +1,6 @@
 // Public API of the library. Components are re-exported from here.
 
-export const VERSION = '0.8.0';
+export const VERSION = '0.9.1';
 
 export { default as Button } from './Button/Button.svelte';
 export { default as Switch } from './Switch/Switch.svelte';
@@ -29,6 +29,8 @@ export type {
   RowJustify
 } from './Grid/types.js';
 export { default as Input } from './Input/Input.svelte';
+export { message } from './Message/message.js';
+export { default as MessageHost } from './Message/MessageHost.svelte';
 export { default as InputOTP } from './Input/InputOTP.svelte';
 export { default as InputPassword } from './Input/InputPassword.svelte';
 export { default as InputSearch } from './Input/InputSearch.svelte';
@@ -117,6 +119,26 @@ export type {
   ButtonSize,
   ButtonType
 } from './Button/types.js';
+export { MESSAGE_TYPES } from './Message/types.js';
+export type {
+  MessageApi,
+  MessageClassNames,
+  MessageConfig,
+  MessageConfigClassNames,
+  MessageConfigStyles,
+  MessageContainer,
+  MessageContent,
+  MessageHandle,
+  MessageIcon,
+  MessageLabels,
+  MessageListSemanticName,
+  MessageOptions,
+  MessageSemanticName,
+  MessageStack,
+  MessageStyles,
+  MessageType,
+  MessageTypedOptions
+} from './Message/types.js';
 export { TOOLTIP_PRESET_COLORS } from './Tooltip/types.js';
 export type {
   TooltipArrow,

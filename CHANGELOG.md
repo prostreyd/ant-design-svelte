@@ -33,6 +33,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   - Not taken: `tip` and `wrapperClassName` (deprecated in Ant Design), the function form of `classNames` and `styles`,
     `Spin.setDefaultIndicator` and `nzSimple`. A default `indicator` and `size` are reserved for ConfigProvider in v1.1.
 
+## [0.9.1] - 2026-11-17
+
+### Fixed
+
+- `Message`: the close button (`closable`) is easier to see. The cross was 12px with a thin line and no background, and next to the
+  disc of an `error` message, which has a cross in it too, it did not read as a button. The cross is now 16px with a thicker
+  line, the button has a faint background at rest (`--ads-message-close-bg`) and a stronger one on hover, in the light and
+  the dark theme. The box keeps its 40px height. One token is new: `--ads-message-close-bg`.
+
+## [0.9.0] - 2026-11-17
+
+### Added
+
+- **`Message`** (with `MessageHost`): a short notice at the top of the page that goes away by itself, opened by a call from
+  code, from anywhere: `message.info`, `success`, `error`, `warning`, `loading`, `open`, `destroy` and `config`. The library
+  makes the layer itself when the first message opens and removes it when the last has gone; a `<MessageHost>` in the app
+  takes the messages over and holds the settings (`top`, `duration`, `maxCount`, `container`, `closable`, `labels`,
+  `classNames`, `styles`, `stack`). A call returns a function that closes the message and is also thenable (`.then` runs
+  when the message starts to close, so `await message.info(...)` waits for the close, as in React and Vue); a call with the
+  `key` of an open message updates it in place. `content` is a string, a number or a snippet, `icon` a string, a snippet or
+  `false`, and `class`, `style`, `classNames` and `styles` address the box and its parts. The timer waits while the pointer
+  (not a touch), the focus or a hidden page holds it. New: `closable` (a close button of 24px; `Escape` closes the message
+  that has focus in it) and `stack` (React 6.4.0: the newest message first, and past a threshold the others lie behind it as
+  a pile that the pointer or focus opens). A role per type (`alert` for `error` and `warning`, `status` for the rest) and a
+  hidden type word read before the text, translated through `labels`, where Ant Design React gives `role="alert"` to all and
+  Vue and Angular give none. 23 `--ads-message-*` tokens, light, dark and accessible (`tokens-accessible.css` darkens the
+  green and the amber icon to 3:1). Not checked: whether a screen reader announces a message when it opens, NVDA, JAWS,
+  VoiceOver, a real touch device and a real Safari.
+
 ### Documentation
 
 - The rules for AI assistants say how a component takes another component. Before the specification, the assistant checks

@@ -13,6 +13,7 @@ export const WIREFRAMES = [
   'Tooltip',
   'Grid',
   'Spin',
+  'Message',
   'Typography',
   'Icon',
   'Menu',
@@ -22,6 +23,5 @@ export const WIREFRAMES = [
   'Table',
   'Modal',
   'Drawer',
-  'Message',
   'Notification'
 ] as const;

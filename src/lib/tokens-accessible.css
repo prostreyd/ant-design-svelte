@@ -6,7 +6,8 @@
  * off track of a Switch is 1.84:1 against a white page and the border of a Checkbox or an Input 1.41:1 (3:1 is needed).
  * Import this file AFTER tokens.css to get darker values for the `-solid`, `-text` and link tokens, for the
  * Switch, for the Checkbox border, for the Input (border, placeholder, count, icons, warning), for the Select
- * (the group label and the empty-result text of its list) and for the Spin (the description and the fullscreen mask):
+ * (the group label and the empty-result text of its list), for the Message (the success and warning icons) and for the Spin
+ * (the description and the fullscreen mask):
  *
  *   import 'svelte-ant-design/tokens.css';
  *   import 'svelte-ant-design/tokens-accessible.css';
@@ -81,4 +82,11 @@
    */
   --ads-spin-description-color: #1668dc;
   --ads-spin-mask-bg: rgba(0, 0, 0, 0.6);
+
+  /*
+   * Message: the type icons are held to 3:1 against the white box. The green of Ant Design is 2.27:1 and the amber
+   * 1.90:1; the red (3.27:1) and the blue (4.10:1) already reach it.
+   */
+  --ads-message-icon-success: #389e0d;
+  --ads-message-icon-warning: #c27c00;
 }
