@@ -379,6 +379,22 @@ changes (nothing public: the primitive is internal):
   the outside-press rule below (decision 14). Found by a browser test of the Tooltip that watched the tip half a second after
   the tap (`e2e/tooltip.spec.ts`, `e2e/tooltip-touch.chromium.spec.ts`); unit tests in `tests/popupTriggers.test.ts`.
 
+## Added for the Menu (2026-11-17)
+
+The Menu ([menu.md](menu.md)) draws its submenus, its "…" popup and the tips of a collapsed menu on the primitive, and asked for
+two small additive changes (nothing public):
+
+- `Popup` takes `shift`, a pair `[x, y]` in px that moves the placed panel after the placement (the Menu's `popupOffset`).
+  `x` is mirrored in right-to-left layouts, `y` is not. Two tests in `tests/Popup.test.ts`.
+- `Popup` takes `forceMount`: the panel is built, hidden, before the first opening (the Menu's `forceSubMenuRender`). It is
+  not built on the server. The panel is moved to its container only when it is shown, so before that it stays where it is
+  written, hidden.
+
+What did **not** need a change: the hover bridge and the delays of `popupTriggers` serve the tips of a collapsed menu as they
+are; the submenus use their own timer in the Menu, because a child popup is in `document.body`, not inside its parent, so the
+pointer going from a popup into the popup of a submenu in it leaves the parent's panel in the DOM. The Menu keeps the chain
+open while the pointer is anywhere in it (`specs/menu.md`, Implementation notes).
+
 ## The arrow (changed 2026-11-13 and 2026-11-14, after the Tooltip was looked at)
 
 What the maintainer saw in the Tooltip, in the order it was found, and what the primitive does now:

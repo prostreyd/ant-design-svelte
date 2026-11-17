@@ -204,6 +204,21 @@ describe('Popup: placement (R1, R2, R4, R5, R6, R15)', () => {
     expect(placed(panelOf()!).top).toBe(350);
   });
 
+  it('shift moves the placed panel by [x, y] after the placement (Menu popupOffset)', async () => {
+    await mountOpen({ shift: [10, -6] });
+    expect(placed(panelOf()!)).toEqual({ left: 410, top: 338 });
+  });
+
+  it('shift: x mirrors in right-to-left layouts, y does not', async () => {
+    await mountOpen({ rtl: true });
+    const plain = placed(panelOf()!);
+    document.body.innerHTML = '';
+    await mountOpen({ rtl: true, shift: [10, -6] });
+    const moved = placed(panelOf()!);
+    expect(moved.left).toBe(plain.left - 10);
+    expect(moved.top).toBe(plain.top - 6);
+  });
+
   it('matchWidth: true is the anchor width, a number is a minimum, false is none', async () => {
     const view = await mountOpen({ matchWidth: true });
     expect(panelOf()!.style.minWidth).toBe('100px');

@@ -34,6 +34,8 @@
     arrow?: PopupArrow;
     /** Gap between the anchor and the panel in px. Default 4, or the arrow size plus 2 with an arrow. */
     offset?: number;
+    /** Moves the placed panel by `[x, y]` px, after the placement (React and Vue `popupOffset` of a submenu). `x` mirrors in right-to-left. */
+    shift?: readonly [number, number];
     /** Where the panel is moved to. Default `document.body`. */
     container?: PopupContainer;
     /** Layer token: popover 1030, dropdown 1050 (also Select), tooltip 1070. */
@@ -46,6 +48,8 @@
     dismiss?: PopupDismiss;
     /** Remove the content from the DOM on every close. Default: it stays mounted after the first opening. */
     destroyOnHidden?: boolean;
+    /** Mount the panel (hidden) before the first opening instead of at it (Menu `forceSubMenuRender`). Not on the server. */
+    forceMount?: boolean;
     /** A press inside the panel does not take focus from the anchor (a field-anchored popup). Inputs inside still work. */
     preventBlur?: boolean;
     /** Called with the placement actually used, after mirroring and flipping, when it changes. */
@@ -80,12 +84,14 @@
     matchWidth = false,
     arrow = false,
     offset,
+    shift,
     container,
     layer = 'dropdown',
     zIndex,
     onopenchange,
     dismiss,
     destroyOnHidden = false,
+    forceMount = false,
     preventBlur = false,
     onplacement,
     panel = $bindable(null),
@@ -167,6 +173,11 @@
       clearTimeout(fallback);
     };
   }
+
+  // The panel is mounted ahead of the first opening, hidden, when the consumer asks for it.
+  $effect(() => {
+    if (forceMount) untrack(() => (mounted = true));
+  });
 
   // The lifecycle: open shows (and mounts on the first time); close plays the leave animation and hides.
   $effect(() => {
@@ -329,8 +340,9 @@
 
     // Nothing is written when the placement did not change: while the page scrolls the two numbers differ only by
     // the noise of the arithmetic, and a rounding flipping between two pixels would shake the panel.
-    const x = result.x - (origin.left - appliedX);
-    const y = result.y - (origin.top - appliedY);
+    const [shiftX, shiftY] = shift ?? [0, 0];
+    const x = result.x + (rtl ? -shiftX : shiftX) - (origin.left - appliedX);
+    const y = result.y + shiftY - (origin.top - appliedY);
     if (exact === null || Math.abs(x - exact.x) > 0.01 || Math.abs(y - exact.y) > 0.01) {
       exact = { x, y };
       appliedX = snap(x);
