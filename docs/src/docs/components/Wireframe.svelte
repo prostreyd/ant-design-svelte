@@ -41,6 +41,10 @@
     <circle cx="32" cy="14" r="7" /><circle class="acc" cx="32" cy="14" r="3" /><path d="M50 14h70" />
     <circle cx="32" cy="38" r="7" /><path d="M50 38h56" />
     <circle cx="32" cy="62" r="7" /><path d="M50 62h64" />
+  {:else if name === 'Grid'}
+    <rect x="14" y="8" width="30" height="16" rx="3" /><rect class="fl" x="50" y="8" width="30" height="16" rx="3" /><rect x="86" y="8" width="30" height="16" rx="3" /><rect x="122" y="8" width="24" height="16" rx="3" />
+    <rect x="14" y="30" width="62" height="16" rx="3" /><rect class="fl" x="84" y="30" width="62" height="16" rx="3" />
+    <rect x="14" y="52" width="40" height="16" rx="3" /><rect x="86" y="52" width="60" height="16" rx="3" />
   {:else if name === 'DatePicker'}
     <rect x="20" y="6" width="120" height="20" rx="5" /><rect x="28" y="12" width="9" height="9" rx="2" /><path d="M46 16h44" />
     <path d="M30 40h4M47 40h4M64 40h4M81 40h4M98 40h4M115 40h4M132 40h4M30 52h4M47 52h4M64 52h4M81 52h4M98 52h4M115 52h4M132 52h4M30 64h4M47 64h4M64 64h4" />

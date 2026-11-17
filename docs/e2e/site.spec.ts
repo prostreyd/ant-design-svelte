@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { expect, test, type Page } from '@playwright/test';
 import { demos } from '../src/docs/data/button.ts';
 import { demos as checkboxDemos } from '../src/docs/data/checkbox.ts';
+import { demos as gridDemos } from '../src/docs/data/grid.ts';
 import { demos as inputDemos } from '../src/docs/data/input.ts';
 import { demos as radioDemos } from '../src/docs/data/radio.ts';
 import { demos as selectDemos } from '../src/docs/data/select.ts';
@@ -279,7 +280,7 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip'];
+    const READY = ['Button', 'Grid', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip'];
     const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Message', 'Notification'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
@@ -410,19 +411,21 @@ test.describe('home page', () => {
     await open(page, '');
     const now = page.locator('.road .card').first();
     await expect(now).toContainText('Button');
+    await expect(now).toContainText('Grid');
     await expect(now).toContainText('Input');
     await expect(now).toContainText('Checkbox');
     await expect(now).toContainText('Radio');
     await expect(now).toContainText('Switch');
     await expect(now).toContainText('Select');
     await expect(now).toContainText('Tooltip');
-    // The ready components follow the order of the sidebar: Button, Input, Checkbox, Radio, Switch, Select, Tooltip.
-    await expect(now.locator('.chips').nth(1)).toContainText('variant');
-    await expect(now.locator('.chips').nth(2)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(3)).toContainText('orientation');
-    await expect(now.locator('.chips').nth(4)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(5)).toContainText('showSearch');
-    await expect(now.locator('.chips').nth(6)).toContainText('placement');
+    // The ready components follow the order of the sidebar: Button, Grid, Input, Checkbox, Radio, Switch, Select, Tooltip.
+    await expect(now.locator('.chips').nth(1)).toContainText('gutter');
+    await expect(now.locator('.chips').nth(2)).toContainText('variant');
+    await expect(now.locator('.chips').nth(3)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(4)).toContainText('orientation');
+    await expect(now.locator('.chips').nth(5)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(6)).toContainText('showSearch');
+    await expect(now.locator('.chips').nth(7)).toContainText('placement');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -1470,6 +1473,150 @@ test.describe('Tooltip page', () => {
       expect(painted.ratio, `${name} contrast`).toBeGreaterThanOrEqual(4.5);
       expect(painted.same, `${name} arrow`).toBe(true);
     }
+  });
+});
+
+test.describe('Grid page', () => {
+  /** The example section with the given title. */
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+  /** The width of the first column of the first Row of a demo, in 24ths of its Row. */
+  const firstSpan = (demo: ReturnType<typeof demoOf>) =>
+    demo.locator('.demo-pre .ads-row').first().evaluate((row) => {
+      const column = row.querySelector(':scope > .ads-col')!.getBoundingClientRect().width;
+      return Math.round((column / row.getBoundingClientRect().width) * 24 * 100) / 100;
+    });
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    // A loop over every example with several browser commands each: WebKit needs about three times the default time.
+    test.slow();
+    await open(page, 'components/grid/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(gridDemos.length);
+
+    for (let i = 0; i < gridDemos.length; i++) {
+      const demo = examples.nth(i);
+      // The preview contains library rows, not copies drawn with the same classes.
+      await expect(demo.locator('.demo-pre .ads-row').first()).toBeVisible();
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/grid/${String(i + 1).padStart(2, '0')}-${gridDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('every caption stands above the component it names, inside its own unit', async ({ page }) => {
+    await open(page, 'components/grid/');
+    const misplaced = await page.locator('.demo-pre .field').evaluateAll((fields) =>
+      fields.filter((field) => field.querySelector(':scope > .caption') && field.firstElementChild?.className !== 'caption' && !field.firstElementChild?.classList.contains('caption')).length
+    );
+    expect(misplaced).toBe(0);
+  });
+
+  test('the gutter demo: a Row is as wide as its parent, and the page does not scroll sideways', async ({ page }) => {
+    await open(page, 'components/grid/');
+    const demo = demoOf(page, 'Gutter');
+    const rows = await demo.locator('.demo-pre .ads-row').evaluateAll((all) =>
+      all.map((row) => ({ row: row.getBoundingClientRect().width, parent: row.parentElement!.getBoundingClientRect().width }))
+    );
+    expect(rows).toHaveLength(4);
+    for (const { row, parent } of rows) expect(row).toBeCloseTo(parent, 1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  });
+
+  test.describe('on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('no example makes the page scroll sideways', async ({ page }) => {
+      await open(page, 'components/grid/');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+    });
+
+    test('the responsive demo is at its xs values, and the hidden column is hidden', async ({ page }) => {
+      await open(page, 'components/grid/');
+      expect(await firstSpan(demoOf(page, 'Responsive'))).toBeCloseTo(2, 1);
+      const hidden = demoOf(page, 'Hide a column').locator('.demo-pre .ads-col').first();
+      await expect(hidden).toHaveCSS('display', 'none');
+    });
+  });
+
+  test.describe('on a laptop', () => {
+    test.use({ viewport: { width: 1440, height: 900 } });
+
+    test('the responsive demo is at its xl values, and the hidden column shows', async ({ page }) => {
+      await open(page, 'components/grid/');
+      expect(await firstSpan(demoOf(page, 'Responsive'))).toBeCloseTo(10, 1);
+      await expect(demoOf(page, 'Hide a column').locator('.demo-pre .ads-col').first()).toHaveCSS('display', 'block');
+    });
+  });
+
+  test('the responsive values follow a resize, at the boundary pixel', async ({ page }) => {
+    await open(page, 'components/grid/');
+    const demo = demoOf(page, 'Responsive');
+    for (const [width, span] of [[575, 2], [576, 4], [767, 4], [768, 6], [991, 6], [992, 8], [1199, 8], [1200, 10], [1599, 10], [1600, 11], [1919, 11], [1920, 12]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect.poll(() => firstSpan(demo), { message: `at ${width}px` }).toBeCloseTo(span, 1);
+    }
+  });
+
+  test('breakpoints demo: the helper names the breakpoint of the screen, on the first render and after a resize', async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 900 });
+    await open(page, 'components/grid/');
+    const demo = demoOf(page, 'Breakpoints in code');
+    const current = demo.locator('output');
+    await expect(current).toHaveText('md');
+    await expect(demo.locator('.demo-pre').getByText('The screen is at least 768 px wide')).toBeVisible();
+    await page.setViewportSize({ width: 500, height: 900 });
+    await expect(current).toHaveText('xs');
+    await expect(demo.locator('.demo-pre').getByText('The screen is narrower than 768 px')).toBeVisible();
+    await page.setViewportSize({ width: 2000, height: 900 });
+    await expect(current).toHaveText('xxxl');
+  });
+
+  test('wrap demo: the switch changes its own Row, and without wrap the strip scrolls', async ({ page }) => {
+    await page.setViewportSize({ width: 700, height: 900 });
+    await open(page, 'components/grid/');
+    const demo = demoOf(page, 'Wrap');
+    const strip = demo.locator('.demo-pre .strip');
+    const row = demo.locator('.demo-pre .ads-row');
+    const scrolls = () => strip.evaluate((element) => element.scrollWidth > element.clientWidth + 1);
+    expect(await scrolls()).toBe(false);
+    await expect(row).not.toHaveClass(/ads-row-nowrap/);
+    await demo.getByRole('switch', { name: 'wrap' }).click();
+    await expect(row).toHaveClass(/ads-row-nowrap/);
+    await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText('wrap={false}');
+    expect(await scrolls()).toBe(true);
+  });
+
+  test('playground: a choice in one group changes its own result, and no other group moves', async ({ page }) => {
+    await open(page, 'components/grid/');
+    const demo = demoOf(page, 'Playground');
+    const checked = (name: string) => demo.getByRole('radiogroup', { name }).getByRole('radio', { checked: true });
+    await expect(checked('Horizontal gutter')).toHaveAccessibleName('16');
+    await expect(checked('Vertical gutter')).toHaveAccessibleName('16');
+    await expect(checked('Columns in a row')).toHaveAccessibleName('4');
+
+    await demo.getByRole('radiogroup', { name: 'Horizontal gutter' }).getByRole('radio', { name: '32', exact: true }).check();
+    await expect(checked('Horizontal gutter')).toHaveAccessibleName('32');
+    await expect(checked('Vertical gutter')).toHaveAccessibleName('16');
+    await expect(checked('Columns in a row')).toHaveAccessibleName('4');
+    await expect(demo.locator('.caption').last()).toContainText('gutter={[32, 16]}');
+
+    await demo.getByRole('radiogroup', { name: 'Columns in a row' }).getByRole('radio', { name: '8', exact: true }).check();
+    await expect(demo.locator('.demo-pre .ads-row .ads-col')).toHaveCount(16);
+    await expect(checked('Horizontal gutter')).toHaveAccessibleName('32');
+    await expect(checked('Vertical gutter')).toHaveAccessibleName('16');
+  });
+
+  test('is listed in the components menu', async ({ page }) => {
+    await open(page, 'components/');
+    await expect(page.getByRole('navigation', { name: 'Components' }).getByRole('link', { name: 'Grid', exact: true })).toBeVisible();
+  });
+
+  test('the API tables name the props of Row, Col and Breakpoints', async ({ page }) => {
+    await open(page, 'components/grid/');
+    await expect(page.getByRole('table', { name: 'Row API' }).getByRole('rowheader', { name: 'gutter', exact: true })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Col API' }).getByRole('rowheader', { name: 'xxxl', exact: true })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Breakpoints' }).getByRole('rowheader', { name: 'current', exact: true })).toBeVisible();
   });
 });
 
