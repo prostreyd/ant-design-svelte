@@ -8,6 +8,7 @@ import { demos as inputDemos } from '../src/docs/data/input.ts';
 import { demos as radioDemos } from '../src/docs/data/radio.ts';
 import { demos as selectDemos } from '../src/docs/data/select.ts';
 import { demos as switchDemos } from '../src/docs/data/switch.ts';
+import { demos as messageDemos } from '../src/docs/data/message.ts';
 import { demos as tooltipDemos } from '../src/docs/data/tooltip.ts';
 import { allPages, localize, type SitePath } from '../src/docs/pages.ts';
 
@@ -250,8 +251,8 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip'];
-    const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Message', 'Notification'];
+    const READY = ['Button', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Message'];
+    const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Notification'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
       await open(page, 'components/');
@@ -387,13 +388,15 @@ test.describe('home page', () => {
     await expect(now).toContainText('Switch');
     await expect(now).toContainText('Select');
     await expect(now).toContainText('Tooltip');
-    // The ready components follow the order of the sidebar: Button, Input, Checkbox, Radio, Switch, Select, Tooltip.
+    await expect(now).toContainText('Message');
+    // The ready components follow the order of the sidebar: Button, Input, Checkbox, Radio, Switch, Select, Tooltip, Message.
     await expect(now.locator('.chips').nth(1)).toContainText('variant');
     await expect(now.locator('.chips').nth(2)).toContainText('classNames');
     await expect(now.locator('.chips').nth(3)).toContainText('orientation');
     await expect(now.locator('.chips').nth(4)).toContainText('classNames');
     await expect(now.locator('.chips').nth(5)).toContainText('showSearch');
     await expect(now.locator('.chips').nth(6)).toContainText('placement');
+    await expect(now.locator('.chips').nth(7)).toContainText('stack');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -1409,6 +1412,68 @@ test.describe('Tooltip page', () => {
       expect(painted.ratio, `${name} contrast`).toBeGreaterThanOrEqual(4.5);
       expect(painted.same, `${name} arrow`).toBe(true);
     }
+  });
+});
+
+test.describe('Message page', () => {
+  // A message fades in; a rectangle or a colour read in its first frames is the one of a half-shown message.
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+  });
+
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    test.slow();
+    await open(page, 'components/message/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(messageDemos.length);
+
+    for (let i = 0; i < messageDemos.length; i++) {
+      const demo = examples.nth(i);
+      // Nothing is on the page before a press: the layer appears with the first message and goes with the last one.
+      await expect(demo.locator('.demo-pre').getByRole('button').first()).toBeAttached();
+
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/message/${String(i + 1).padStart(2, '0')}-${messageDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('a press shows a message; an error is an alert and the others are status; the layer leaves with the last message', async ({ page }) => {
+    await open(page, 'components/message/');
+    await expect(page.locator('.ads-message-list')).toHaveCount(0);
+
+    const types = demoOf(page, 'Types').locator('.demo-pre');
+    await types.scrollIntoViewIfNeeded();
+    await types.getByRole('button', { name: 'success', exact: true }).click();
+    const done = page.locator('.ads-message-success');
+    await expect(done).toHaveText(/This is a success message/);
+    await expect(done).toHaveAttribute('role', 'status');
+
+    await types.getByRole('button', { name: 'error', exact: true }).click();
+    const failed = page.locator('.ads-message-error');
+    await expect(failed).toHaveText(/This is an error message/);
+    await expect(failed).toHaveAttribute('role', 'alert');
+
+    // Both go by themselves (3 s), and then the page is as it was.
+    await expect(page.locator('.ads-message')).toHaveCount(0, { timeout: 8000 });
+    await expect(page.locator('.ads-message-list')).toHaveCount(0);
+  });
+
+  test('closable: the button closes a message that stays', async ({ page }) => {
+    await open(page, 'components/message/');
+    const demo = demoOf(page, 'Close button').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    await demo.getByRole('button', { name: 'stays', exact: true }).click();
+    const kept = page.locator('.ads-message').filter({ hasText: 'A message that stays' });
+    await expect(kept).toBeVisible();
+    // duration 0: it is still there after a pause longer than the default 3 s would allow.
+    await page.waitForTimeout(3500);
+    await expect(kept).toBeVisible();
+    await kept.locator('.ads-message-close').click();
+    await expect(kept).toHaveCount(0);
   });
 });
 
