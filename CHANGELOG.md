@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-17
+
 ### Added
 
 - **`Message`** (with `MessageHost`): a short notice at the top of the page that goes away by itself, opened by a call from
