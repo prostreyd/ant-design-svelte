@@ -82,6 +82,7 @@
         description={demo.description[lang]}
         code={example.code}
         example={example.component}
+        wide={demo.wide}
         column={demo.column}
       />
     {/if}

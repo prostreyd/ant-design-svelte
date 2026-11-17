@@ -16,7 +16,10 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Pinned, not `ubuntu-latest`: on 2026-11-17 that label moved to Ubuntu 26.04, where the WebKit of Playwright 1.65 does not
+    # start (`libicudata.so.74: cannot open shared object file`, every WebKit test fails). 24.04 is the image the job was green on.
+    # Move it together with a Playwright release that knows the newer Ubuntu.
+    runs-on: ubuntu-24.04
     # The job takes about 20 minutes (the e2e tests of the library and of the site in three engines); a slow runner adds
     # 40% to that, so the limit leaves room for it.
     timeout-minutes: 40

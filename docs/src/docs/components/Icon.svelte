@@ -1,6 +1,6 @@
 <script lang="ts">
   export type IconName =
-    | 'search' | 'chevron' | 'globe' | 'moon' | 'sun' | 'menu' | 'copy' | 'check' | 'code' | 'github'
+    | 'search' | 'chevron' | 'globe' | 'moon' | 'sun' | 'menu' | 'copy' | 'check' | 'code' | 'code-slash' | 'github'
     | 'cube' | 'circle-check' | 'dots' | 'layers' | 'close';
 
   let { name, class: className = '' }: { name: IconName; class?: string } = $props();
@@ -22,6 +22,7 @@
     {:else if name === 'copy'}<rect x="5" y="5" width="9" height="9" rx="1.5" /><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5" />
     {:else if name === 'check'}<path d="M3 8.5 6.5 12 13 4.5" />
     {:else if name === 'code'}<path d="M5.5 4 2 8l3.5 4M10.5 4 14 8l-3.5 4" />
+    {:else if name === 'code-slash'}<path d="M5 4 1.5 8 5 12M11 4l3.5 4-3.5 4M9.5 3 6.5 13" />
     {:else if name === 'cube'}<path d="M8 1.5 2 5v6l6 3.5 6-3.5V5L8 1.5Z" /><path d="m2 5 6 3.5L14 5M8 8.5v6" />
     {:else if name === 'circle-check'}<circle cx="8" cy="8" r="6.5" /><path d="m5.5 8.2 1.8 1.8 3.2-3.6" />
     {:else if name === 'dots'}<circle cx="5" cy="5" r="2.5" /><circle cx="11" cy="5" r="2.5" /><circle cx="8" cy="11" r="2.5" />

@@ -14,7 +14,8 @@
     code,
     example: Example,
     surface = false,
-    column = false
+    column = false,
+    wide = false
   }: {
     id: string;
     title: string;
@@ -23,6 +24,8 @@
     example: Component;
     surface?: boolean;
     column?: boolean;
+    /** The demo takes both columns of the page. */
+    wide?: boolean;
   } = $props();
 
   const t = useT();
@@ -30,7 +33,7 @@
   const copier = createCopier();
 </script>
 
-<section class="demo" class:open aria-labelledby="demo-{id}">
+<section class="demo" class:open class:wide aria-labelledby="demo-{id}">
   <div class="demo-pre" class:surface class:col={column}>
     <Example />
   </div>
@@ -48,7 +51,8 @@
       title={open ? t('demo.hide') : t('demo.show')}
       onclick={() => (open = !open)}
     >
-      <Icon name="code" />
+      <!-- Two glyphs, as in the demos of Ant Design: brackets while the code is hidden, brackets with a slash while it is shown. -->
+      <Icon name={open ? 'code-slash' : 'code'} />
     </button>
     <button class="icon-btn" type="button" aria-label={t('demo.copy')} title={t('demo.copy')} onclick={() => copier.copy(code)}>
       <Icon name={copier.copied ? 'check' : 'copy'} />

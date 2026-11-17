@@ -5,7 +5,7 @@
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
 // It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab, the
-// Tooltip lab and the Radio lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// Tooltip lab, the Radio lab and the grid lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -492,6 +492,114 @@ async function radioPage(context) {
   await page.close();
 }
 
+async function gridPage(context) {
+  const page = await newPage(context, base + '/#grid');
+  // The host is an empty block with no height until a row is drawn, so it is waited for as attached, not as visible.
+  await page.waitForSelector(idOf('host'), { state: 'attached' });
+  const draw = (scenes, width) => page.evaluate((args) => window.__gridLab.set(args[0], args[1]), [scenes, width]);
+  const boxes = (id) =>
+    page.evaluate((rowId) => {
+      const host = document.querySelector('[data-testid="host"]').getBoundingClientRect();
+      return Array.from(document.querySelectorAll('[data-testid="' + rowId + '"] > .ads-col > .box')).map((box) => {
+        const r = box.getBoundingClientRect();
+        return { x: r.left - host.left, y: r.top - host.top, w: r.width };
+      });
+    }, id);
+  const near = (a, b) => Math.abs(a - b) < 0.6;
+  const cols = (count, span) => Array.from({ length: count }, () => ({ span, height: 10 }));
+
+  await check('grid: a column is (W + gutter) * span / 24 - gutter wide, in the places of the Ant Design demo', async () => {
+    await draw([{ id: 'row', gutter: 32, cols: cols(4, 6) }], 488);
+    const found = await boxes('row');
+    const ok = found.length === 4 && found.every((box, i) => near(box.w, 98) && near(box.x, i * 130));
+    return [ok, found.map((box) => `${Math.round(box.x)}+${Math.round(box.w)}`).join(' ')];
+  });
+
+  await check('grid: a Row is as wide as its parent, whatever the gutter, and the page does not scroll sideways', async () => {
+    await draw([{ id: 'row', gutter: 24, cols: cols(4, 6) }], 500);
+    const row = await page.evaluate(() => {
+      const r = document.querySelector('[data-testid="row"]').getBoundingClientRect();
+      const host = document.querySelector('[data-testid="host"]').getBoundingClientRect();
+      return { dx: r.left - host.left, w: r.width, over: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+    });
+    return [near(row.dx, 0) && near(row.w, 500) && row.over === 0, `offset ${row.dx}, width ${row.w}, overflow ${row.over}`];
+  });
+
+  await check('grid: the vertical gutter is the gap between the lines', async () => {
+    await draw([{ id: 'row', gutter: [16, 24], cols: cols(8, 6).map(() => ({ span: 6, height: 30 })) }], 800);
+    const found = await boxes('row');
+    return [found.length === 8 && near(found[4].y - (found[0].y + 30), 24), `first line ${Math.round(found[0].y)}, second ${Math.round(found[4].y)}`];
+  });
+
+  await check('grid: offset, push and pull move columns by 24ths of the Row', async () => {
+    await draw([{ id: 'row', gutter: 0, cols: [{ span: 6, offset: 6, height: 10 }, { span: 6, push: 6, height: 10 }, { span: 6, pull: 12, height: 10 }] }], 480);
+    const found = await boxes('row');
+    return [near(found[0].x, 120) && near(found[1].x, 360) && near(found[2].x, 120 + 120 + 120 - 240), found.map((box) => Math.round(box.x)).join(' ')];
+  });
+
+  await check('grid: justify and align place the columns', async () => {
+    await draw([{ id: 'row', justify: 'space-between', align: 'bottom', cols: [{ span: 4, height: 20 }, { span: 4, height: 60 }] }], 480);
+    const found = await boxes('row');
+    return [found.length === 2 && near(found[0].x, 0) && near(found[1].x + found[1].w, 480) && near(found[0].y, 40), found.map((box) => Math.round(box.x) + ',' + Math.round(box.y)).join(' ')];
+  });
+
+  await check('grid: columns of 24 do not wrap by rounding (a sample of widths, gutters and partitions)', async () => {
+    const parts = [[24], [12, 12], [8, 8, 8], [6, 6, 6, 6], [4, 4, 4, 4, 4, 4], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [5, 7, 12], [9, 5, 10]];
+    const scenes = [];
+    [0, 8, 16, 32].forEach((gutter) => parts.forEach((spans, i) => scenes.push({ id: 'p' + gutter + '-' + i, gutter, cols: spans.map((span) => ({ span, height: 4 })) })));
+    await draw(scenes, 1000);
+    const wrapped = await page.evaluate(() => {
+      const host = document.querySelector('[data-testid="host"]');
+      const rows = Array.from(host.querySelectorAll(':scope > .ads-row'));
+      const found = [];
+      for (let width = 420; width <= 1500; width += 5) {
+        host.style.width = width + 'px';
+        rows.forEach((row) => {
+          const tops = {};
+          Array.from(row.querySelectorAll(':scope > .ads-col')).forEach((col) => { tops[Math.round(col.getBoundingClientRect().top)] = true; });
+          if (Object.keys(tops).length > 1) found.push(row.getAttribute('data-testid') + ' at ' + width);
+        });
+      }
+      return found;
+    });
+    return [wrapped.length === 0, wrapped.slice(0, 3).join(', ')];
+  });
+
+  await check('grid: the responsive values switch at 576, 768, 992, 1200, 1600 and 1920 px', async () => {
+    await draw([{ id: 'row', cols: [{ xs: 2, sm: 4, md: 6, lg: 8, xl: 10, xxl: 12, xxxl: 14, height: 10 }] }], 960);
+    const steps = [[575, 2], [576, 4], [767, 4], [768, 6], [991, 6], [992, 8], [1199, 8], [1200, 10], [1599, 10], [1600, 12], [1919, 12], [1920, 14]];
+    const bad = [];
+    for (const step of steps) {
+      await page.setViewportSize({ width: step[0], height: VIEWPORT.height });
+      const found = await boxes('row');
+      if (!near(found[0].w, (960 * step[1]) / 24)) bad.push(step[0] + 'px: ' + Math.round(found[0].w));
+    }
+    return [bad.length === 0, bad.join(', ')];
+  });
+
+  await check('grid: Breakpoints names the screen and follows a resize', async () => {
+    const seen = [];
+    for (const step of [[500, 'xs'], [800, 'md'], [1300, 'xl'], [2000, 'xxxl'], [575, 'xs'], [576, 'sm']]) {
+      await page.setViewportSize({ width: step[0], height: VIEWPORT.height });
+      await settle(page);
+      seen.push(step[0] + ':' + (await textOf(page, idOf('current'))));
+      if ((await textOf(page, idOf('current'))) !== step[1]) return [false, seen.join(' ')];
+    }
+    return [true, seen.join(' ')];
+  });
+
+  await check('grid: right to left mirrors an offset', async () => {
+    await page.setViewportSize(VIEWPORT);
+    await page.evaluate(() => { document.documentElement.dir = 'rtl'; });
+    await draw([{ id: 'row', cols: [{ span: 6, offset: 6, height: 10 }] }], 480);
+    const found = await boxes('row');
+    await page.evaluate(() => { document.documentElement.dir = 'ltr'; });
+    return [near(found[0].x + found[0].w, 480 - 120), Math.round(found[0].x) + '+' + Math.round(found[0].w)];
+  });
+
+  await page.close();
+}
+
 async function selectPage(context) {
   const page = await newPage(context, base + '/#select');
   await page.waitForSelector(idOf('single'));
@@ -580,6 +688,7 @@ async function selectPage(context) {
     await selectPage(context);
     await tooltipPage(context);
     await radioPage(context);
+    await gridPage(context);
   } catch (error) {
     record('run', false, `threw: ${String(error && error.message ? error.message : error).split('\n')[0]}`);
   }

@@ -9,6 +9,47 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-17
+
+### Added
+
+- `Grid`: `Row` and `Col`, the 24-column layout, with `Breakpoints` to read the screen from code. A `Row` has `align`, `justify`,
+  `gutter` (pixels, a CSS length, a value per breakpoint, or `[horizontal, vertical]`) and `wrap`. A `Col` has `span` (`0` hides it),
+  `offset`, `push`, `pull`, `order`, `flex` and the responsive `xs`, `sm`, `md`, `lg`, `xl`, `xxl` and `xxxl`, each a span or an
+  object of the same props. The API is inspired by Ant Design; the implementation is original for Svelte.
+  - The gutter is a flex `gap`, not a negative margin with padding on the columns, so a `Row` is exactly as wide as its parent and
+    never makes a page scroll sideways (the Ant Design `Row` does, an open issue since 2018). The boxes of the content are in the
+    same places as in the Ant Design demos; a column's own background does not paint the gutter.
+  - The responsive values are resolved in CSS (the component writes its values as custom properties and static media queries pick
+    them), so the server and the browser render the same markup and nothing flashes on hydration. The breakpoints (576, 768, 992,
+    1200, 1600 and 1920 px) are fixed and exported as `BREAKPOINTS`.
+  - `Breakpoints` is a class with `xs` ... `xxxl` and `current`; its values are right on the first render in a browser (the
+    Ant Design hook returns an empty object there) and it includes `xxxl`.
+  - A single length in `flex` (`'100px'`) is a fixed width, as in the Ant Design demos, although their table says "applied as written".
+  - `Row` and `Col` have no role and no state; `order`, `push` and `pull` change only how the columns are drawn, and the page says so.
+  - Page of `Grid` on the documentation site, with 16 examples and the API tables in English, Russian and Chinese.
+
+### Documentation
+
+- The rules for AI assistants say how the examples of a component page are laid out and what state they keep: every group and
+  every separate control on its own line (as in the demos of Ant Design), texts and controls not mixed (a caption above the
+  control it names, its output under it, no loose text beside the controls), every component with a state of its own (two
+  groups do not share a bound variable unless the example is about a shared value), and the page is checked on the built site
+  by clicking in each group in both themes, with a site test that the groups are independent.
+- On every page of a component the examples stand in two columns in the order of reading (1 | 2, 3 | 4) and one column on a
+  phone. They used to flow in CSS columns, so a block that did not fit jumped to the top of the other column and the order
+  depended on the heights, the language and the width. The rules for AI assistants forbid CSS columns for the list of examples,
+  and a site test checks the order on every component page. A demo that needs room takes both columns (the placement demo of
+  the `Tooltip`: in the right column a tip on the right turned to the left, and the demo no longer showed the right placements).
+- On the page of `Input`, the examples "One-time code" and "One-time code options" show each `InputOTP` on a line of its own,
+  with a short caption of the option it shows, instead of mixing the fields, their texts and each other in one flow.
+- On the examples of every component page, the button that shows the code now looks different when the code is shown: the
+  brackets `< >` turn into brackets with a slash `</>` (as in the demos of Ant Design) and the button keeps a tinted background,
+  so the state can be read without pointing at it. Before, only the colour of the same glyph changed.
+- The left menu and the menu on a phone show the names of the components in English only (`Button`, `Radio`, `Select`),
+  without the Russian or Chinese translation beside them. The translated note stays in the heading of each component page.
+  The rules for AI assistants say both, and the site tests check them in all three languages.
+
 ## [0.7.0] - 2026-11-16
 
 ### Added
