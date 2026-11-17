@@ -9,6 +9,38 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- `Menu`, with `MenuItem`, `MenuSubMenu`, `MenuItemGroup` and `MenuDivider`: a list of choices for navigation. Three types:
+  `horizontal` (a bar; items that do not fit move into a "…" item), `vertical` (submenus open in popups) and `inline`
+  (submenus expand in place, with `inlineIndent`; `inlineCollapsed` narrows it to icons with a tip on every item and popup
+  submenus). `theme` `light` or `dark`, and a submenu may have a theme of its own for its popup. The content is `items`
+  (items, submenus, groups, dividers; `label` and `icon` as text or a snippet, `extra`, `title`, `disabled`, `danger`,
+  `popupClassName`, `popupOffset`, `ontitleclick`, `popupRender`) or the markup components, in the order of the markup also
+  after `{#if}` and `{#each}`. `bind:selectedKeys` and `bind:openKeys` (no `defaultSelectedKeys` or `defaultOpenKeys`),
+  `multiple`, `selectable`, `triggerSubMenuAction`, `subMenuOpenDelay` and `subMenuCloseDelay` (seconds), `forceSubMenuRender`,
+  `expandIcon`, `overflowedIndicator`, `overflowLabel`, `tooltip`, `classNames`, `styles`, `popupRender`, and the callbacks
+  `onclick`, `onselect`, `ondeselect` and `onopenchange` (the user's changes only). Keys are strings. Accessibility follows the
+  menu and menubar patterns of the WAI-ARIA Authoring Practices: one Tab stop on an item, the arrow keys, `Home`, `End`,
+  `Enter`, `Space`, `Escape` and typing a letter; a selected item is `menuitemradio` (`menuitemcheckbox` with `multiple`) with
+  `aria-checked`, so it is spoken; icons are hidden from assistive technology; ids are unique per menu; the keyboard and touch
+  open a popup whatever `triggerSubMenuAction` says. Three colors of the Ant Design token table are below 4.5:1 (the selected
+  item, the group title, the danger item) and so are two fills of the dark menu; `tokens-accessible.css` darkens them and the
+  dark theme of the page needs no file. Forced-colors modes, `prefers-reduced-motion` and right-to-left are covered; selecting,
+  hovering and focusing never move an item. Not checked with a real screen reader or on a real touch device. The page with
+  examples, the API and the design tokens is on the documentation site, in English, Russian and Chinese.
+
+### Documentation
+
+- The rules for AI assistants say what a component checks on this machine before it is released: only its own browser tests, the
+  tests of the components that import it or whose shared code it changed (extending the popup primitive checks `Select` and
+  `Tooltip`), and the pages of these components on the site. The files that every new component adds its own lines to (tokens,
+  the exports, the test stand, the registries of the site) no longer make the machine run everything; the planner of the checks is
+  asked with the files of the component (`--files`). The full run of every component is done by the CI on GitHub. A port of a
+  test server is checked for its owner, not only for being free: a run once went to the build of another worktree.
+- The rules also describe a joint release of several finished components: one branch that gathers them, one CI run on GitHub, one
+  version (+0.1.0 once, whatever the number of the new components) and one tag.
+
 ## [0.9.0] - 2026-11-17
 
 ### Added
