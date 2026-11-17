@@ -11,6 +11,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Documentation
 
+- The rules for AI assistants say how a component takes another component. Before the specification, the assistant checks
+  `origin/main` for what the new component can reuse (whole public components, shared parts in `src/lib/internal/`) and, if a
+  needed part is missing, stops and asks the owner to make it first instead of writing a copy. The specification gets a
+  "Dependencies" section. There are three ways to depend: render the whole public component (when the user sees the same
+  element and can set it with the same props, as `InputSearch` draws a `Button`), take a part or a primitive from `internal/` (when only
+  a mechanism is needed, as the popup), or share state through a context, a rune class or an attachment (as `Breakpoints` of
+  the `Grid`). `internal/` imports no component, components make no cycles, a component is imported only through a file that
+  `src/lib/index.ts` exports, and a part is moved to `internal/` before its second consumer.
+- The rules for AI assistants describe working on several components at once: a new component is made in its own
+  `git worktree` on a branch `feat/<name>` from `origin/main` (the main folder is shared by the chats and is not touched),
+  with its own ports for the tests, no heavy runs in two chats at the same time, additive edits in the files that every
+  component changes, and, before the merge, the current `main` merged into the branch (not rebased, force-push is
+  forbidden), a new green CI, the version counted from `main` at the moment of the merge, and the worktree removed after
+  the release. A short request such as "let's make the `Menu` component" is now enough to start.
 - `npm run check:docs` now also checks the dependencies between the components of the library. It fails on a cycle between
   components, on a component that `internal/` imports, on a component that reaches into another one's private files instead of a
   file the package exports, on a dependency that is not written down with its reason, and on a specification that has no
