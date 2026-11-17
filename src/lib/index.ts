@@ -27,6 +27,11 @@ export type {
   RowAlign,
   RowJustify
 } from './Grid/types.js';
+export { default as Menu } from './Menu/Menu.svelte';
+export { default as MenuItem } from './Menu/MenuItem.svelte';
+export { default as MenuSubMenu } from './Menu/MenuSubMenu.svelte';
+export { default as MenuItemGroup } from './Menu/MenuItemGroup.svelte';
+export { default as MenuDivider } from './Menu/MenuDivider.svelte';
 export { default as Input } from './Input/Input.svelte';
 export { message } from './Message/message.js';
 export { default as MessageHost } from './Message/MessageHost.svelte';
@@ -148,3 +153,30 @@ export type {
   TooltipStyles,
   TooltipTrigger
 } from './Tooltip/types.js';
+export type {
+  MenuClassNames,
+  MenuClickInfo,
+  MenuContent,
+  MenuDividerProps,
+  MenuDividerType,
+  MenuExpandIconInfo,
+  MenuGroupType,
+  MenuItemEntry,
+  MenuItemGroupProps,
+  MenuItemProps,
+  MenuItemType,
+  MenuItems,
+  MenuMode,
+  MenuPopupInfo,
+  MenuProps,
+  MenuSelectInfo,
+  MenuSemanticName,
+  MenuStyles,
+  MenuSubMenuProps,
+  MenuSubMenuSemanticName,
+  MenuSubMenuType,
+  MenuTheme,
+  MenuTitleClickInfo,
+  MenuTooltipProps,
+  MenuTriggerAction
+} from './Menu/types.js';

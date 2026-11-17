@@ -81,4 +81,22 @@
    */
   --ads-message-icon-success: #389e0d;
   --ads-message-icon-warning: #c27c00;
+
+  /*
+   * Menu: the selected item `#1668dc` on `#e6f4ff` is 4.63:1 (3.66:1 by default) and on white 5.19:1 (the horizontal bar, 4.10:1 by
+   * default); the group title and the extra text `rgba(0, 0, 0, 0.65)` are 6.98:1 (3.35:1); the danger text `#cf1322` is 5.57:1
+   * on white, 5.10:1 on its selected fill and 4.88:1 on the hover fill (3.27:1, 2.99:1, 2.86:1); the dark menu's selected fill
+   * `#1668dc` is 5.19:1 with white text (4.10:1) and its danger-selected fill `#d9363e` 4.62:1 (3.27:1).
+   */
+  --ads-menu-item-selected-color: #1668dc;
+  --ads-menu-submenu-selected-color: #1668dc;
+  --ads-menu-horizontal-hover-color: #1668dc;
+  --ads-menu-horizontal-selected-color: #1668dc;
+  --ads-menu-group-title-color: rgba(0, 0, 0, 0.65);
+  --ads-menu-danger-color: #cf1322;
+  --ads-menu-danger-hover-color: #cf1322;
+  --ads-menu-danger-selected-color: #cf1322;
+  --ads-menu-dark-item-selected-bg: #1668dc;
+  --ads-menu-dark-danger-selected-bg: #d9363e;
+  --ads-menu-dark-danger-active-bg: #d9363e;
 }

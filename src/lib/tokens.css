@@ -379,6 +379,74 @@
   --ads-message-motion-offset: 64px;
   --ads-message-stack-offset: 8px;
   --ads-message-stack-scale-step: 0.06;
+
+  /*
+   * Menu: the values of the "Design Token" table of the Ant Design React page (checked 2026-11-16; specs/menu.md). Three of its
+   * defaults do not reach WCAG AA for text: the selected item (3.66:1), the group title (3.35:1) and the danger item (3.27:1 on
+   * white), and the dark menu's selected and danger-selected fills (4.10:1 and 3.27:1 with white text). `tokens-accessible.css`
+   * darkens them. The dark theme of the page below keeps the ratios.
+   */
+  --ads-menu-item-height: 40px;
+  --ads-menu-item-margin-block: 4px;
+  --ads-menu-item-margin-inline: 4px;
+  --ads-menu-item-padding-inline: 16px;
+  /* Where the text of an item of a group starts, from the edge of a vertical list or a popup (its title starts at the padding). */
+  --ads-menu-group-item-indent: 32px;
+  --ads-menu-item-radius: 8px;
+  --ads-menu-submenu-item-radius: 4px;
+  --ads-menu-icon-size: 14px;
+  --ads-menu-icon-gap: 10px;
+  --ads-menu-collapsed-width: 80px;
+  --ads-menu-collapsed-icon-size: 16px;
+  --ads-menu-horizontal-line-height: 46px;
+  --ads-menu-horizontal-radius: 0;
+  --ads-menu-active-bar-height: 2px;
+  --ads-menu-group-title-font-size: 14px;
+  --ads-menu-group-title-line-height: 1.5714285714285714;
+  --ads-menu-popup-min-width: 160px;
+
+  --ads-menu-bg: #ffffff;
+  --ads-menu-popup-bg: #ffffff;
+  --ads-menu-submenu-bg: rgba(0, 0, 0, 0.02);
+  --ads-menu-split: rgba(5, 5, 5, 0.06);
+  --ads-menu-popup-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  --ads-menu-item-color: rgba(0, 0, 0, 0.88);
+  --ads-menu-item-hover-color: rgba(0, 0, 0, 0.88);
+  --ads-menu-item-hover-bg: rgba(0, 0, 0, 0.06);
+  --ads-menu-item-active-bg: #e6f4ff;
+  --ads-menu-item-selected-color: #1677ff;
+  --ads-menu-item-selected-bg: #e6f4ff;
+  --ads-menu-submenu-selected-color: #1677ff;
+  --ads-menu-item-disabled-color: rgba(0, 0, 0, 0.25);
+  --ads-menu-group-title-color: rgba(0, 0, 0, 0.45);
+  --ads-menu-danger-color: #ff4d4f;
+  --ads-menu-danger-hover-color: #ff4d4f;
+  --ads-menu-danger-selected-color: #ff4d4f;
+  --ads-menu-danger-selected-bg: #fff2f0;
+  --ads-menu-danger-active-bg: #fff2f0;
+  --ads-menu-horizontal-hover-color: #1677ff;
+  --ads-menu-horizontal-selected-color: #1677ff;
+  --ads-menu-horizontal-hover-bg: transparent;
+  --ads-menu-horizontal-selected-bg: transparent;
+
+  /* The dark menu (`theme="dark"`) is the same on a light and on a dark page. */
+  --ads-menu-dark-bg: #001529;
+  --ads-menu-dark-popup-bg: #001529;
+  --ads-menu-dark-submenu-bg: #000c17;
+  --ads-menu-dark-item-color: rgba(255, 255, 255, 0.65);
+  --ads-menu-dark-item-hover-color: #ffffff;
+  --ads-menu-dark-item-hover-bg: transparent;
+  --ads-menu-dark-item-selected-color: #ffffff;
+  --ads-menu-dark-item-selected-bg: #1677ff;
+  --ads-menu-dark-item-disabled-color: rgba(255, 255, 255, 0.25);
+  --ads-menu-dark-group-title-color: rgba(255, 255, 255, 0.65);
+  --ads-menu-dark-danger-color: #ff4d4f;
+  --ads-menu-dark-danger-hover-color: #ff7875;
+  --ads-menu-dark-danger-selected-color: #ffffff;
+  --ads-menu-dark-danger-selected-bg: #ff4d4f;
+  --ads-menu-dark-danger-active-bg: #ff4d4f;
 }
 
 :root[data-theme='dark'] {
@@ -550,4 +618,35 @@
   --ads-message-close-color: rgba(255, 255, 255, 0.65);
   --ads-message-close-color-hover: rgba(255, 255, 255, 0.88);
   --ads-message-close-bg-hover: rgba(255, 255, 255, 0.12);
+
+  /*
+   * Menu on a dark page: the light menu takes the dark surface. The dark menu (`theme="dark"`) keeps its own colors, with a
+   * selected fill and a danger fill that reach 4.5:1 with white text without `tokens-accessible.css`.
+   */
+  --ads-menu-bg: #141414;
+  --ads-menu-popup-bg: #1f1f1f;
+  --ads-menu-submenu-bg: rgba(0, 0, 0, 0.2);
+  --ads-menu-split: rgba(253, 253, 253, 0.12);
+  --ads-menu-popup-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.32), 0 3px 6px -4px rgba(0, 0, 0, 0.48),
+    0 9px 28px 8px rgba(0, 0, 0, 0.2);
+  --ads-menu-item-color: rgba(255, 255, 255, 0.88);
+  --ads-menu-item-hover-color: rgba(255, 255, 255, 0.88);
+  --ads-menu-item-hover-bg: rgba(255, 255, 255, 0.08);
+  --ads-menu-item-active-bg: #111a2c;
+  --ads-menu-item-selected-color: #69b1ff;
+  --ads-menu-item-selected-bg: #111a2c;
+  --ads-menu-submenu-selected-color: #69b1ff;
+  --ads-menu-item-disabled-color: rgba(255, 255, 255, 0.3);
+  --ads-menu-group-title-color: rgba(255, 255, 255, 0.55);
+  --ads-menu-danger-color: #ff7875;
+  --ads-menu-danger-hover-color: #ff9c99;
+  --ads-menu-danger-selected-color: #ff7875;
+  --ads-menu-danger-selected-bg: #2a1215;
+  --ads-menu-danger-active-bg: #2a1215;
+  --ads-menu-horizontal-hover-color: #69b1ff;
+  --ads-menu-horizontal-selected-color: #69b1ff;
+  --ads-menu-dark-item-selected-bg: #1668dc;
+  --ads-menu-dark-danger-selected-bg: #d9363e;
+  --ads-menu-dark-danger-active-bg: #d9363e;
 }
