@@ -5,7 +5,7 @@
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
 // It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab, the
-// Tooltip lab and the Radio lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// Tooltip lab, the Radio lab and the Message lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -564,6 +564,100 @@ async function selectPage(context) {
   await page.close();
 }
 
+async function messagePage(context) {
+  const page = await newPage(context, base + '/#message');
+  await page.waitForSelector(idOf('before'));
+  await settle(page);
+  const call = (method, args) => page.evaluate(([name, list]) => { window.__messageLab.message[name].apply(null, list); }, [method, args]);
+  const boxes = () => page.evaluate(() => Array.from(document.querySelectorAll('.ads-message')).length);
+
+  await check('message: a message opens 8px from the top, centred, 40px high, with its icon, and a click next to it reaches the page', async () => {
+    await call('success', ['Saved', 0]);
+    await settle(page);
+    const box = await rectOf(page, '.ads-message');
+    const icon = await rectOf(page, '.ads-message-icon svg');
+    await page.click(idOf('under'));
+    const reached = await page.evaluate(() => window.__messageLab.underClicks());
+    await call('destroy', []);
+    await settle(page);
+    const placed = Math.abs(box.y - 8) < 1 && Math.abs(box.height - 40) < 1.5 && Math.abs(box.x + box.width / 2 - VIEWPORT.width / 2) < 1.5;
+    return [placed && icon.width === 16 && reached === 1, `y ${box.y}, height ${box.height}, centre ${Math.round(box.x + box.width / 2)}, icon ${icon.width}, page clicks ${reached}`];
+  });
+
+  await check('message: it goes after its time, and nothing of the layer is left in the page', async () => {
+    await call('info', ['Short', 1]);
+    await settle(page);
+    const opened = (await boxes()) === 1;
+    await page.waitForTimeout(1800);
+    const left = await page.evaluate(() => document.querySelectorAll('.ads-message-list').length);
+    return [opened && (await boxes()) === 0 && left === 0, `opened ${opened}, boxes ${await boxes()}, layers left ${left}`];
+  });
+
+  await check('message: an update by key keeps the height and the place of the box', async () => {
+    await call('loading', [{ content: 'Loading', key: 'job', duration: 0 }]);
+    await settle(page);
+    const before = await rectOf(page, '.ads-message');
+    await call('success', [{ content: 'Done, and a longer text', key: 'job', duration: 0 }]);
+    await settle(page);
+    const after = await rectOf(page, '.ads-message');
+    await call('destroy', []);
+    await settle(page);
+    return [Math.abs(before.height - after.height) < 0.01 && Math.abs(before.y - after.y) < 0.01, `height ${before.height} -> ${after.height}, y ${before.y} -> ${after.y}`];
+  });
+
+  await check('message: the close button is 24px, closes the message with a click and with Enter, and shows a focus ring for the keyboard', async () => {
+    await call('info', [{ content: 'x', duration: 0, closable: true }]);
+    await settle(page);
+    const button = await rectOf(page, '.ads-message-close');
+    const high = await rectOf(page, '.ads-message');
+    await page.click('.ads-message-close');
+    await settle(page);
+    const clicked = (await boxes()) === 0;
+    await call('info', [{ content: 'y', duration: 0, closable: true }]);
+    await settle(page);
+    await page.focus(idOf('after'));
+    await page.keyboard.press('Tab');
+    const ring = await page.evaluate(() => {
+      const active = document.activeElement;
+      return active && active.classList.contains('ads-message-close') ? getComputedStyle(active).outlineStyle : 'not focused';
+    });
+    await page.keyboard.press('Enter');
+    await settle(page);
+    const entered = (await boxes()) === 0;
+    return [button.width === 24 && Math.abs(high.height - 40) < 1.5 && clicked && entered && ring !== 'none' && ring !== 'not focused', `button ${button.width}, box ${high.height}, click ${clicked}, Enter ${entered}, ring ${ring}`];
+  });
+
+  await check('message: a pile of four keeps the newest on top and the older ones inert (the attribute) with no Tab stop; hovering opens it 56px apart', async () => {
+    // The pointer is still where the last click left it, on the box: a pile with the pointer in it is open.
+    await page.mouse.move(900, 700);
+    await call('config', [{ stack: true }]);
+    for (let index = 1; index <= 4; index++) await call('info', [{ content: 'm' + index, duration: 0, closable: true }]);
+    await settle(page);
+    const state = await page.evaluate(() => {
+      const items = Array.from(document.querySelectorAll('.ads-message-item'));
+      return {
+        first: items[0].textContent.replace(/\s+/g, ' ').trim(),
+        buried: items.slice(1).every((item) => item.hasAttribute('inert') && item.getAttribute('aria-hidden') === 'true' && item.querySelector('button').getAttribute('tabindex') === '-1'),
+        piled: Boolean(document.querySelector('.ads-message-piled'))
+      };
+    });
+    const top = await rectOf(page, '.ads-message');
+    await page.mouse.move(top.x + top.width / 2, top.y + top.height / 2);
+    await settle(page);
+    const ys = await page.evaluate(() => Array.from(document.querySelectorAll('.ads-message')).map((box) => Math.round(box.getBoundingClientRect().y)));
+    await page.mouse.move(900, 700);
+    await settle(page);
+    const piledAgain = await page.evaluate(() => Boolean(document.querySelector('.ads-message-piled')));
+    await call('destroy', []);
+    await call('config', [{ stack: undefined }]);
+    await settle(page);
+    const spread = ys.length === 4 && ys.every((y, index) => Math.abs(y - (8 + index * 56)) <= 2);
+    return [state.piled && state.buried && /m4$/.test(state.first) && spread && piledAgain, `piled ${state.piled}, buried ${state.buried}, first ${state.first}, rows ${ys.join(',')}, piled again ${piledAgain}`];
+  });
+
+  await page.close();
+}
+
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await playwright[engine].launch();
@@ -580,6 +674,7 @@ async function selectPage(context) {
     await selectPage(context);
     await tooltipPage(context);
     await radioPage(context);
+    await messagePage(context);
   } catch (error) {
     record('run', false, `threw: ${String(error && error.message ? error.message : error).split('\n')[0]}`);
   }
