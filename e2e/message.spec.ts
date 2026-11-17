@@ -314,25 +314,62 @@ test.describe('motion', () => {
     );
   }
 
+  interface Asked {
+    target: string;
+    keyframes: Keyframe[];
+    duration: number;
+  }
+
+  /**
+   * What the component hands to the engine when `action` runs: the target, the keyframes and the duration of every animation it
+   * starts. The frames that an engine draws depend on how busy the machine is (with six browsers on a loaded machine WebKit drew a
+   * frame of the middle of a motion after the animation had reported that it was finished, and the first frame that a test could
+   * sample came 100 to 250 ms late), so a motion is read where it is defined, and where it ends up is read once it has finished.
+   */
+  async function animationsOf(page: Page, action: string): Promise<Asked[]> {
+    return page.evaluate(
+      (code) =>
+        new Promise<Asked[]>((resolve) => {
+          const seen: Asked[] = [];
+          const original = Element.prototype.animate;
+          Element.prototype.animate = function (this: Element, keyframes, options) {
+            const animation = original.call(this, keyframes, options);
+            const effect = animation.effect as KeyframeEffect;
+            seen.push({ target: this.className, keyframes: effect.getKeyframes() as Keyframe[], duration: Number(effect.getTiming().duration) });
+            return animation;
+          };
+          new Function('lab', code)(window.__messageLab);
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              Element.prototype.animate = original;
+              resolve(seen);
+            })
+          );
+        }),
+      action
+    );
+  }
+
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
   });
 
   test('a message comes in from above and fades in over about 0.2 s, and ends 8 px from the top', async ({ page }) => {
-    const out = await frames(page, "lab.message.info('x', 0)", '.ads-message', 500);
-    const seen = out.filter((frame) => frame.length > 0).map((frame) => frame[0]);
-    expect(seen[0][1]).toBeLessThan(0);
-    expect(seen[0][2]).toBeLessThan(0.5);
-    const last = seen[seen.length - 1];
-    near(last[1], 8, 0.01);
-    expect(last[2]).toBe(1);
-    for (let index = 1; index < seen.length; index++) {
-      expect(seen[index][1]).toBeGreaterThanOrEqual(seen[index - 1][1] - 0.01);
-      expect(seen[index][2]).toBeGreaterThanOrEqual(seen[index - 1][2] - 0.01);
-    }
-    const done = seen.find((frame) => frame[2] >= 0.999)!;
-    expect(done[0]).toBeGreaterThan(120);
-    expect(done[0]).toBeLessThan(450);
+    const asked = await animationsOf(page, "lab.message.info('x', 0)");
+    const entering = asked.filter((one) => one.target.includes('ads-message-item'));
+    expect(entering).toHaveLength(1);
+    const [from, to] = entering[0].keyframes;
+    expect(Number(from.opacity)).toBe(0);
+    expect(Number(to.opacity)).toBe(1);
+    expect(String(from.transform)).toMatch(/^translateY\(-[1-9][0-9.]*px\)$/);
+    expect(String(to.transform)).toMatch(/^translateY\(0(px)?\)$/);
+    expect(entering[0].duration).toBeGreaterThan(120);
+    expect(entering[0].duration).toBeLessThan(450);
+
+    const box = page.locator('.ads-message');
+    await expect.poll(async () => (await box.boundingBox())!.y).toBeCloseTo(8, 0);
+    await expect(page.locator('.ads-message-item')).toHaveCSS('opacity', '1');
+    await expect(page.locator('.ads-message-item')).toHaveCSS('transform', 'none');
   });
 
   test('when a message leaves, the one below slides up into its place without a jump, and the leaving one fades', async ({ page }) => {
@@ -341,17 +378,39 @@ test.describe('motion', () => {
     await page.waitForTimeout(400);
     const out = await frames(page, "lab.message.destroy('a')", '.ads-message', 600);
     const second = out.filter((frame) => frame.length === 2).map((frame) => frame[1][1]);
-    expect(second.length).toBeGreaterThan(3);
-    near(second[0], 64, 8);
-    // The last frame before the row is removed: the easing leaves a pixel or two (WebKit: 1.5), not the 16 px of the gap.
-    near(second[second.length - 1], 8, 3);
+    expect(second.length, "frames sampled while the row leaves").toBeGreaterThanOrEqual(2);
+    // The first frame that is sampled may come late on a busy machine, so it is anywhere on the way from 64 to 8, not above 64.
+    expect(second[0]).toBeLessThanOrEqual(72);
+    expect(second[0]).toBeGreaterThanOrEqual(8);
     for (let index = 1; index < second.length; index++) {
       expect(second[index]).toBeLessThanOrEqual(second[index - 1] + 0.01);
-      expect(second[index - 1] - second[index]).toBeLessThan(40);
     }
     const leaving = out.filter((frame) => frame.length === 2).map((frame) => frame[0][2]);
-    expect(Math.min(...leaving)).toBeLessThan(0.2);
+    // It fades: the opacity only goes down, and a busy machine may not let a test sample the last frames, so it need not reach 0.
+    expect(Math.min(...leaving)).toBeLessThan(0.8);
+    for (let index = 1; index < leaving.length; index++) expect(leaving[index]).toBeLessThanOrEqual(leaving[index - 1] + 0.01);
     await expect(boxes(page)).toHaveCount(1);
+    // Where it ends up is read once the row has gone: the last frame that a busy machine lets a test sample can be far from it.
+    await expect.poll(async () => (await rect(boxes(page).first())).y).toBeCloseTo(8, 0);
+  });
+
+  test('a message that leaves shrinks its row to nothing and fades its box in about 0.2 s, so the ones below slide instead of jumping', async ({ page }) => {
+    await call(page, 'info', { content: 'a', key: 'a', duration: 0 });
+    await call(page, 'info', { content: 'b', duration: 0 });
+    await page.waitForTimeout(400);
+    const asked = await animationsOf(page, "lab.message.destroy('a')");
+    const shrink = asked.find((one) => one.target.includes('ads-message-slot'))!;
+    expect(shrink, 'the row is animated').toBeDefined();
+    expect(parseFloat(String(shrink.keyframes[0].height))).toBeGreaterThan(20);
+    expect(String(shrink.keyframes[shrink.keyframes.length - 1].height)).toMatch(/^0(px)?$/);
+    expect(String(shrink.keyframes[shrink.keyframes.length - 1].paddingBlockEnd)).toMatch(/^0(px)?$/);
+    expect(shrink.duration).toBeGreaterThan(120);
+    expect(shrink.duration).toBeLessThan(450);
+    const fade = asked.find((one) => one.target.includes('ads-message-item'))!;
+    expect(fade, 'the box is animated').toBeDefined();
+    expect(Number(fade.keyframes[0].opacity)).toBe(1);
+    expect(Number(fade.keyframes[fade.keyframes.length - 1].opacity)).toBe(0);
+    expect(fade.duration).toBe(shrink.duration);
   });
 
   test('prefers-reduced-motion: the box is there at full opacity in its first frame, and gone in the next', async ({ page }) => {
@@ -372,9 +431,22 @@ test.describe('motion', () => {
     await page.waitForTimeout(400);
     const out = await frames(page, "lab.message.info({ content: 'c', duration: 0 })", '.ads-message', 500);
     const older = out.filter((frame) => frame.length === 3).map((frame) => frame[2][1]);
-    expect(older.length).toBeGreaterThan(3);
-    for (let index = 1; index < older.length; index++) expect(older[index] - older[index - 1]).toBeLessThan(40);
+    expect(older.length, "frames sampled while the row grows").toBeGreaterThanOrEqual(2);
     near(older[older.length - 1], 8 + 2 * 56, 1);
+  });
+
+  test('a message that is the newest of a pile: its row grows from nothing to its height in about 0.2 s', async ({ page }) => {
+    await call(page, 'config', { stack: true });
+    await call(page, 'info', { content: 'a', duration: 0 });
+    await call(page, 'info', { content: 'b', duration: 0 });
+    await page.waitForTimeout(400);
+    const asked = await animationsOf(page, "lab.message.info({ content: 'c', duration: 0 })");
+    const grow = asked.find((one) => one.target.includes('ads-message-slot'))!;
+    expect(grow, 'the row is animated').toBeDefined();
+    expect(String(grow.keyframes[0].height)).toMatch(/^0(px)?$/);
+    expect(parseFloat(String(grow.keyframes[grow.keyframes.length - 1].height))).toBeGreaterThan(20);
+    expect(grow.duration).toBeGreaterThan(120);
+    expect(grow.duration).toBeLessThan(450);
   });
 });
 
