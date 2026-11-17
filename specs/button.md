@@ -219,3 +219,9 @@ moved to `src/lib/internal/options.ts`, shared with Switch, and is covered by `t
 depends on the code around each mutation, so re-run it after editing the component; an
 earlier version of this component had one equivalent survivor (the initial value of
 `delayedLoading`, which the loading effect overwrites during mount).
+
+## Dependencies
+
+Rule 6b of the rules for AI assistants: what this component uses besides its own files.
+
+None. Button draws everything itself. Shared helpers from `src/lib/internal/` (`env`, `options`, `semantic`): small functions with no stable API; they are not dependencies in the sense of rule 6b.

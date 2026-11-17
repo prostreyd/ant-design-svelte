@@ -11,6 +11,7 @@ export const WIREFRAMES = [
   'Switch',
   'Select',
   'Tooltip',
+  'Grid',
   'Message',
   'Typography',
   'Icon',

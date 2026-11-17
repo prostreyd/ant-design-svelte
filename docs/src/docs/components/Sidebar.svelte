@@ -35,11 +35,11 @@
       {#each group.items as item (item.name)}
         {#if item.path}
           <a href={localHref(item.path)} class:active={item.path === current} aria-current={item.path === current ? 'page' : undefined}>
-            <span>{item.name} <span class="nm">{t(item.note)}</span></span>
+            <span>{item.name}</span>
           </a>
         {:else}
           <span class="item soon">
-            <span>{item.name} <span class="nm">{t(item.note)}</span></span><span class="pillsoon">{t('soon')}</span>
+            <span>{item.name}</span><span class="pillsoon">{t('soon')}</span>
           </span>
         {/if}
       {/each}

@@ -47,9 +47,9 @@
       <div class="grp">{t(group.title)}</div>
       {#each group.items as item (item.name)}
         {#if item.path}
-          <a href={localHref(item.path)} class:active={item.path === current}>{item.name} <span class="nm">{t(item.note)}</span></a>
+          <a href={localHref(item.path)} class:active={item.path === current}>{item.name}</a>
         {:else}
-          <span class="item soon">{item.name} <span class="nm">{t(item.note)}</span><span class="pillsoon">{t('soon')}</span></span>
+          <span class="item soon">{item.name}<span class="pillsoon">{t('soon')}</span></span>
         {/if}
       {/each}
     {/each}

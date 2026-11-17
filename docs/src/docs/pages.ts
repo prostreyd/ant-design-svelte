@@ -33,6 +33,7 @@ export const componentPages: PageDef[] = [
   { path: '/components/', section: 'components', title: 'c.overview', description: 'seo.components' },
   { path: '/components/button/', section: 'components', title: 'b.title', description: 'seo.button' },
   { path: '/components/checkbox/', section: 'components', title: 'cb.title', description: 'seo.checkbox' },
+  { path: '/components/grid/', section: 'components', title: 'gr.title', description: 'seo.grid' },
   { path: '/components/input/', section: 'components', title: 'in.title', description: 'seo.input' },
   { path: '/components/message/', section: 'components', title: 'msg.title', description: 'seo.message' },
   { path: '/components/radio/', section: 'components', title: 'rd.title', description: 'seo.radio' },
@@ -69,6 +70,10 @@ export const componentGroups: ComponentGroup[] = [
       { name: 'Typography', note: 'n.typography', phase: 'next' },
       { name: 'Icon', note: 'n.icon', phase: 'next' }
     ]
+  },
+  {
+    title: 'g.layout',
+    items: [{ name: 'Grid', note: 'n.grid', phase: 'now', path: '/components/grid/' }]
   },
   {
     title: 'g.nav',

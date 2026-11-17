@@ -4,11 +4,12 @@ import { createRequire } from 'node:module';
 import { expect, test, type Page } from '@playwright/test';
 import { demos } from '../src/docs/data/button.ts';
 import { demos as checkboxDemos } from '../src/docs/data/checkbox.ts';
+import { demos as gridDemos } from '../src/docs/data/grid.ts';
 import { demos as inputDemos } from '../src/docs/data/input.ts';
+import { demos as messageDemos } from '../src/docs/data/message.ts';
 import { demos as radioDemos } from '../src/docs/data/radio.ts';
 import { demos as selectDemos } from '../src/docs/data/select.ts';
 import { demos as switchDemos } from '../src/docs/data/switch.ts';
-import { demos as messageDemos } from '../src/docs/data/message.ts';
 import { demos as tooltipDemos } from '../src/docs/data/tooltip.ts';
 import { allPages, localize, type SitePath } from '../src/docs/pages.ts';
 
@@ -115,6 +116,22 @@ test.describe('navigation', () => {
     await expect(componentsSide.getByRole('link', { name: 'Getting started' })).toHaveCount(0);
   });
 
+  for (const lang of LANGS) {
+    test(`the names of the components in the left menu are not translated (${lang})`, async ({ page }) => {
+      await open(page, rel('/components/button/', lang));
+      const side = page.getByRole('navigation', { name: /Components|Компоненты|组件/ });
+      // Only the English name, in every language: no translated note next to it.
+      await expect(side.getByRole('link', { name: 'Button', exact: true })).toBeVisible();
+      await expect(side.getByRole('link', { name: 'Radio', exact: true })).toBeVisible();
+      // A component that is not ready shows its name and the "soon" mark, but no translation.
+      const typography = side.getByText('Typography').first();
+      await expect(typography).toBeVisible();
+      for (const translated of ['Кнопка', 'Флажок', 'Радиокнопка', 'Выбор', '按钮', '多选框', '单选框', '选择器']) {
+        await expect(side.getByText(translated)).toHaveCount(0);
+      }
+    });
+  }
+
   test('components that are not ready are listed but are not links', async ({ page }) => {
     await open(page, 'components/');
     const side = page.getByRole('navigation', { name: 'Components' });
@@ -214,6 +231,19 @@ test.describe('mobile', () => {
     await expect(menu).toBeHidden();
   });
 
+  for (const lang of LANGS) {
+    test(`the menu on a phone shows the names of the components without translation (${lang})`, async ({ page }) => {
+      await open(page, rel('/components/button/', lang));
+      await page.getByRole('button', { name: /^(Menu|Меню|菜单)$/ }).click();
+      const menu = page.locator('#mobile-nav');
+      await expect(menu).toBeVisible();
+      await expect(menu.getByRole('link', { name: 'Radio', exact: true })).toBeVisible();
+      for (const translated of ['Кнопка', 'Флажок', 'Радиокнопка', 'Выбор', '按钮', '多选框', '单选框', '选择器']) {
+        await expect(menu.getByText(translated)).toHaveCount(0);
+      }
+    });
+  }
+
   test('the menu fills the screen under the header, and every link in it can really be pressed', async ({ page }) => {
     // A link that is "visible" can still be cut off by a panel that is too short: what counts is that the point in
     // the middle of the link belongs to the link, and that the panel reaches the bottom of the screen.
@@ -251,7 +281,7 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Message'];
+    const READY = ['Button', 'Grid', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Message'];
     const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Notification'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
@@ -382,6 +412,7 @@ test.describe('home page', () => {
     await open(page, '');
     const now = page.locator('.road .card').first();
     await expect(now).toContainText('Button');
+    await expect(now).toContainText('Grid');
     await expect(now).toContainText('Input');
     await expect(now).toContainText('Checkbox');
     await expect(now).toContainText('Radio');
@@ -389,14 +420,15 @@ test.describe('home page', () => {
     await expect(now).toContainText('Select');
     await expect(now).toContainText('Tooltip');
     await expect(now).toContainText('Message');
-    // The ready components follow the order of the sidebar: Button, Input, Checkbox, Radio, Switch, Select, Tooltip, Message.
-    await expect(now.locator('.chips').nth(1)).toContainText('variant');
-    await expect(now.locator('.chips').nth(2)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(3)).toContainText('orientation');
-    await expect(now.locator('.chips').nth(4)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(5)).toContainText('showSearch');
-    await expect(now.locator('.chips').nth(6)).toContainText('placement');
-    await expect(now.locator('.chips').nth(7)).toContainText('stack');
+    // The ready components follow the order of the sidebar: Button, Grid, Input, Checkbox, Radio, Switch, Select, Tooltip, Message.
+    await expect(now.locator('.chips').nth(1)).toContainText('gutter');
+    await expect(now.locator('.chips').nth(2)).toContainText('variant');
+    await expect(now.locator('.chips').nth(3)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(4)).toContainText('orientation');
+    await expect(now.locator('.chips').nth(5)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(6)).toContainText('showSearch');
+    await expect(now.locator('.chips').nth(7)).toContainText('placement');
+    await expect(now.locator('.chips').nth(8)).toContainText('stack');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -420,6 +452,35 @@ test.describe('Button page', () => {
       const file = new URL(`../src/docs/examples/button/${String(i + 1).padStart(2, '0')}-${demos[i].slug}.svelte`, import.meta.url);
       expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
     }
+  });
+
+  test('the code toggle looks different when the code is shown: another glyph and a tinted background', async ({ page }) => {
+    await open(page, 'components/button/');
+    const demo = page.locator('section.demo').first();
+    const toggle = demo.locator('.demo-act .icon-btn').first();
+    const glyph = () => toggle.locator('svg path').evaluateAll((paths) => paths.map((path) => path.getAttribute('d')).join('|'));
+
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const closedGlyph = await glyph();
+    // Not hovered or focused: the background of a closed toggle is plain.
+    await page.mouse.move(0, 0);
+    await expect(toggle).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(demo.locator('.demo-code')).toBeVisible();
+    // The glyph changes (brackets with a slash), and the button stays tinted when the pointer leaves it.
+    expect(await glyph()).not.toBe(closedGlyph);
+    await page.mouse.move(0, 0);
+    await expect(toggle).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(toggle).toHaveAccessibleName('Hide code');
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(await glyph()).toBe(closedGlyph);
+    await page.mouse.move(0, 0);
+    await expect(toggle).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(toggle).toHaveAccessibleName('Show code');
   });
 
   test('copy puts the source of the example on the clipboard', async ({ page, context, browserName }) => {
@@ -1190,9 +1251,12 @@ test.describe('Radio page', () => {
     await solid.getByRole('radio', { name: 'Chengdu' }).click({ force: true });
     await expect(solid.getByRole('radio', { name: 'Chengdu' })).toBeChecked();
     await expect(outline.getByRole('radio', { name: 'Shanghai' })).toBeChecked();
-    const fill = await solid.locator('label.ads-radio-button-checked').first().evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(fill).not.toBe('rgb(255, 255, 255)');
-    expect(fill).not.toBe('rgba(0, 0, 0, 0)');
+    // The fill changes over 0.2 s after the click, and the first frame still has the old color (white in WebKit): wait for the final
+    // color instead of reading it once.
+    const checked = solid.locator('label.ads-radio-button-checked');
+    await expect(checked).toHaveCount(1);
+    await expect(checked).not.toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await expect(checked).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   });
 
   test('size demo: the buttons are 40, 32 and 24 px high, and the aliases are the medium size', async ({ page }) => {
@@ -1411,6 +1475,220 @@ test.describe('Tooltip page', () => {
       });
       expect(painted.ratio, `${name} contrast`).toBeGreaterThanOrEqual(4.5);
       expect(painted.same, `${name} arrow`).toBe(true);
+    }
+  });
+});
+
+test.describe('Grid page', () => {
+  /** The example section with the given title. */
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+  /** The width of the first column of the first Row of a demo, in 24ths of its Row. */
+  const firstSpan = (demo: ReturnType<typeof demoOf>) =>
+    demo.locator('.demo-pre .ads-row').first().evaluate((row) => {
+      const column = row.querySelector(':scope > .ads-col')!.getBoundingClientRect().width;
+      return Math.round((column / row.getBoundingClientRect().width) * 24 * 100) / 100;
+    });
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    // A loop over every example with several browser commands each: WebKit needs about three times the default time.
+    test.slow();
+    await open(page, 'components/grid/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(gridDemos.length);
+
+    for (let i = 0; i < gridDemos.length; i++) {
+      const demo = examples.nth(i);
+      // The preview contains library rows, not copies drawn with the same classes.
+      await expect(demo.locator('.demo-pre .ads-row').first()).toBeVisible();
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/grid/${String(i + 1).padStart(2, '0')}-${gridDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('every caption stands above the component it names, inside its own unit', async ({ page }) => {
+    await open(page, 'components/grid/');
+    const misplaced = await page.locator('.demo-pre .field').evaluateAll((fields) =>
+      fields.filter((field) => field.querySelector(':scope > .caption') && field.firstElementChild?.className !== 'caption' && !field.firstElementChild?.classList.contains('caption')).length
+    );
+    expect(misplaced).toBe(0);
+  });
+
+  test('the gutter demo: a Row is as wide as its parent, and the page does not scroll sideways', async ({ page }) => {
+    await open(page, 'components/grid/');
+    const demo = demoOf(page, 'Gutter');
+    const rows = await demo.locator('.demo-pre .ads-row').evaluateAll((all) =>
+      all.map((row) => ({ row: row.getBoundingClientRect().width, parent: row.parentElement!.getBoundingClientRect().width }))
+    );
+    expect(rows).toHaveLength(4);
+    for (const { row, parent } of rows) expect(row).toBeCloseTo(parent, 1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  });
+
+  test.describe('on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('no example makes the page scroll sideways', async ({ page }) => {
+      await open(page, 'components/grid/');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+    });
+
+    test('the responsive demo is at its xs values, and the hidden column is hidden', async ({ page }) => {
+      await open(page, 'components/grid/');
+      expect(await firstSpan(demoOf(page, 'Responsive'))).toBeCloseTo(2, 1);
+      const hidden = demoOf(page, 'Hide a column').locator('.demo-pre .ads-col').first();
+      await expect(hidden).toHaveCSS('display', 'none');
+    });
+  });
+
+  test.describe('on a laptop', () => {
+    test.use({ viewport: { width: 1440, height: 900 } });
+
+    test('the responsive demo is at its xl values, and the hidden column shows', async ({ page }) => {
+      await open(page, 'components/grid/');
+      expect(await firstSpan(demoOf(page, 'Responsive'))).toBeCloseTo(10, 1);
+      await expect(demoOf(page, 'Hide a column').locator('.demo-pre .ads-col').first()).toHaveCSS('display', 'block');
+    });
+  });
+
+  test('the responsive values follow a resize, at the boundary pixel', async ({ page }) => {
+    await open(page, 'components/grid/');
+    const demo = demoOf(page, 'Responsive');
+    for (const [width, span] of [[575, 2], [576, 4], [767, 4], [768, 6], [991, 6], [992, 8], [1199, 8], [1200, 10], [1599, 10], [1600, 11], [1919, 11], [1920, 12]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect.poll(() => firstSpan(demo), { message: `at ${width}px` }).toBeCloseTo(span, 1);
+    }
+  });
+
+  test('breakpoints demo: the helper names the breakpoint of the screen, on the first render and after a resize', async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 900 });
+    await open(page, 'components/grid/');
+    const demo = demoOf(page, 'Breakpoints in code');
+    const current = demo.locator('output');
+    await expect(current).toHaveText('md');
+    await expect(demo.locator('.demo-pre').getByText('The screen is at least 768 px wide')).toBeVisible();
+    await page.setViewportSize({ width: 500, height: 900 });
+    await expect(current).toHaveText('xs');
+    await expect(demo.locator('.demo-pre').getByText('The screen is narrower than 768 px')).toBeVisible();
+    await page.setViewportSize({ width: 2000, height: 900 });
+    await expect(current).toHaveText('xxxl');
+  });
+
+  test('wrap demo: the switch changes its own Row, and without wrap the strip scrolls', async ({ page }) => {
+    await page.setViewportSize({ width: 700, height: 900 });
+    await open(page, 'components/grid/');
+    const demo = demoOf(page, 'Wrap');
+    const strip = demo.locator('.demo-pre .strip');
+    const row = demo.locator('.demo-pre .ads-row');
+    const scrolls = () => strip.evaluate((element) => element.scrollWidth > element.clientWidth + 1);
+    expect(await scrolls()).toBe(false);
+    await expect(row).not.toHaveClass(/ads-row-nowrap/);
+    await demo.getByRole('switch', { name: 'wrap' }).click();
+    await expect(row).toHaveClass(/ads-row-nowrap/);
+    await expect(demo.locator('.demo-pre').getByRole('status')).toHaveText('wrap={false}');
+    expect(await scrolls()).toBe(true);
+  });
+
+  test('playground: a choice in one group changes its own result, and no other group moves', async ({ page }) => {
+    await open(page, 'components/grid/');
+    const demo = demoOf(page, 'Playground');
+    const checked = (name: string) => demo.getByRole('radiogroup', { name }).getByRole('radio', { checked: true });
+    await expect(checked('Horizontal gutter')).toHaveAccessibleName('16');
+    await expect(checked('Vertical gutter')).toHaveAccessibleName('16');
+    await expect(checked('Columns in a row')).toHaveAccessibleName('4');
+
+    await demo.getByRole('radiogroup', { name: 'Horizontal gutter' }).getByRole('radio', { name: '32', exact: true }).check();
+    await expect(checked('Horizontal gutter')).toHaveAccessibleName('32');
+    await expect(checked('Vertical gutter')).toHaveAccessibleName('16');
+    await expect(checked('Columns in a row')).toHaveAccessibleName('4');
+    await expect(demo.locator('.caption').last()).toContainText('gutter={[32, 16]}');
+
+    await demo.getByRole('radiogroup', { name: 'Columns in a row' }).getByRole('radio', { name: '8', exact: true }).check();
+    await expect(demo.locator('.demo-pre .ads-row .ads-col')).toHaveCount(16);
+    await expect(checked('Horizontal gutter')).toHaveAccessibleName('32');
+    await expect(checked('Vertical gutter')).toHaveAccessibleName('16');
+  });
+
+  test('is listed in the components menu', async ({ page }) => {
+    await open(page, 'components/');
+    await expect(page.getByRole('navigation', { name: 'Components' }).getByRole('link', { name: 'Grid', exact: true })).toBeVisible();
+  });
+
+  test('the API tables name the props of Row, Col and Breakpoints', async ({ page }) => {
+    await open(page, 'components/grid/');
+    await expect(page.getByRole('table', { name: 'Row API' }).getByRole('rowheader', { name: 'gutter', exact: true })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Col API' }).getByRole('rowheader', { name: 'xxxl', exact: true })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Breakpoints' }).getByRole('rowheader', { name: 'current', exact: true })).toBeVisible();
+  });
+});
+
+// The demos of a component page stand in two columns in the order of reading (1 | 2, 3 | 4, ...), a demo marked `wide` takes a whole
+// row, and on a phone there is one column. With CSS columns a block jumped to the top of the other column when it did not fit, and
+// the order depended on the heights.
+test.describe('demos of a component page: reading order', () => {
+  const componentPaths = allPages.map((entry) => entry.path).filter((path) => path.startsWith('/components/') && path !== '/components/');
+  const boxesOf = (page: Page) =>
+    page.locator('section.demo').evaluateAll((demos) =>
+      demos.map((demo) => {
+        const r = demo.getBoundingClientRect();
+        return { x: r.x, width: r.width, top: r.top + scrollY, bottom: r.bottom + scrollY, wide: demo.classList.contains('wide') };
+      })
+    );
+
+  test.describe('on a laptop', () => {
+    test.use({ viewport: { width: 1440, height: 900 } });
+    for (const path of componentPaths) {
+      test(`${path}: the demos fill the rows 1 | 2, 3 | 4, ... from the left, and a wide demo takes a row alone`, async ({ page }) => {
+        await open(page, rel(path));
+        const boxes = await boxesOf(page);
+        expect(boxes.length).toBeGreaterThan(1);
+        const left = Math.min(...boxes.map((box) => box.x));
+        const column = Math.max(...boxes.filter((box) => !box.wide).map((box) => box.width));
+        let slot = 0; // 0: the next demo opens a row on the left, 1: it completes the row on the right
+        let above = 0; // the bottom of the rows before the current one
+        let rowTop = 0;
+        let rowBottom = 0;
+        boxes.forEach((box, i) => {
+          const name = `demo ${i + 1}`;
+          if (box.wide) {
+            above = Math.max(above, rowBottom);
+            expect(Math.abs(box.x - left), `${name} (wide) starts at the left edge`).toBeLessThan(1);
+            expect(box.width, `${name} (wide) is wider than a column`).toBeGreaterThan(column + 100);
+            expect(box.top, `${name} (wide) starts below the rows before`).toBeGreaterThanOrEqual(above - 1);
+            rowTop = box.top;
+            rowBottom = box.bottom;
+            slot = 0;
+          } else if (slot === 0) {
+            above = Math.max(above, rowBottom);
+            expect(Math.abs(box.x - left), `${name} is in the left column`).toBeLessThan(1);
+            expect(box.top, `${name} starts below the rows before`).toBeGreaterThanOrEqual(above - 1);
+            rowTop = box.top;
+            rowBottom = box.bottom;
+            slot = 1;
+          } else {
+            expect(box.x, `${name} is in the right column`).toBeGreaterThan(left + 100);
+            expect(Math.abs(box.top - rowTop), `${name} starts in the row of the demo before`).toBeLessThan(1);
+            rowBottom = Math.max(rowBottom, box.bottom);
+            slot = 0;
+          }
+        });
+      });
+    }
+  });
+
+  test.describe('on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+    for (const path of componentPaths) {
+      test(`${path}: one column, in order`, async ({ page }) => {
+        await open(page, rel(path));
+        const boxes = await boxesOf(page);
+        expect(boxes.length).toBeGreaterThan(1);
+        boxes.forEach((box, i) => {
+          expect(Math.abs(box.x - boxes[0].x), `demo ${i + 1} is in the one column`).toBeLessThan(1);
+          if (i > 0) expect(box.top, `demo ${i + 1} is below demo ${i}`).toBeGreaterThanOrEqual(boxes[i - 1].bottom - 1);
+        });
+      });
     }
   });
 });

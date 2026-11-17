@@ -83,7 +83,6 @@ kbd { font-size: 11px; line-height: 18px; padding: 0 6px; border: 1px solid var(
 .mnav .primary-links a { font-weight: 500; }
 .mnav .side-title { margin: 12px 24px 4px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ads-color-text-secondary); }
 .mnav .grp { margin: 14px 24px 4px; font-size: 12px; color: var(--ads-color-text-secondary); }
-.mnav .nm { margin-left: 4px; color: var(--ads-color-text-secondary); font-size: 12px; }
 .mnav .ver { font-size: 11px; padding: 0 6px; border-radius: 4px; color: #1d6a03; background: rgba(82, 196, 26, .12); }
 .mnav .pillsoon { color: var(--ads-color-text-secondary); font-size: 11px; }
 .menu { position: absolute; right: 0; top: 38px; min-width: 150px; padding: 6px; background: var(--ads-color-bg-container); border: 1px solid var(--ads-color-border); border-radius: 10px; box-shadow: var(--s-shadow); z-index: 70; }
@@ -159,7 +158,6 @@ kbd { font-size: 11px; line-height: 18px; padding: 0 6px; border: 1px solid var(
 .grp { margin: 20px 24px 6px; padding-bottom: 6px; border-bottom: 1px solid var(--s-border); font-size: 12px; color: var(--ads-color-text-secondary); }
 .side a, .side .item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 24px; color: var(--ads-color-text); border-right: 3px solid transparent; }
 .side a > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.side .nm { margin-left: 4px; color: var(--ads-color-text-secondary); font-size: 12px; }
 .side .pillsoon { flex: none; color: var(--ads-color-text-secondary); font-size: 11px; }
 .side a:hover { background: var(--ads-color-bg-text-hover); color: var(--ads-color-text); }
 .side a.active { background: var(--s-primary-soft); color: var(--s-link); border-right-color: var(--s-link); font-weight: 500; }
@@ -198,9 +196,13 @@ nav.crumbs li + li::before { content: "/"; margin: 0 6px; }
 .pager small { display: block; color: var(--ads-color-text-secondary); font-size: 12px; }
 .pager .next { text-align: right; margin-left: auto; }
 
-/* ---- demos (two-column masonry) ---- */
-.demos { column-count: 2; column-gap: 16px; }
-.demo { break-inside: avoid; margin: 0 0 16px; border: 1px solid var(--s-border); border-radius: 8px; background: var(--ads-color-bg-container); transition: box-shadow .2s; }
+/* ---- demos: two columns in reading order (1 | 2, 3 | 4, ...) ----
+   A grid, not CSS columns: with `column-count` a block that does not fit moves to the top of the next column, so the order
+   (down the left column, then down the right one) and the place of every block depend on the heights, the language and the
+   width. In a grid a demo never changes its column; a short demo leaves room under it, which is the price. */
+.demos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.demo { margin: 0; border: 1px solid var(--s-border); border-radius: 8px; background: var(--ads-color-bg-container); transition: box-shadow .2s; }
+.demo.wide { grid-column: 1 / -1; }
 .demo:hover { box-shadow: var(--s-shadow); }
 .demo-pre { padding: 36px 20px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .demo-pre.col { flex-direction: column; align-items: stretch; }
@@ -210,7 +212,7 @@ nav.crumbs li + li::before { content: "/"; margin: 0 6px; }
 .demo-desc { color: var(--ads-color-text-secondary); font-size: 13px; }
 .demo-act { display: flex; justify-content: center; gap: 4px; padding: 4px 0 6px; border-top: 1px dashed var(--s-border); }
 .demo-act .icon-btn { width: 30px; height: 30px; }
-.demo-act .icon-btn[aria-expanded='true'] { color: var(--s-link); }
+.demo-act .icon-btn[aria-expanded='true'] { color: var(--s-link); background: var(--s-primary-soft); }
 .demo-code { display: none; border-top: 1px dashed var(--s-border); }
 .demo.open .demo-code { display: block; }
 pre { margin: 0; padding: 16px 24px; overflow: auto; background: var(--s-code); font-size: 13px; line-height: 1.65; }
@@ -285,7 +287,7 @@ table.api { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   .ftr-in { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 640px) {
-  .demos { column-count: 1; } .cards, .road { grid-template-columns: 1fr; }
+  .demos { grid-template-columns: minmax(0, 1fr); } .cards, .road { grid-template-columns: 1fr; }
   .hdr-act .chip.ver-chip, .search kbd { display: none; }
   /* Dropped from the narrow layout, but still the accessible name of the link. */
   .hdr .logo span:nth-child(2) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

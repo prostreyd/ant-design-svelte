@@ -384,6 +384,15 @@ P8 (accepted). **The disabled child** is measured at the floor in stage 3 and th
 special wrapper in the library unless an engine of the floor fails. **Result (2026-11-13): no engine failed**, so there is none.
 P9 (accepted). **`trigger` accepts one value or an array**, and `[]` means controlled only.
 
+## Dependencies
+
+Rule 6b of the rules for AI assistants: what this component uses besides its own files.
+
+| Needs | Kind | Why |
+|---|---|---|
+| `internal/popup` | primitive | Places and shows the panel next to the trigger; the primitive is shared with Select and the next anchored components. |
+| helpers | helper | `contrast`, `env`, `options`, `semantic` from `src/lib/internal/`. |
+
 ## Quality matrix
 
 | Row | Status | Where |

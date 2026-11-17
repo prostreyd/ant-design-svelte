@@ -1,6 +1,6 @@
 {
   "name": "svelte-ant-design",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "An independent UI component library for Svelte 5, inspired by Ant Design.",
   "license": "MIT",
   "repository": {
@@ -54,7 +54,7 @@
     "package": "svelte-package",
     "prepublishOnly": "npm run lint && npm run check && npm run test && npm run package",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "check:docs": "npm run check -w docs && node scripts/check-quality-matrix.mjs",
+    "check:docs": "npm run check -w docs && node scripts/check-quality-matrix.mjs && node scripts/check-architecture.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",

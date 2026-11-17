@@ -523,3 +523,12 @@ depends on the code around each mutation, so re-run it after editing a component
   frame now; the e2e test fails without that). The unit tests found an empty paste that removed a character of `InputOTP`.
 - Not covered by an automatic test: a real screen reader and a real IME keyboard (the composition is simulated with the DevTools
   protocol and with composition events); only Chromium is run (as for the other components).
+
+## Dependencies
+
+Rule 6b of the rules for AI assistants: what this component uses besides its own files.
+
+| Needs | Kind | Why |
+|---|---|---|
+| Button | component | `InputSearch` draws the same button the user sees for `enterButton`, so it is the public `Button` (criterion 1: the user sees the same element and can set it with the same props). |
+| helpers | helper | `env`, `options`, `semantic` from `src/lib/internal/`. |

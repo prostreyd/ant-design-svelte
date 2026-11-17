@@ -1,6 +1,6 @@
 // Public API of the library. Components are re-exported from here.
 
-export const VERSION = '0.7.0';
+export const VERSION = '0.8.0';
 
 export { default as Button } from './Button/Button.svelte';
 export { default as Switch } from './Switch/Switch.svelte';
@@ -13,6 +13,20 @@ export { default as Select } from './Select/Select.svelte';
 export { default as SelectOption } from './Select/SelectOption.svelte';
 export { default as SelectOptGroup } from './Select/SelectOptGroup.svelte';
 export { default as Tooltip } from './Tooltip/Tooltip.svelte';
+export { default as Row } from './Grid/Row.svelte';
+export { default as Col } from './Grid/Col.svelte';
+export { Breakpoints } from './Grid/Breakpoints.js';
+export type { BreakpointsOptions } from './Grid/Breakpoints.js';
+export { BREAKPOINTS } from './Grid/constants.js';
+export type {
+  Breakpoint,
+  ColSize,
+  Gutter,
+  GutterValue,
+  Responsive,
+  RowAlign,
+  RowJustify
+} from './Grid/types.js';
 export { default as Input } from './Input/Input.svelte';
 export { message } from './Message/message.js';
 export { default as MessageHost } from './Message/MessageHost.svelte';
