@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-17
+
 ### Added
 
 - `Grid`: `Row` and `Col`, the 24-column layout, with `Breakpoints` to read the screen from code. A `Row` has `align`, `justify`,
