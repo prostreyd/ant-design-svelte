@@ -693,7 +693,7 @@ describe('message tokens (specs/message.md)', () => {
   });
 
   it('the dark theme overrides everything that is a color of the box', () => {
-    for (const token of ['bg', 'color', 'shadow', 'icon-info', 'icon-success', 'icon-error', 'icon-warning', 'close-color', 'close-color-hover', 'close-bg-hover']) {
+    for (const token of ['bg', 'color', 'shadow', 'icon-info', 'icon-success', 'icon-error', 'icon-warning', 'close-color', 'close-color-hover', 'close-bg', 'close-bg-hover']) {
       expect(dark.has(`--ads-message-${token}`), token).toBe(true);
     }
   });

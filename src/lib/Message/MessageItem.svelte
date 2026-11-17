@@ -283,8 +283,8 @@
     border: 0;
     border-radius: var(--ads-radius-sm);
     color: var(--ads-message-close-color);
-    background: transparent;
-    font-size: 12px;
+    background: var(--ads-message-close-bg);
+    font-size: var(--ads-message-icon-size);
     cursor: pointer;
     transition:
       color var(--ads-motion-duration) var(--ads-motion-ease),
