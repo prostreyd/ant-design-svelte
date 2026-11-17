@@ -9,6 +9,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Documentation
+
+- `npm run test:affected` no longer runs every browser test when a file in `screen-reader/` changes. Those tests use a real
+  screen reader (Orca) and run only in the workflow `Screen reader` on GitHub (on `main`, on pull requests and by hand), never on
+  this machine, so a change there has nothing to run here. Before, such a file was "unknown" to the plan and started the whole
+  run, which took about half an hour. The rules for AI assistants say it too.
+
 ## [0.9.0] - 2026-11-17
 
 ### Added
