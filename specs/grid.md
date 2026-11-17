@@ -299,6 +299,12 @@ the Vue docs to `false`. Proposed: **React (`true`)** (P1). Confirm, or choose t
   5.29 (`{@attach}`), so no new floor. The `peerDependencies` of `^5.0.0` is out of date for the library as it is
   (worth a separate fix, not part of this component).
 
+## Dependencies
+
+Rule 6b of the rules for AI assistants: what this component uses besides its own files.
+
+None. `Row` and `Col` draw everything themselves; `Breakpoints` is a public class of `Grid` that other components take as shared state (`Avatar`, `Pagination`, `Steps`, `Descriptions` and `Table` read the screen width with it). Shared helpers from `src/lib/internal/` (`env`, `options`, `semantic`): small functions with no stable API; they are not dependencies in the sense of rule 6b.
+
 ## Quality matrix
 
 | Row | Status | Where |
