@@ -415,6 +415,12 @@ Estimate of the whole component under the recommendations: `Radio` and `RadioBut
 half days (context, the group sync, options, layout), `classNames` / `styles` half a day, the tokens and the contrast set half
 a day, the page and its examples one day, tests alongside (the e2e and Orca ones about a day).
 
+## Dependencies
+
+Rule 6b of the rules for AI assistants: what this component uses besides its own files.
+
+None. Radio, RadioButton and RadioGroup draw everything themselves (the group shares state through its own context). Shared helpers from `src/lib/internal/` (`env`, `options`, `semantic`): small functions with no stable API; they are not dependencies in the sense of rule 6b.
+
 ## Quality matrix
 
 | Row | Status | Where |

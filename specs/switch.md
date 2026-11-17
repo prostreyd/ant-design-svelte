@@ -269,3 +269,9 @@ Each item is at least one test; the test name is the item.
 - Mutation testing: `npm run test:mutation -- --target=Switch` applies one mutation at a time to
   `Switch.svelte` and runs `tests/Switch.test.ts`. Current result: 100% (53 of 53 killed). The score
   depends on the code around each mutation, so re-run it after editing the component.
+
+## Dependencies
+
+Rule 6b of the rules for AI assistants: what this component uses besides its own files.
+
+None. Switch draws everything itself. Shared helpers from `src/lib/internal/` (`options`, `semantic`): small functions with no stable API; they are not dependencies in the sense of rule 6b.

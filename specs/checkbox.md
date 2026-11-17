@@ -399,3 +399,9 @@ Browser (Playwright, `e2e/checkbox.spec.ts`):
   `tests/Checkbox.test.ts` and `tests/CheckboxGroup.test.ts`; `-- --target=Checkbox --file=CheckboxGroup` does the
   same for `CheckboxGroup.svelte`. Current result: Checkbox 100% (54 of 54 killed), CheckboxGroup 100% (24 of 24).
   The score depends on the code around each mutation, so re-run it after editing a component.
+
+## Dependencies
+
+Rule 6b of the rules for AI assistants: what this component uses besides its own files.
+
+None. Checkbox draws everything itself (its group shares state through its own context). Shared helpers from `src/lib/internal/` (`env`, `semantic`): small functions with no stable API; they are not dependencies in the sense of rule 6b.

@@ -700,3 +700,11 @@ the computed `overscroll-behavior-y`).
   swipe, Chromium), `tests/SelectPopup.test.ts`, `tests/clickable.test.ts`. Not checked on a real iPhone or Android
   phone: only emulated touch in three engines.
 
+## Dependencies
+
+Rule 6b of the rules for AI assistants: what this component uses besides its own files.
+
+| Needs | Kind | Why |
+|---|---|---|
+| `internal/popup` | primitive | Places and shows the list panel: only the mechanism is needed, not a public component (criterion 2). |
+| helpers | helper | `clickable`, `env`, `options`, `semantic` from `src/lib/internal/`. |
