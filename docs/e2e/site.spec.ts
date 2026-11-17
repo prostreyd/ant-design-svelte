@@ -8,6 +8,7 @@ import { demos as gridDemos } from '../src/docs/data/grid.ts';
 import { demos as inputDemos } from '../src/docs/data/input.ts';
 import { demos as radioDemos } from '../src/docs/data/radio.ts';
 import { demos as selectDemos } from '../src/docs/data/select.ts';
+import { demos as spinDemos } from '../src/docs/data/spin.ts';
 import { demos as switchDemos } from '../src/docs/data/switch.ts';
 import { demos as tooltipDemos } from '../src/docs/data/tooltip.ts';
 import { allPages, localize, type SitePath } from '../src/docs/pages.ts';
@@ -51,7 +52,7 @@ async function accessibilityViolations(page: Page): Promise<Violation[]> {
         run: (context: Document | { exclude: string[][] }, options?: object) => Promise<AxeResult>;
       };
     }).axe;
-    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-radio', '.ads-radio-button', '.ads-radio-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-popup'];
+    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-radio', '.ads-radio-button', '.ads-radio-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-popup', '.ads-spin'];
     const everything = await axe.run(document, { rules: { 'color-contrast': { enabled: false } } });
     const contrast = await axe.run(
       { exclude: library.map((selector) => [selector]) },
@@ -1623,6 +1624,147 @@ test.describe('Grid page', () => {
 // The demos of a component page stand in two columns in the order of reading (1 | 2, 3 | 4, ...), a demo marked `wide` takes a whole
 // row, and on a phone there is one column. With CSS columns a block jumped to the top of the other column when it did not fit, and
 // the order depended on the heights.
+test.describe('Spin page', () => {
+  /** The example section with the given title. */
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+  const pre = (demo: ReturnType<typeof demoOf>) => demo.locator('.demo-pre');
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    // A loop over every example with several browser commands each: WebKit needs about three times the default time.
+    test.slow();
+    await open(page, 'components/spin/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(spinDemos.length);
+
+    for (let i = 0; i < spinDemos.length; i++) {
+      const demo = examples.nth(i);
+      // The preview contains library Spins; the fullscreen one draws nothing until its button is pressed.
+      if (spinDemos[i].slug === 'fullscreen') await expect(demo.locator('.demo-pre button.ads-btn').first()).toBeVisible();
+      else await expect(demo.locator('.demo-pre .ads-spin').first()).toBeVisible();
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/spin/${String(i + 1).padStart(2, '0')}-${spinDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('every caption stands above the component it names, inside its own unit', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const misplaced = await page.locator('.demo-pre .field').evaluateAll((fields) =>
+      fields.filter((field) => field.querySelector(':scope > .caption') && !field.firstElementChild?.classList.contains('caption')).length
+    );
+    expect(misplaced).toBe(0);
+  });
+
+  test('no loose text or element stands beside the units of an example', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const loose = await page.locator('.demo-pre').evaluateAll((all) =>
+      all.flatMap((preview) =>
+        [...preview.children].filter((child) => !child.classList.contains('stack') && !child.classList.contains('ads-spin')).map((child) => child.className)
+      )
+    );
+    expect(loose).toEqual([]);
+  });
+
+  test('basic demo: the switch turns a standalone Spin on and off, and nothing is left when it is off', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const demo = demoOf(page, 'Basic');
+    const toggle = demo.getByRole('switch', { name: 'Spinning' });
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await expect(pre(demo).getByRole('status', { name: 'Loading the data' })).toBeVisible();
+    await toggle.click();
+    await expect(pre(demo).getByRole('status')).toHaveCount(0);
+    await expect(demo).toContainText('spinning is false');
+    await toggle.click();
+    await expect(pre(demo).getByRole('status', { name: 'Loading the data' })).toBeVisible();
+  });
+
+  test('embedded demo: the mouse is blocked and the keyboard is not, and switching off frees the mouse', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const demo = demoOf(page, 'Embedded mode');
+    const press = demo.getByRole('button', { name: 'Press me' });
+    const pressed = () => demo.locator('.demo-pre span', { hasText: 'The button was pressed' }).textContent();
+    await expect(demo.locator('.ads-spin-container')).toHaveCSS('opacity', '0.5');
+    const box = (await press.boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    expect(await pressed()).toContain('pressed 0 times');
+    await press.focus();
+    await page.keyboard.press('Enter');
+    expect(await pressed()).toContain('pressed 1 times');
+    await demo.getByRole('switch', { name: 'Spinning' }).click();
+    await expect(demo.locator('.ads-spin-container')).toHaveCSS('opacity', '1');
+    await press.click();
+    expect(await pressed()).toContain('pressed 2 times');
+  });
+
+  test('delay demo: a fast load never dims the panel, a slow one does after the delay', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const demo = demoOf(page, 'Delay');
+    const panel = demo.locator('.ads-spin-container');
+    await demo.getByRole('button', { name: 'Load fast (200 ms)' }).click();
+    // The load ends at 200 ms, before the 500 ms delay: the panel is never dimmed and the status line says it is done.
+    await expect(demo.getByRole('status').filter({ hasText: 'Loaded in 200 ms' })).toBeVisible();
+    await page.waitForTimeout(600);
+    await expect(panel).toHaveCSS('opacity', '1');
+    await expect(demo.locator('.ads-spin-section')).toHaveCount(0);
+    await demo.getByRole('button', { name: 'Load slow (2 s)' }).click();
+    await expect(panel).toHaveCSS('opacity', '0.5');
+    await expect(demo.locator('.ads-spin-section')).toHaveCount(1);
+    await expect(demo.getByRole('status').filter({ hasText: 'Loaded in 2000 ms' })).toBeVisible({ timeout: 6000 });
+    await expect(panel).toHaveCSS('opacity', '1');
+  });
+
+  test('progress demo: the slider moves its own ring only, and the other rings keep their values', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const demo = demoOf(page, 'Progress');
+    const rings = pre(demo).getByRole('progressbar');
+    await expect(rings).toHaveCount(3);
+    await expect(rings.nth(0)).toHaveAttribute('aria-valuenow', '35');
+    await expect(rings.nth(1)).not.toHaveAttribute('aria-valuenow');
+    await expect(rings.nth(2)).toHaveAttribute('aria-valuenow', '70');
+    await demo.locator('input[type="range"]').fill('80');
+    await expect(rings.nth(0)).toHaveAttribute('aria-valuenow', '80');
+    await expect(rings.nth(1)).not.toHaveAttribute('aria-valuenow');
+    await expect(rings.nth(2)).toHaveAttribute('aria-valuenow', '70');
+    await expect(pre(demo).getByRole('progressbar', { name: 'Uploading' })).toBeVisible();
+  });
+
+  test('fullscreen demo: the backdrop covers the viewport, blocks the page and goes away by itself', async ({ page }) => {
+    test.slow();
+    await open(page, 'components/spin/');
+    const demo = demoOf(page, 'Fullscreen');
+    await demo.getByRole('button', { name: 'Show fullscreen' }).click();
+    const backdrop = page.locator('.ads-spin-fullscreen');
+    await expect(backdrop).toBeVisible();
+    const viewport = page.viewportSize()!;
+    const box = (await backdrop.boundingBox())!;
+    expect(box).toMatchObject({ x: 0, y: 0, width: viewport.width, height: viewport.height });
+    // The description is the content of the status element (a status has no name from content), and the content is what is announced.
+    await expect(page.getByRole('status').filter({ hasText: 'Loading the page' })).toBeVisible();
+    await expect(backdrop).toHaveCount(0, { timeout: 8000 });
+    await expect(demo).toContainText('spinning is false');
+  });
+
+  test('semantic demo: classNames and styles reach the parts, and a custom property changes the color', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const demo = demoOf(page, 'Classes and styles');
+    await expect(demo.locator('.ads-spin-indicator.demo-indicator')).toHaveCount(1);
+    await expect(demo.locator('.ads-spin-description.demo-description')).toHaveCount(1);
+    const green = demo.locator('.ads-spin').nth(1);
+    await expect(green).toHaveCSS('color', 'rgb(82, 196, 26)');
+    await expect(demo.locator('.ads-spin-container.demo-container')).toHaveCount(1);
+  });
+
+  test.describe('on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('no example makes the page scroll sideways', async ({ page }) => {
+      await open(page, 'components/spin/');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+    });
+  });
+});
+
 test.describe('demos of a component page: reading order', () => {
   const componentPaths = allPages.map((entry) => entry.path).filter((path) => path.startsWith('/components/') && path !== '/components/');
   const boxesOf = (page: Page) =>

@@ -12,6 +12,7 @@ export const WIREFRAMES = [
   'Select',
   'Tooltip',
   'Grid',
+  'Spin',
   'Typography',
   'Icon',
   'Menu',
