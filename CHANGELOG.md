@@ -9,6 +9,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Documentation
+
+- `npm run check:docs` now also checks the dependencies between the components of the library. It fails on a cycle between
+  components, on a component that `internal/` imports, on a component that reaches into another one's private files instead of a
+  file the package exports, on a dependency that is not written down with its reason, and on a specification that has no
+  "Dependencies" section or does not name the components and the primitives of `internal/` that the component uses. The
+  specifications of `Button`, `Checkbox`, `Grid`, `Input`, `Radio`, `Select`, `Switch` and `Tooltip` got that section.
+
 ## [0.8.0] - 2026-11-17
 
 ### Added
