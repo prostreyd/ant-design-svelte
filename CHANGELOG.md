@@ -9,6 +9,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Fixed
+
+- `Message`: the close button (`closable`) is easier to see. The cross was 12px with a thin line and no background, and next to the
+  disc of an `error` message, which has a cross in it too, it did not read as a button. The cross is now 16px with a thicker
+  line, the button has a faint background at rest (`--ads-message-close-bg`) and a stronger one on hover, in the light and
+  the dark theme. The box keeps its 40px height. One token is new: `--ads-message-close-bg`.
+
 ## [0.9.0] - 2026-11-17
 
 ### Added

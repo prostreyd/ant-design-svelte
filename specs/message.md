@@ -305,7 +305,7 @@ New tokens in `tokens.css` (light, and dark where it differs): `--ads-message-bg
 `--ads-message-padding`, `--ads-message-radius`, `--ads-message-shadow`, `--ads-message-gap`, `--ads-message-top`,
 `--ads-message-z-index` (2010), `--ads-message-icon-size`, the four type colours `--ads-message-icon-success`, `-error`,
 `-warning`, `-info`, the close button (`--ads-message-close-size`, `-color`, `-color-hover`, which reach 4.5:1 on the box
-in both themes) and the stack (`--ads-message-stack-offset`, `--ads-message-stack-scale-step`). In the dark theme: box `#1f1f1f`, text `rgba(255,255,255,.85)`, the faint shadow.
+in both themes, and `-bg` and `-bg-hover`, the faint background that shows where the button is) and the stack (`--ads-message-stack-offset`, `--ads-message-stack-scale-step`). In the dark theme: box `#1f1f1f`, text `rgba(255,255,255,.85)`, the faint shadow.
 
 ## Scope v1.0 (CLAUDE.md section 5a)
 
@@ -439,7 +439,7 @@ the ConfigProvider settings.
 Files: `src/lib/Message/` (`message.ts` the `message` object, `store.ts` the list, timers, keys, settings and hosts with no
 Svelte in it, `layer.ts` the layer the library makes itself, `MessageHost.svelte`, `MessageLayer.svelte` the drawing
 shared by the host and the library layer, `MessageItem.svelte`, `MessageIcon.svelte`, `motion.ts` the Web Animations,
-`types.ts`, `README.md`), 23 `--ads-message-*` tokens in `tokens.css` and two overrides in `tokens-accessible.css`.
+`types.ts`, `README.md`), 24 `--ads-message-*` tokens in `tokens.css` and two overrides in `tokens-accessible.css`.
 Tests: `tests/Message.test.ts` (80 cases), `tests/MessageMotion.test.ts`, `tests/MessageStore.test.ts`,
 `tests/MessageIcon.test.ts`, the Message cases of `tests/tokens.test.ts`, `tests/docs/message-page.test.ts`,
 `e2e/message.spec.ts` (26 cases per engine) and `e2e/message-touch.chromium.spec.ts`, five checks in
@@ -462,6 +462,10 @@ What the implementation settled, and what it changed in this document:
   in the README.
 - **The close button is 24 px** (WCAG 2.5.8; Ant Design has 22 px for the Notification) and takes `margin` of `-1px` above
   and below, so the box keeps its 40 px.
+- **The cross of the close button is 16 px with a stroke of 1.8** (2026-11-17, a remark of the maintainer on the released
+  0.9.0: "plain, unclear, not sharp"). It was 12 px with a stroke of 1.4, a cross 5 px across on a button with no background,
+  and beside the disc of the `error` icon (which has a cross in it too) it did not read as a button. Now the button has a faint
+  background at rest (`--ads-message-close-bg`), which grows on hover (`--ads-message-close-bg-hover`); the box is still 40 px.
 - **The container with a `transform`** is the box the layer is fixed to; the page shows it as a feature (a message region
   inside a part of the page). The line "the layer is `position: fixed` anyway" above holds only for a container without
   `transform`, `filter` or `contain: layout`.

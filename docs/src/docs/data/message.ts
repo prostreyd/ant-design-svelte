@@ -355,7 +355,8 @@ export const tokenRows: TokenRow[] = [
   token('--ads-message-close-size', '24px', 'Size of the close button: 24px, the smallest target of WCAG 2.5.8.', 'Размер кнопки закрытия: 24px, минимальная цель по WCAG 2.5.8.', '关闭按钮大小：24px，WCAG 2.5.8 要求的最小目标尺寸。'),
   token('--ads-message-close-color', 'rgba(0, 0, 0, 0.65)', 'Color of the close button (4.5:1 on the box).', 'Цвет кнопки закрытия (4.5:1 на блоке).', '关闭按钮颜色（在消息框上达到 4.5:1）。'),
   token('--ads-message-close-color-hover', 'rgba(0, 0, 0, 0.88)', 'Color of the close button on hover.', 'Цвет кнопки закрытия при наведении.', '关闭按钮悬停时的颜色。'),
-  token('--ads-message-close-bg-hover', 'rgba(0, 0, 0, 0.06)', 'Background of the close button on hover.', 'Фон кнопки закрытия при наведении.', '关闭按钮悬停时的背景。'),
+  token('--ads-message-close-bg', 'rgba(0, 0, 0, 0.04)', 'Background of the close button at rest: it shows where the button is.', 'Фон кнопки закрытия в покое: он показывает, где кнопка.', '关闭按钮平时的背景：用来显示按钮所在的位置。'),
+  token('--ads-message-close-bg-hover', 'rgba(0, 0, 0, 0.1)', 'Background of the close button on hover.', 'Фон кнопки закрытия при наведении.', '关闭按钮悬停时的背景。'),
   token('--ads-message-motion-offset', '64px', 'How far above its place a message starts to come in and ends to leave.', 'На сколько выше своего места сообщение начинает появляться и заканчивает уходить.', '消息进入时的起始位置与离开时的终止位置距其所在位置的上方距离。'),
   token('--ads-message-stack-offset', '8px', 'Step between the rows of a pile.', 'Шаг между строками стопки.', '堆叠中各行之间的偏移。'),
   token('--ads-message-stack-scale-step', '0.06', 'How much smaller each row of a pile is than the one in front of it.', 'Насколько каждая строка стопки меньше предыдущей.', '堆叠中每一行比前一行缩小的比例。')
