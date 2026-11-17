@@ -9,6 +9,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-17
+
+### Added
+
+- `Grid`: `Row` and `Col`, the 24-column layout, with `Breakpoints` to read the screen from code. A `Row` has `align`, `justify`,
+  `gutter` (pixels, a CSS length, a value per breakpoint, or `[horizontal, vertical]`) and `wrap`. A `Col` has `span` (`0` hides it),
+  `offset`, `push`, `pull`, `order`, `flex` and the responsive `xs`, `sm`, `md`, `lg`, `xl`, `xxl` and `xxxl`, each a span or an
+  object of the same props. The API is inspired by Ant Design; the implementation is original for Svelte.
+  - The gutter is a flex `gap`, not a negative margin with padding on the columns, so a `Row` is exactly as wide as its parent and
+    never makes a page scroll sideways (the Ant Design `Row` does, an open issue since 2018). The boxes of the content are in the
+    same places as in the Ant Design demos; a column's own background does not paint the gutter.
+  - The responsive values are resolved in CSS (the component writes its values as custom properties and static media queries pick
+    them), so the server and the browser render the same markup and nothing flashes on hydration. The breakpoints (576, 768, 992,
+    1200, 1600 and 1920 px) are fixed and exported as `BREAKPOINTS`.
+  - `Breakpoints` is a class with `xs` ... `xxxl` and `current`; its values are right on the first render in a browser (the
+    Ant Design hook returns an empty object there) and it includes `xxxl`.
+  - A single length in `flex` (`'100px'`) is a fixed width, as in the Ant Design demos, although their table says "applied as written".
+  - `Row` and `Col` have no role and no state; `order`, `push` and `pull` change only how the columns are drawn, and the page says so.
+  - Page of `Grid` on the documentation site, with 16 examples and the API tables in English, Russian and Chinese.
+
 ### Documentation
 
 - The rules for AI assistants say how the examples of a component page are laid out and what state they keep: every group and

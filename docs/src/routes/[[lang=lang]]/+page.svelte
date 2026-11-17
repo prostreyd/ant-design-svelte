@@ -30,6 +30,7 @@
   // The properties shown as chips under a ready component.
   const highlights: Record<string, string[]> = {
     Button: ['type', 'size', 'shape', 'loading', 'danger', 'ghost', 'href'],
+    Grid: ['gutter', 'span', 'offset', 'order', 'flex', 'justify', 'xs', 'Breakpoints'],
     Input: ['value', 'variant', 'status', 'allowClear', 'showCount', 'prefix', 'classNames', 'styles'],
     Checkbox: ['checked', 'indeterminate', 'disabled', 'value', 'options', 'classNames', 'styles'],
     Radio: ['value', 'options', 'optionType', 'buttonStyle', 'size', 'orientation', 'block', 'classNames'],
