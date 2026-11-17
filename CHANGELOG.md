@@ -9,6 +9,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- **`Message`** (with `MessageHost`): a short notice at the top of the page that goes away by itself, opened by a call from
+  code, from anywhere: `message.info`, `success`, `error`, `warning`, `loading`, `open`, `destroy` and `config`. The library
+  makes the layer itself when the first message opens and removes it when the last has gone; a `<MessageHost>` in the app
+  takes the messages over and holds the settings (`top`, `duration`, `maxCount`, `container`, `closable`, `labels`,
+  `classNames`, `styles`, `stack`). A call returns a function that closes the message and is also thenable (`.then` runs
+  when the message starts to close, so `await message.info(...)` waits for the close, as in React and Vue); a call with the
+  `key` of an open message updates it in place. `content` is a string, a number or a snippet, `icon` a string, a snippet or
+  `false`, and `class`, `style`, `classNames` and `styles` address the box and its parts. The timer waits while the pointer
+  (not a touch), the focus or a hidden page holds it. New: `closable` (a close button of 24px; `Escape` closes the message
+  that has focus in it) and `stack` (React 6.4.0: the newest message first, and past a threshold the others lie behind it as
+  a pile that the pointer or focus opens). A role per type (`alert` for `error` and `warning`, `status` for the rest) and a
+  hidden type word read before the text, translated through `labels`, where Ant Design React gives `role="alert"` to all and
+  Vue and Angular give none. 23 `--ads-message-*` tokens, light, dark and accessible (`tokens-accessible.css` darkens the
+  green and the amber icon to 3:1). Not checked: whether a screen reader announces a message when it opens, NVDA, JAWS,
+  VoiceOver, a real touch device and a real Safari.
+
 ## [0.7.0] - 2026-11-16
 
 ### Added
