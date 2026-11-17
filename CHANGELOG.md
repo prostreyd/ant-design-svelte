@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-11-17
+
 ### Fixed
 
 - `Message`: the close button (`closable`) is easier to see. The cross was 12px with a thin line and no background, and next to the
