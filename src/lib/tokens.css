@@ -375,7 +375,8 @@
   --ads-message-close-size: 24px;
   --ads-message-close-color: rgba(0, 0, 0, 0.65);
   --ads-message-close-color-hover: rgba(0, 0, 0, 0.88);
-  --ads-message-close-bg-hover: rgba(0, 0, 0, 0.06);
+  --ads-message-close-bg: rgba(0, 0, 0, 0.04);
+  --ads-message-close-bg-hover: rgba(0, 0, 0, 0.1);
   --ads-message-motion-offset: 64px;
   --ads-message-stack-offset: 8px;
   --ads-message-stack-scale-step: 0.06;
@@ -549,5 +550,6 @@
   --ads-message-icon-warning: #d89614;
   --ads-message-close-color: rgba(255, 255, 255, 0.65);
   --ads-message-close-color-hover: rgba(255, 255, 255, 0.88);
-  --ads-message-close-bg-hover: rgba(255, 255, 255, 0.12);
+  --ads-message-close-bg: rgba(255, 255, 255, 0.08);
+  --ads-message-close-bg-hover: rgba(255, 255, 255, 0.18);
 }

@@ -17,7 +17,7 @@
     <circle class="track" cx="8" cy="8" r="6" />
     <path class="arc" d="M8 2a6 6 0 0 1 6 6" />
   {:else if name === 'close'}
-    <path d="M4.4 4.4l7.2 7.2M11.6 4.4l-7.2 7.2" />
+    <path d="M3.8 3.8l8.4 8.4M12.2 3.8l-8.4 8.4" />
   {:else}
     <mask id="{uid}-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="16" height="16">
       <rect width="16" height="16" fill="#fff" stroke="none" />
@@ -46,6 +46,10 @@
     stroke-width: 1.4;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+
+  .ads-message-svg-close {
+    stroke-width: 1.8;
   }
 
   .ads-message-svg-loading {
