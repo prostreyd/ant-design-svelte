@@ -261,7 +261,7 @@ describe('accessible tokens (tokens-accessible.css)', () => {
   });
 
   it('changes the -solid, -text, link, switch, checkbox, radio, input and select tokens, and nothing else', () => {
-    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color))$/;
+    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color)|message-icon-(success|warning))$/;
     for (const token of accessible.keys()) expect(token, token).toMatch(allowed);
   });
 
@@ -633,5 +633,68 @@ describe('tooltip tokens (specs/tooltip.md)', () => {
     expect(light.get('--ads-tooltip-min-height')).toBe('32px');
     expect(light.get('--ads-tooltip-max-width')).toBe('250px');
     expect(light.get('--ads-tooltip-z-index')).toBe('1070');
+  });
+});
+
+describe('message tokens (specs/message.md)', () => {
+  // Measured on the Ant Design demo (React 6.7.1, 2026-11-16, Chromium, light and dark theme).
+  const measuredLight: Record<string, string> = {
+    '--ads-message-z-index': '2010',
+    '--ads-message-top': '8px',
+    '--ads-message-gap': '16px',
+    '--ads-message-bg': '#ffffff',
+    '--ads-message-color': 'rgba(0, 0, 0, 0.88)',
+    '--ads-message-padding': '9px 12px',
+    '--ads-message-radius': '8px',
+    '--ads-message-icon-size': '16px',
+    '--ads-message-icon-gap': '8px',
+    '--ads-message-icon-success': '#52c41a',
+    '--ads-message-icon-error': '#ff4d4f',
+    '--ads-message-icon-warning': '#faad14',
+    '--ads-message-icon-info': '#1677ff'
+  };
+
+  it('the light values are the ones measured on the Ant Design demo', () => {
+    for (const [token, value] of Object.entries(measuredLight)) expect(normalize(light.get(token) ?? ''), token).toBe(normalize(value));
+    expect(normalize(light.get('--ads-message-shadow')!)).toContain('0 6px 16px 0 rgba(0, 0, 0, 0.08)');
+  });
+
+  it('the dark theme has the box #1f1f1f with the text of Ant Design (85% white)', () => {
+    expect(normalize(dark.get('--ads-message-bg')!)).toBe('#1f1f1f');
+    expect(normalize(dark.get('--ads-message-color')!)).toBe('rgba(255, 255, 255, 0.85)');
+  });
+
+  it('the close button is 24 px, the smallest target of WCAG 2.5.8, and the box line is 22 px', () => {
+    expect(light.get('--ads-message-close-size')).toBe('24px');
+    expect(light.get('--ads-message-line-height')).toBe('22px');
+  });
+
+  for (const [theme, tokens] of [['light with the accessible file', lightAccessible], ['dark', darkTheme]] as const) {
+    describe(theme, () => {
+      it('the text reaches 4.5:1 on the box, and the close button 4.5:1 in rest and hover', () => {
+        expect(ratio(tokens, '--ads-message-color', '--ads-message-bg')).toBeGreaterThanOrEqual(4.5);
+        expect(ratio(tokens, '--ads-message-close-color', '--ads-message-bg')).toBeGreaterThanOrEqual(4.5);
+        expect(ratio(tokens, '--ads-message-close-color-hover', '--ads-message-bg')).toBeGreaterThanOrEqual(4.5);
+      });
+
+      it('each type icon reaches 3:1 on the box (WCAG 1.4.11)', () => {
+        for (const type of ['info', 'success', 'error', 'warning']) {
+          expect(ratio(tokens, `--ads-message-icon-${type}`, '--ads-message-bg'), type).toBeGreaterThanOrEqual(3);
+        }
+      });
+    });
+  }
+
+  it('the default light green and amber are below 3:1 on the white box, which is why the accessible file darkens them', () => {
+    expect(ratio(light, '--ads-message-icon-success', '--ads-message-bg')).toBeLessThan(3);
+    expect(ratio(light, '--ads-message-icon-warning', '--ads-message-bg')).toBeLessThan(3);
+    expect(ratio(light, '--ads-message-icon-error', '--ads-message-bg')).toBeGreaterThanOrEqual(3);
+    expect(ratio(light, '--ads-message-icon-info', '--ads-message-bg')).toBeGreaterThanOrEqual(3);
+  });
+
+  it('the dark theme overrides everything that is a color of the box', () => {
+    for (const token of ['bg', 'color', 'shadow', 'icon-info', 'icon-success', 'icon-error', 'icon-warning', 'close-color', 'close-color-hover', 'close-bg-hover']) {
+      expect(dark.has(`--ads-message-${token}`), token).toBe(true);
+    }
   });
 });

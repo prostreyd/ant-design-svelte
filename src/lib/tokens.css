@@ -345,6 +345,40 @@
   --ads-tooltip-preset-gold-text: #000000;
   --ads-tooltip-preset-lime: #a0d911;
   --ads-tooltip-preset-lime-text: #000000;
+
+  /*
+   * Message: the values measured on the Ant Design demo (React 6.7.1, 2026-11-16, light theme): padding, radius, shadow,
+   * 16 px icon with an 8 px gap, the layer above every popup (2010), the box 8 px from the top and 16 px from the next.
+   * The type colors are the status colors of Ant Design. They are decorative here (the text and a hidden type word carry
+   * the meaning), but the icon is still held to 3:1 (WCAG 1.4.11): the green and the amber are below it on a white page,
+   * and `tokens-accessible.css` darkens them. The dark theme below keeps 3:1.
+   */
+  --ads-message-z-index: 2010;
+  --ads-message-top: 8px;
+  --ads-message-gap: 16px;
+  --ads-message-margin-inline: 24px;
+  --ads-message-bg: #ffffff;
+  --ads-message-color: rgba(0, 0, 0, 0.88);
+  --ads-message-padding: 9px 12px;
+  --ads-message-line-height: 22px;
+  --ads-message-radius: 8px;
+  --ads-message-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  --ads-message-icon-size: 16px;
+  --ads-message-icon-gap: 8px;
+  --ads-message-icon-info: #1677ff;
+  --ads-message-icon-success: #52c41a;
+  --ads-message-icon-error: #ff4d4f;
+  --ads-message-icon-warning: #faad14;
+  /* 24 px: the smallest target of WCAG 2.5.8. It is 2 px taller than the line, so the button takes -1px of margin above and below and the box keeps its height. */
+  --ads-message-close-size: 24px;
+  --ads-message-close-color: rgba(0, 0, 0, 0.65);
+  --ads-message-close-color-hover: rgba(0, 0, 0, 0.88);
+  --ads-message-close-bg-hover: rgba(0, 0, 0, 0.06);
+  --ads-message-motion-offset: 64px;
+  --ads-message-stack-offset: 8px;
+  --ads-message-stack-scale-step: 0.06;
 }
 
 :root[data-theme='dark'] {
@@ -502,4 +536,18 @@
   --ads-tooltip-preset-gold-text: #000000;
   --ads-tooltip-preset-lime: #8bbb11;
   --ads-tooltip-preset-lime-text: #000000;
+
+  /* Message in the dark theme: an elevated panel one step lighter than the page, and the dark status colors. */
+  --ads-message-bg: #1f1f1f;
+  --ads-message-color: rgba(255, 255, 255, 0.85);
+  --ads-message-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.32), 0 3px 6px -4px rgba(0, 0, 0, 0.48),
+    0 9px 28px 8px rgba(0, 0, 0, 0.2);
+  --ads-message-icon-info: #3c9ae8;
+  --ads-message-icon-success: #49aa19;
+  --ads-message-icon-error: #dc4446;
+  --ads-message-icon-warning: #d89614;
+  --ads-message-close-color: rgba(255, 255, 255, 0.65);
+  --ads-message-close-color-hover: rgba(255, 255, 255, 0.88);
+  --ads-message-close-bg-hover: rgba(255, 255, 255, 0.12);
 }

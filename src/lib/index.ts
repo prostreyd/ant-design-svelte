@@ -14,6 +14,8 @@ export { default as SelectOption } from './Select/SelectOption.svelte';
 export { default as SelectOptGroup } from './Select/SelectOptGroup.svelte';
 export { default as Tooltip } from './Tooltip/Tooltip.svelte';
 export { default as Input } from './Input/Input.svelte';
+export { message } from './Message/message.js';
+export { default as MessageHost } from './Message/MessageHost.svelte';
 export { default as InputOTP } from './Input/InputOTP.svelte';
 export { default as InputPassword } from './Input/InputPassword.svelte';
 export { default as InputSearch } from './Input/InputSearch.svelte';
@@ -101,6 +103,26 @@ export type {
   ButtonSize,
   ButtonType
 } from './Button/types.js';
+export { MESSAGE_TYPES } from './Message/types.js';
+export type {
+  MessageApi,
+  MessageClassNames,
+  MessageConfig,
+  MessageConfigClassNames,
+  MessageConfigStyles,
+  MessageContainer,
+  MessageContent,
+  MessageHandle,
+  MessageIcon,
+  MessageLabels,
+  MessageListSemanticName,
+  MessageOptions,
+  MessageSemanticName,
+  MessageStack,
+  MessageStyles,
+  MessageType,
+  MessageTypedOptions
+} from './Message/types.js';
 export { TOOLTIP_PRESET_COLORS } from './Tooltip/types.js';
 export type {
   TooltipArrow,
