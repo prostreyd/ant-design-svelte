@@ -6,6 +6,7 @@ import { demos } from '../src/docs/data/button.ts';
 import { demos as checkboxDemos } from '../src/docs/data/checkbox.ts';
 import { demos as gridDemos } from '../src/docs/data/grid.ts';
 import { demos as inputDemos } from '../src/docs/data/input.ts';
+import { demos as menuDemos } from '../src/docs/data/menu.ts';
 import { demos as messageDemos } from '../src/docs/data/message.ts';
 import { demos as radioDemos } from '../src/docs/data/radio.ts';
 import { demos as selectDemos } from '../src/docs/data/select.ts';
@@ -52,7 +53,7 @@ async function accessibilityViolations(page: Page): Promise<Violation[]> {
         run: (context: Document | { exclude: string[][] }, options?: object) => Promise<AxeResult>;
       };
     }).axe;
-    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-radio', '.ads-radio-button', '.ads-radio-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-popup'];
+    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-radio', '.ads-radio-button', '.ads-radio-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-menu', '.ads-popup'];
     const everything = await axe.run(document, { rules: { 'color-contrast': { enabled: false } } });
     const contrast = await axe.run(
       { exclude: library.map((selector) => [selector]) },
@@ -281,8 +282,8 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Grid', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Message'];
-    const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Notification'];
+    const READY = ['Button', 'Grid', 'Menu', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Message'];
+    const PLANNED = ['Typography', 'Icon', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Notification'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
       await open(page, 'components/');
@@ -413,6 +414,7 @@ test.describe('home page', () => {
     const now = page.locator('.road .card').first();
     await expect(now).toContainText('Button');
     await expect(now).toContainText('Grid');
+    await expect(now).toContainText('Menu');
     await expect(now).toContainText('Input');
     await expect(now).toContainText('Checkbox');
     await expect(now).toContainText('Radio');
@@ -420,15 +422,16 @@ test.describe('home page', () => {
     await expect(now).toContainText('Select');
     await expect(now).toContainText('Tooltip');
     await expect(now).toContainText('Message');
-    // The ready components follow the order of the sidebar: Button, Grid, Input, Checkbox, Radio, Switch, Select, Tooltip, Message.
+    // The ready components follow the order of the sidebar: Button, Grid, Menu, Input, Checkbox, Radio, Switch, Select, Tooltip, Message.
     await expect(now.locator('.chips').nth(1)).toContainText('gutter');
-    await expect(now.locator('.chips').nth(2)).toContainText('variant');
-    await expect(now.locator('.chips').nth(3)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(4)).toContainText('orientation');
-    await expect(now.locator('.chips').nth(5)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(6)).toContainText('showSearch');
-    await expect(now.locator('.chips').nth(7)).toContainText('placement');
-    await expect(now.locator('.chips').nth(8)).toContainText('stack');
+    await expect(now.locator('.chips').nth(2)).toContainText('selectedKeys');
+    await expect(now.locator('.chips').nth(3)).toContainText('variant');
+    await expect(now.locator('.chips').nth(4)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(5)).toContainText('orientation');
+    await expect(now.locator('.chips').nth(6)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(7)).toContainText('showSearch');
+    await expect(now.locator('.chips').nth(8)).toContainText('placement');
+    await expect(now.locator('.chips').nth(9)).toContainText('stack');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -1644,7 +1647,9 @@ test.describe('demos of a component page: reading order', () => {
         const boxes = await boxesOf(page);
         expect(boxes.length).toBeGreaterThan(1);
         const left = Math.min(...boxes.map((box) => box.x));
-        const column = Math.max(...boxes.filter((box) => !box.wide).map((box) => box.width));
+        // A column is as wide as the widest narrow demo; when every demo is wide (the Menu page), it is half of a row less the gap.
+        const narrow = boxes.filter((box) => !box.wide).map((box) => box.width);
+        const column = narrow.length > 0 ? Math.max(...narrow) : (Math.max(...boxes.map((box) => box.width)) - 16) / 2;
         let slot = 0; // 0: the next demo opens a row on the left, 1: it completes the row on the right
         let above = 0; // the bottom of the rows before the current one
         let rowTop = 0;
@@ -1767,5 +1772,118 @@ test.describe('installation tabs', () => {
     await expect(page.getByRole('tab', { name: 'bun' })).toBeFocused();
     await page.keyboard.press('ArrowRight');
     await expect(npm).toBeFocused();
+  });
+});
+
+test.describe('Menu page', () => {
+  // No animation: a rectangle is final right after a change.
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+  });
+
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    test.slow();
+    await open(page, 'components/menu/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(menuDemos.length);
+
+    for (let i = 0; i < menuDemos.length; i++) {
+      const demo = examples.nth(i);
+      await expect(demo.locator('.demo-pre ul.ads-menu-root').first()).toBeAttached();
+
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/menu/${String(i + 1).padStart(2, '0')}-${menuDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('selection demo: the three groups are independent (a click in one leaves the others as they were)', async ({ page }) => {
+    await open(page, 'components/menu/');
+    const demo = demoOf(page, 'Selection').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const status = demo.getByRole('status');
+    await expect(status.nth(0)).toContainText('selectedKeys: a');
+    await expect(status.nth(1)).toContainText('selectedKeys: a, c');
+    await demo.getByRole('menu', { name: 'Single selection' }).getByRole('menuitemradio', { name: 'Beta' }).click();
+    await expect(status.nth(0)).toContainText('selectedKeys: b');
+    await expect(status.nth(1)).toContainText('selectedKeys: a, c');
+    await demo.getByRole('menu', { name: 'Multiple selection' }).getByRole('menuitemcheckbox', { name: 'Alpha' }).click();
+    await expect(status.nth(1)).toContainText('selectedKeys: c');
+    await expect(status.nth(1)).toContainText('ondeselect: a');
+    await expect(status.nth(0)).toContainText('selectedKeys: b');
+    await demo.getByRole('menu', { name: 'Actions' }).getByRole('menuitem', { name: 'Gamma' }).click();
+    await expect(status.nth(2)).toContainText('onclick: c (path c)');
+    await expect(status.nth(0)).toContainText('selectedKeys: b');
+    await expect(status.nth(1)).toContainText('selectedKeys: c');
+  });
+
+  test('vertical demo: the pointer opens a popup, and a click opens the popup of the click menu', async ({ page }) => {
+    await open(page, 'components/menu/');
+    const demo = demoOf(page, 'Vertical menu').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    await demo.getByRole('menu', { name: 'Vertical menu' }).getByRole('menuitem', { name: 'Navigation Two' }).hover();
+    await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list')).toBeVisible();
+    await expect(demo.getByRole('status').first()).toContainText('onopenchange: ["two"]');
+    await page.mouse.move(5, 5);
+    await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list')).toHaveCount(0);
+    const clicking = demo.getByRole('menu', { name: 'Click to open' });
+    await clicking.getByRole('menuitem', { name: 'Navigation Two' }).hover();
+    await page.waitForTimeout(700);
+    await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list')).toHaveCount(0);
+    await clicking.getByRole('menuitem', { name: 'Navigation Two' }).click();
+    await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list')).toBeVisible();
+    await expect(demo.getByRole('status').nth(1)).toContainText('title click: two');
+  });
+
+  test('collapsed demo: the button narrows the menu to icons and brings it back', async ({ page }) => {
+    await open(page, 'components/menu/');
+    const demo = demoOf(page, 'Collapsed inline menu').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const menu = demo.getByRole('menu', { name: 'Collapsible menu' });
+    await expect.poll(async () => (await menu.boundingBox())?.width).toBeGreaterThan(200);
+    await demo.getByRole('button', { name: 'Collapse' }).click();
+    await expect.poll(async () => Math.round((await menu.boundingBox())?.width ?? 0)).toBe(80);
+    await demo.getByRole('button', { name: 'Expand' }).click();
+    await expect.poll(async () => (await menu.boundingBox())?.width).toBeGreaterThan(200);
+  });
+
+  test('top navigation demo: a narrow container moves the items that do not fit into the "…" item', async ({ page }) => {
+    await open(page, 'components/menu/');
+    const demo = demoOf(page, 'Top navigation').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const narrow = demo.getByRole('menubar', { name: 'Narrow navigation' });
+    const more = narrow.getByRole('menuitem', { name: 'More sections' });
+    await expect(more).toBeVisible();
+    await more.hover();
+    await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list')).toBeVisible();
+    await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list').getByRole('menuitemradio', { name: 'Navigation Six' })).toBeVisible();
+  });
+
+  test('keyboard demo: one Tab stop, the arrows move, Escape returns', async ({ page }) => {
+    await open(page, 'components/menu/');
+    const demo = demoOf(page, 'Keyboard').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const bar = demo.getByRole('menubar', { name: 'Application menu' });
+    await expect(bar.locator('[tabindex="0"]')).toHaveCount(1);
+    await bar.getByRole('menuitem', { name: 'File' }).focus();
+    await page.keyboard.press('ArrowDown');
+    await expect(page.locator('.ads-popup:not([hidden])').getByRole('menuitemradio', { name: 'New' })).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(bar.getByRole('menuitem', { name: 'File' })).toBeFocused();
+  });
+
+  test('markup demo: items written as components appear in the order of the markup, and an {#if} section comes and goes', async ({ page }) => {
+    await open(page, 'components/menu/');
+    const demo = demoOf(page, 'Items written as markup').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const dynamic = demo.getByRole('menu', { name: 'Dynamic markup' });
+    await expect(dynamic.locator('[data-ads-key]')).toHaveCount(5);
+    await demo.getByRole('checkbox', { name: 'Show the beta section' }).uncheck();
+    await expect(dynamic.locator('[data-ads-key]')).toHaveCount(2);
+    await demo.getByRole('checkbox', { name: 'Show the beta section' }).check();
+    await expect(dynamic.locator('[data-ads-key]')).toHaveCount(5);
   });
 });
