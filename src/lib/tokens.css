@@ -345,6 +345,28 @@
   --ads-tooltip-preset-gold-text: #000000;
   --ads-tooltip-preset-lime: #a0d911;
   --ads-tooltip-preset-lime-text: #000000;
+
+  /*
+   * Spin: the sizes and times of the Ant Design token documentation and the public demos (read 2026-11-17): dot box
+   * 20 / 14 / 32, 12 between the indicator and the description, the covered content at half opacity, the fullscreen
+   * mask `colorBgMask`, its layer `zIndexPopupBase` and a white indicator on it. The turn (1.2 s) and the pulse (1 s)
+   * are the measured times of the default indicator. The description is text, so it uses the text variant of the
+   * primary color; on a white page that is 4.10:1 here and 4.5:1 or more in `tokens-accessible.css`, which also
+   * darkens the mask (white text on the default mask is 3.4:1 over a white page).
+   */
+  --ads-spin-dot-size: 20px;
+  --ads-spin-dot-size-sm: 14px;
+  --ads-spin-dot-size-lg: 32px;
+  --ads-spin-gap: 12px;
+  --ads-spin-color: #1677ff;
+  --ads-spin-description-color: #1677ff;
+  --ads-spin-container-opacity: 0.5;
+  --ads-spin-duration: 1.2s;
+  --ads-spin-pulse-duration: 1s;
+  --ads-spin-mask-bg: rgba(0, 0, 0, 0.45);
+  --ads-spin-fullscreen-color: #ffffff;
+  --ads-spin-fullscreen-z-index: 1000;
+  --ads-spin-ring-track: rgba(0, 0, 0, 0.06);
 }
 
 :root[data-theme='dark'] {
@@ -502,4 +524,10 @@
   --ads-tooltip-preset-gold-text: #000000;
   --ads-tooltip-preset-lime: #8bbb11;
   --ads-tooltip-preset-lime-text: #000000;
+
+  /* Spin: the primary colors of this theme; the mask and the ring track are the ones of the Ant Design dark theme. */
+  --ads-spin-color: #4096ff;
+  --ads-spin-description-color: #69b1ff;
+  --ads-spin-mask-bg: rgba(0, 0, 0, 0.45);
+  --ads-spin-ring-track: rgba(255, 255, 255, 0.12);
 }
