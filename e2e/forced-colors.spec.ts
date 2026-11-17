@@ -259,3 +259,56 @@ test.describe('Forced colors: Tooltip (specs/tooltip.md)', () => {
     expect(await computed(box, 'color')).not.toBe(await computed(box, 'background-color'));
   });
 });
+
+// Ant Design's own Spin vanishes in this mode: its dots are backgrounds, which the system replaces with Canvas (found
+// 2026-11-17 on their public demo). Ours draws the dots and the ring with system colors (specs/spin.md, A11y).
+test.describe('Forced colors: Spin (specs/spin.md)', () => {
+  type SpinLab = { set(next: { props: Record<string, unknown>; content: string }): void };
+  const mountSpin = (page: Page, props: Record<string, unknown>, content = 'none') =>
+    page.evaluate((args) => (window as unknown as { __spinLab: SpinLab }).__spinLab.set(args), { props, content });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/#spin');
+    await page.waitForFunction(() => Boolean((window as unknown as { __spinLab?: unknown }).__spinLab));
+    await page.emulateMedia({ forcedColors: 'active' });
+    expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
+  });
+
+  const canvas = (page: Page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+
+  test('the dots are drawn in a system color, not in Canvas, so the indicator stays visible', async ({ page }) => {
+    await mountSpin(page, { 'aria-label': 'Loading' });
+    const dots = page.locator('.ads-spin-dots > span');
+    await expect(dots).toHaveCount(4);
+    for (let index = 0; index < 4; index += 1) {
+      expect(await computed(dots.nth(index), 'background-color'), `dot ${index}`).not.toBe(await canvas(page));
+    }
+    // Where the engine knows the property, the dots opt out of the adjustment that would turn them into Canvas.
+    if (await page.evaluate(() => CSS.supports('forced-color-adjust', 'none'))) {
+      expect(await computed(dots.first(), 'forced-color-adjust')).toBe('none');
+    }
+  });
+
+  test('the dots of every size and of an embedded Spin stay visible too', async ({ page }) => {
+    for (const size of ['small', 'medium', 'large']) {
+      await mountSpin(page, { size, 'aria-label': 'Loading' }, size === 'large' ? 'text' : 'none');
+      expect(await computed(page.locator('.ads-spin-dots > span').first(), 'background-color'), size).not.toBe(await canvas(page));
+    }
+  });
+
+  test('the ring: the arc and the track are in system colors that differ from Canvas and from each other', async ({ page }) => {
+    await mountSpin(page, { percent: 40, 'aria-label': 'Upload' });
+    const arc = await computed(page.locator('.ads-spin-ring-arc'), 'stroke');
+    const track = await computed(page.locator('.ads-spin-ring-track'), 'stroke');
+    expect(arc).not.toBe(await canvas(page));
+    expect(track).not.toBe(await canvas(page));
+    expect(arc).not.toBe(track);
+  });
+
+  test('fullscreen: the dots and the text differ from the backdrop behind them', async ({ page }) => {
+    await mountSpin(page, { fullscreen: true, description: 'Loading' });
+    const backdrop = await computed(page.locator('.ads-spin-fullscreen'), 'background-color');
+    expect(await computed(page.locator('.ads-spin-dots > span').first(), 'background-color')).not.toBe(backdrop);
+    expect(await computed(page.locator('.ads-spin-description'), 'color')).not.toBe(backdrop);
+  });
+});
