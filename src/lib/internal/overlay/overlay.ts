@@ -20,8 +20,8 @@ export interface OverlayOptions {
   restoreFocus?: boolean;
   /** Whether Escape closes the layer. Default: always. */
   escape?: () => boolean;
-  /** Called when Escape asks the layer to close. */
-  dismiss?: (reason: OverlayDismissReason) => void;
+  /** Called when Escape asks the layer to close, with the key, which is not cancelled yet (the stack cancels it after the call). */
+  dismiss?: (reason: OverlayDismissReason, event: KeyboardEvent) => void;
 }
 
 /** Runs every step, even when one throws, and throws the first error at the end. */
@@ -64,7 +64,7 @@ export function openOverlay(options: OverlayOptions): () => void {
         root: () => root,
         escape: options.escape ?? (() => true),
         trap: () => options.trapFocus !== false,
-        dismiss: (reason) => options.dismiss?.(reason)
+        dismiss: (reason, event) => options.dismiss?.(reason, event)
       })
     );
     const initial = typeof options.initialFocus === 'function' ? options.initialFocus() : options.initialFocus;
