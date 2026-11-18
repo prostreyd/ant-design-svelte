@@ -143,19 +143,7 @@
     };
   });
 
-  // The zoom starts at the click that opened the Modal.
   $effect(() => trackPress());
-  $effect(() => {
-    if (!open || !shown || !dialogElement) return;
-    const box = dialogElement;
-    const press = recentPress();
-    if (!press) {
-      box.style.removeProperty('transform-origin');
-      return;
-    }
-    const rect = box.getBoundingClientRect();
-    box.style.setProperty('transform-origin', `${press.x - rect.left}px ${press.y - rect.top}px`);
-  });
 
   /** What gets focus when the Modal opens: the button asked for, or the first element Tab reaches, or the dialog itself. */
   function initialFocus(): HTMLElement {
@@ -185,6 +173,25 @@
       escape: () => keyboard,
       dismiss: (_reason, event) => cancel(event)
     });
+  });
+
+  // The zoom starts at the click that opened the Modal. It is worked out after the page is locked (the next effect): without a
+  // scrollbar the window is wider, and the dialog stands a few pixels further.
+  $effect(() => {
+    if (!open || !shown || !dialogElement) return;
+    const box = dialogElement;
+    const press = recentPress();
+    if (!press) {
+      box.style.removeProperty('transform-origin');
+      return;
+    }
+    // Where the dialog stands without the zoom: the enter animation has already scaled its rectangle. It is positioned in the scroll
+    // area, which is not animated.
+    const area = wrapperElement as HTMLElement;
+    const place = area.getBoundingClientRect();
+    const left = place.left + box.offsetLeft - area.scrollLeft;
+    const top = place.top + box.offsetTop - area.scrollTop;
+    box.style.setProperty('transform-origin', `${press.x - left}px ${press.y - top}px`);
   });
 
   $effect(
@@ -407,7 +414,10 @@
     overflow-wrap: break-word;
   }
 
+  /* A block formatting context: the margins of the first and the last element of the content stay in the body and do not run through
+     the 8 px under the title or the 12 px above the footer. */
   .ads-modal-body {
+    display: flow-root;
     overflow-wrap: break-word;
   }
 
