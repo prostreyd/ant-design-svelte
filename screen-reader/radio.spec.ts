@@ -7,12 +7,13 @@
 import { orcaTest as test } from '@guidepup/playwright';
 import { expect } from '@playwright/test';
 import { BASE, open, settle, toWebContent } from './helpers';
+import { cleanSpoken } from './spoken';
 
 test.use({ orcaStartOptions: { capture: true } });
 test.setTimeout(240_000);
 
-/** What Orca said last, without the "tab." it adds for each key press. */
-const said = async (orca: { lastSpokenPhrase(): Promise<string> }) => (await orca.lastSpokenPhrase()).replace(/tab\. /g, '');
+/** What Orca said last, without the "tab." of each key press and the landmark it may say first (see `cleanSpoken`). */
+const said = async (orca: { lastSpokenPhrase(): Promise<string> }) => cleanSpoken(await orca.lastSpokenPhrase());
 
 test('Radio: Orca says the name and the state of a radio, the name of a group and the selected radio, and follows an arrow key', async ({ page, orca }) => {
   await open(page, `${BASE}/#radio`);

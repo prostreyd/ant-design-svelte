@@ -17,6 +17,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   so and advise `mode="inline"` there, and the examples with vertical menus are narrower on a phone, so their popups stay inside the
   screen; a test of the site checks it at 390 and 360 px.
 
+### Tests
+
+- The screen reader test of the `Radio` no longer depends on the name of the landmark ("main content") that Orca says first when the focus
+  comes into the main region: on GitHub it said it in a first attempt and not in the retry of the same commit. A small module removes a
+  leading landmark (and the "tab." of each key press) from what Orca said, and a unit test checks it with the phrase that had failed.
+
 ## [0.11.0] - 2026-11-18
 
 ### Added
