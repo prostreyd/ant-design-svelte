@@ -134,6 +134,14 @@ additive.
   the left at the edge. `horizontal`: a row; a top-level submenu opens below its item (`bottomLeft`), nested ones to
   the right. `inline`: a column; a submenu expands in place, each level indented by `inlineIndent`, the arrow turns,
   the height animates.
+- **A popup that does not fit (known limit, 2026-11-18).** The popup primitive flips a popup to the side with less overflow and
+  never moves it along the main axis (`specs/popup.md`, R2), so a popup beside a vertical menu that is too wide for the screen is cut
+  off (measured at 390 px: a menu of 247 px, a popup of 128 px, 98 px free on the right). The reference implementations differ (measured
+  the same day on the public demos at 390 px: React flips and leaves it 91 px off the screen in one demo and opens it above in another,
+  Vue pushes it inside the window over its menu, Angular does not even flip), so there is no single behavior to take. The maintainer chose
+  to keep ours (**A**) and to say so (this paragraph, the page, the README) and to keep the vertical menus of the examples narrower on a
+  phone (**E**); moving the popup inside the window, or opening it above or below the title as React does in one demo, was offered and
+  not taken. Test: `docs/e2e/site.spec.ts`, "on a phone the popup of a submenu of every vertical menu stays inside the screen".
 - **Selection.** A click on a selectable item adds its key to `selectedKeys`; without `multiple` it replaces the
   previous one and a second click keeps it; with `multiple` a click toggles. The title of a submenu that holds the
   selected item gets the selected color (React `subMenuItemSelectedColor`), and in `horizontal` the selected top-level item

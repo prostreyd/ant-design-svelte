@@ -52,7 +52,7 @@ menu a container with a width.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `items` | `MenuItems` | `[]` | Items, submenus (an item with `children`), groups (`type: 'group'`) and dividers (`type: 'divider'`). A non-empty `items` wins over markup children. |
-| `mode` | `'vertical' \| 'horizontal' \| 'inline'` | `'vertical'` | The type of the menu. |
+| `mode` | `'vertical' \| 'horizontal' \| 'inline'` | `'vertical'` | The type of the menu. A popup that does not fit is flipped to the other side, not moved inside the window: on a very narrow screen use `inline`. |
 | `theme` | `'light' \| 'dark'` | `'light'` | The light menu follows the theme of the page; the dark one is the dark blue menu of Ant Design. |
 | `selectedKeys` | `string[]` (`$bindable`) | `[]` | Selected items. `bind:selectedKeys`; a plain value is the initial one. |
 | `openKeys` | `string[]` (`$bindable`) | `[]` | Open submenus. `bind:openKeys`; a plain value is the initial one. |
