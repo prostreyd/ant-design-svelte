@@ -9,6 +9,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Changed
+
+- Internal, no change for users: the parts that every layer needs are now shared. Moving a panel out of its place in the page
+  (`portal`) and waiting for a leave animation (`anim`) were taken out of `Popup`; `Popup`, `Tooltip` and `Select` behave as
+  before. New shared part for the Modal and the Drawer (`overlay`): the page does not scroll while a layer is open and does
+  not jump sideways, the page behind the layer is out of reach of the keyboard, the pointer and assistive technology, focus
+  stays inside the layer and comes back, and Escape closes the topmost layer. None of this is exported from the package yet.
+
 ## [0.9.0] - 2026-11-17
 
 ### Added
