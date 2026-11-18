@@ -186,6 +186,28 @@ test.describe('focus (O3)', () => {
   });
 });
 
+test.describe('quick toggling (O5, F2 of the Modal)', () => {
+  test('open, close and open again quickly leaves the page free after the last close, and the layer still works', async ({ page }) => {
+    await page.evaluate(async () => {
+      const lab = (window as unknown as { __overlayLab: Lab }).__overlayLab;
+      const tick = () => new Promise((done) => setTimeout(done, 0));
+      for (let index = 0; index < 6; index++) {
+        lab.open('a');
+        await tick();
+        lab.close('a');
+        await tick();
+      }
+    });
+    await expect(page.getByTestId('layer-a')).toHaveCount(0);
+    expect(await bodyStyle(page)).toEqual({ overflow: '', padding: '' });
+    await page.getByTestId('page-button').click();
+    expect(await clicks(page)).toBe(1);
+    await openA(page);
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('layer-a')).toHaveCount(0);
+  });
+});
+
 test.describe('Escape and the stack (O4)', () => {
   test('Escape closes the layer', async ({ page }) => {
     await openA(page);

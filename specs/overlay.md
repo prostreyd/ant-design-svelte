@@ -88,8 +88,11 @@ layer without a mask (a Drawer with no mask) takes only what it needs.
   key that was already handled (`defaultPrevented`, which is how a popup says it used Escape) or that ends an IME composition
   is ignored. The listener is on `window`, so it runs after the document listener of the popups. **Tab** is handled by the
   topmost layer only, so a second Modal over the first does not have two traps fighting.
-- **O5.** `openOverlay` does these in a fixed order: remember the focused element, put `inert` on the outside, lock the scroll,
-  join the stack, move focus in. Closing undoes it in the reverse order. Each step is undone even when another throws.
+- **O5.** `openOverlay` does these in a fixed order: remember the focused element, join the stack, move focus in, put `inert` on the
+  outside, lock the scroll. Focus goes in **before** the page is put out of reach: where the engine does not know `inert` the page gets
+  `aria-hidden`, and a browser reports and ignores that on an ancestor of the element that has focus (found while writing the Modal:
+  React tracker 50170, Vue 7838). Closing undoes it in the reverse order, and gives focus back last, once the page is reachable
+  again. Each step is undone even when another throws. Opening, closing and opening again quickly leaves one hold of each kind.
 - **O6.** Nothing here touches the DOM at import time or on the server; the functions are called from effects only.
 
 ## Decisions
@@ -129,7 +132,7 @@ and must pass unchanged, which is how "no change of behavior" is shown.
   disabled, `tabindex="-1"` and inert elements are skipped; restore, the guards of restore, `restoreFocus: false`.
 - O4: Escape reaches only the topmost; `escape()` false lets it pass; a handled key and a composition are ignored; a popup that
   used Escape stops the layer; the listener is removed with the last layer.
-- O5: the order of the steps and their undoing, also when a step throws.
+- O5: the order of the steps (focus before the page is hidden, F1) and their undoing, also when a step throws; open, close and open quickly (F2).
 - The two together, as a component makes them (`tests/overlayLayer.test.ts`, harness `tests/fixtures/OverlayHarness.svelte`): the
   layer is already in the body when `openOverlay` runs in an effect of the component (a nested effect in the portal ran
   after it and `inert` went to the wrong siblings; the portal now places the element when the attachment runs); opens and

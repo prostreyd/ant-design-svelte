@@ -202,6 +202,50 @@ describe('openOverlay (O5)', () => {
   });
 });
 
+describe('the order of the steps (O5, F1 and F2 of the Modal)', () => {
+  it('moves focus into the layer before it puts the page out of reach: aria-hidden must not land on an ancestor of the focused element', () => {
+    get('trigger').focus();
+    let focusWhenHiding: Element | null = null;
+    vi.spyOn(inert, 'hideOutside').mockImplementation(() => {
+      focusWhenHiding = document.activeElement;
+      return () => {};
+    });
+    open();
+    expect(focusWhenHiding).toBe(get('box'));
+  });
+
+  it('moves focus into the layer before it locks the scroll, and both are done by the time it returns', () => {
+    get('trigger').focus();
+    let focusWhenLocking: Element | null = null;
+    vi.spyOn(lock, 'lockScroll').mockImplementation(() => {
+      focusWhenLocking = document.activeElement;
+      return () => {};
+    });
+    open();
+    expect(focusWhenLocking).toBe(get('box'));
+  });
+
+  it('opening, closing and opening again quickly leaves one lock, one layer in the stack, and the page reachable after the last close', () => {
+    get('trigger').focus();
+    for (let index = 0; index < 5; index++) {
+      const close = open();
+      expect(stack.openOverlays()).toHaveLength(1);
+      close();
+      expect(stack.openOverlays()).toHaveLength(0);
+    }
+    const last = open();
+    const again = open();
+    expect(document.body.style.overflow).toBe('hidden');
+    last();
+    again();
+    again();
+    expect(stack.openOverlays()).toHaveLength(0);
+    expect(document.body.style.overflow).toBe('');
+    expect(get('app').hasAttribute('inert')).toBe(false);
+    expect(document.activeElement).toBe(get('trigger'));
+  });
+});
+
 describe('openOverlay when a step throws (O5)', () => {
   it('undoes the steps before it and throws the same error', () => {
     const error = new Error('no stack');

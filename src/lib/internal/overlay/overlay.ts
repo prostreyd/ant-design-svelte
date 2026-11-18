@@ -38,10 +38,11 @@ function runAll(steps: (() => void)[]): void {
 }
 
 /**
- * Makes a layer modal (specs/overlay.md, O5): remembers what has focus, puts the page behind the layer out of reach, locks
- * the scroll, joins the stack that gives Escape and Tab to the topmost layer, and moves focus in. The function it returns
- * undoes all of it in the reverse order, and gives focus back last, once the page is reachable again. A step that throws
- * undoes the ones before it.
+ * Makes a layer modal (specs/overlay.md, O5): remembers what has focus, joins the stack that gives Escape and Tab to the
+ * topmost layer, moves focus in, and only then puts the page behind the layer out of reach and locks the scroll: where the
+ * engine does not know `inert` the page gets `aria-hidden`, and a browser does not accept that on an ancestor of the element
+ * that has focus (it reports it and ignores it). The function it returns undoes all of it in the reverse order, and gives
+ * focus back last, once the page is reachable again. A step that throws undoes the ones before it.
  *
  * Call it from an effect, while the layer is open, and return what it returns: it touches the DOM.
  */
@@ -58,8 +59,6 @@ export function openOverlay(options: OverlayOptions): () => void {
       const now = document.activeElement;
       if (!now || now === document.body || root.contains(now)) focusQuietly(previous);
     });
-    if (options.inertOutside !== false) undo.push(hideOutside(scope));
-    if (options.lockScroll !== false) undo.push(lockScroll(options.lockScroll));
     undo.push(
       registerOverlay({
         root: () => root,
@@ -70,6 +69,8 @@ export function openOverlay(options: OverlayOptions): () => void {
     );
     const initial = typeof options.initialFocus === 'function' ? options.initialFocus() : options.initialFocus;
     focusQuietly(initial ?? root);
+    if (options.inertOutside !== false) undo.push(hideOutside(scope));
+    if (options.lockScroll !== false) undo.push(lockScroll(options.lockScroll));
   } catch (error) {
     close();
     throw error;
