@@ -1,7 +1,9 @@
 <script lang="ts">
   import { untrack, type Snippet } from 'svelte';
   import type { HTMLAttributes } from 'svelte/elements';
+  import { waitForLeave } from '../anim/leave.js';
   import { resolveOption } from '../options.js';
+  import { portal, resolveContainer } from '../portal/portal.svelte.js';
   import { classList, styleText, type SemanticStyle } from '../semantic.js';
   import { registerLayer } from './layers.js';
   import { computePlacement, type Box } from './placement.js';
@@ -115,7 +117,6 @@
   let shown = $state(false);
   let frame = $state<HTMLElement | null>(null);
 
-  let leaveToken = 0;
   let leaveCleanup: (() => void) | null = null;
   let lastPlacement: PopupPlacement | null = null;
   // The translation of the last placement: exactly as computed, and as written (rounded to a device pixel). The
@@ -125,7 +126,6 @@
   let appliedY = 0;
 
   function cancelLeave(): void {
-    leaveToken++;
     leaveCleanup?.();
     leaveCleanup = null;
   }
@@ -147,25 +147,11 @@
   /** Plays the leave animation and hides the panel when it ends; at once when there is no animation. */
   function beginLeave(): void {
     cancelLeave();
-    const token = leaveToken;
-    const element = frame;
-    const name = element ? getComputedStyle(element).animationName : 'none';
-    if (!element || !name || name === 'none') {
+    if (!frame) {
       finishLeave();
       return;
     }
-    const done = (event?: Event) => {
-      if (token !== leaveToken || (event && event.target !== element)) return;
-      finishLeave();
-    };
-    element.addEventListener('animationend', done);
-    element.addEventListener('animationcancel', done);
-    const fallback = setTimeout(done, 1000);
-    leaveCleanup = () => {
-      element.removeEventListener('animationend', done);
-      element.removeEventListener('animationcancel', done);
-      clearTimeout(fallback);
-    };
+    leaveCleanup = waitForLeave(frame, finishLeave);
   }
 
   // The lifecycle: open shows (and mounts on the first time); close plays the leave animation and hides.
@@ -198,36 +184,10 @@
     });
   });
 
-  function resolveContainer(): HTMLElement {
-    const target = typeof container === 'function' ? container(anchorElement) : container;
-    return target ?? document.body;
-  }
-
-  // Move the panel to its container each time it is shown, and again if the container changes while it is
-  // shown. Appending moves the node to the end of its container, so popups of equal z-index stack in the
-  // order of opening (R10). The effect runs once before the panel exists, and again when it does.
-  let appendedTo: HTMLElement | null = null;
-  $effect(() => {
-    const element = panel;
-    if (!shown) {
-      appendedTo = null;
-      return;
-    }
-    if (!element) return;
-    const target = resolveContainer();
-    if (appendedTo !== target) {
-      target.appendChild(element);
-      appendedTo = target;
-    }
-  });
-
-  // Svelte removes only the range of DOM nodes it knows about, and the panel has been moved out of it: without
-  // this the panel would stay in the container after the component is gone.
-  $effect(() => {
-    const element = panel;
-    if (!element) return;
-    return () => element.remove();
-  });
+  // The panel is moved to its container each time it is shown, and again if the container changes while it is shown
+  // (the attachment on the panel, `internal/portal`): popups of equal z-index stack in the order of opening (R10). It
+  // also takes the panel out of the container when the component is gone.
+  const target = () => (shown ? resolveContainer(container, anchorElement) : null);
 
   $effect(() => {
     if (panel) panel.style.zIndex = zIndex === undefined ? '' : String(zIndex);
@@ -427,7 +387,7 @@
 </script>
 
 {#if mounted && anchor !== null}
-  <div class={panelClass} hidden={!shown} bind:this={panel}>
+  <div class={panelClass} hidden={!shown} bind:this={panel} {@attach portal(target)}>
     <div
       {...rest}
       class={classList('ads-popup-frame', customClass)}
