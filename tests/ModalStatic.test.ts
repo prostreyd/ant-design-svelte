@@ -194,10 +194,10 @@ describe('R15: the five calls', () => {
 });
 
 describe('R15: the defaults of a dialog (P15)', () => {
-  it('416 px wide, no close button, and the mask does not close it', async () => {
+  it('416 px wide (the token), no close button, and the mask does not close it', async () => {
     modal.confirm({ title: 'T' });
     await settle();
-    expect(alertDialog().style.width).toBe('416px');
+    expect(alertDialog().style.width).toBe('var(--ads-modal-confirm-width)');
     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
     await fireEvent.pointerDown(document.querySelector('.ads-modal-wrapper') as HTMLElement);
     await fireEvent.click(document.querySelector('.ads-modal-wrapper') as HTMLElement);

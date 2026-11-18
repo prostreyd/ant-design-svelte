@@ -53,7 +53,7 @@
     typeof value === 'object' && value !== null && typeof (value as { then?: unknown }).then === 'function';
 
   // OK: the Modal (`closeOnOk`) waits for the Promise. A reject keeps the dialog open, and then it has not been answered.
-  function onok(event: MouseEvent): void | Promise<unknown> {
+  function onok(event: MouseEvent): unknown {
     lastAction = 'ok';
     const result = options.onok?.(event);
     if (!isThenable(result)) return;
@@ -159,7 +159,7 @@
   {mask}
   keyboard={options.keyboard}
   centered={options.centered}
-  width={options.width ?? 416}
+  width={options.width ?? 'var(--ads-modal-confirm-width)'}
   zIndex={options.zIndex}
   container={options.container}
   {focusable}

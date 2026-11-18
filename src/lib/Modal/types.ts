@@ -90,7 +90,7 @@ export type ModalProps = Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'clas
   /** The OK button is loading. */
   confirmLoading?: boolean;
   /** The OK button was pressed. Return a Promise to make the OK button wait (with `closeOnOk`). */
-  onok?: (event: MouseEvent) => void | Promise<unknown>;
+  onok?: (event: MouseEvent) => unknown;
   /** The Modal closes after `onok`, waiting for a Promise it returned. Default `false`. */
   closeOnOk?: boolean;
   /** The close button, Cancel, Escape or the mask asked to close. `event.preventDefault()` keeps the Modal open. */
@@ -150,9 +150,9 @@ export interface ModalFuncOptions {
   okButtonProps?: ModalButtonProps;
   cancelButtonProps?: ModalButtonProps;
   /** A Promise it returns keeps the OK button loading: a resolve closes the dialog, a reject keeps it open. */
-  onok?: (event: MouseEvent) => void | Promise<unknown>;
+  onok?: (event: MouseEvent) => unknown;
   /** Called on Cancel, Escape and the other ways; a Promise it returns is waited for in the same way. `event.preventDefault()` keeps it open. */
-  oncancel?: (event: MouseEvent | KeyboardEvent) => void | Promise<unknown>;
+  oncancel?: (event: MouseEvent | KeyboardEvent) => unknown;
   closable?: boolean | ModalClosable;
   closeIcon?: Snippet;
   mask?: boolean | ModalMask;

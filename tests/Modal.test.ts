@@ -360,9 +360,9 @@ describe('R5: the footer', () => {
 });
 
 describe('R7 and R8: the size and the layer', () => {
-  it('the width is 520 px by default, a number is px, a string is as written', () => {
+  it('the width is the token (520 px) by default, a number is px, a string is as written', () => {
     mount({ title: 'T' });
-    expect(dialog().style.width).toBe('520px');
+    expect(dialog().style.width).toBe('var(--ads-modal-width)');
     cleanup();
     mount({ title: 'T', width: 720 });
     expect(dialog().style.width).toBe('720px');
@@ -393,7 +393,7 @@ describe('R11: customization', () => {
     mount({ title: 'T', class: 'mine', style: 'top: 20px' });
     expect(dialog()).toHaveClass('ads-modal', 'mine');
     expect(dialog().style.top).toBe('20px');
-    expect(dialog().style.width).toBe('520px');
+    expect(dialog().style.width).toBe('var(--ads-modal-width)');
   });
 
   it('wrapClassName goes on the wrapper', () => {

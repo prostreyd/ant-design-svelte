@@ -32,7 +32,7 @@
     mask = true,
     keyboard = true,
     centered = false,
-    width = 520,
+    width,
     zIndex,
     container,
     destroyOnHidden = false,
@@ -71,7 +71,8 @@
   const closeIconSnippet = $derived(closableConfig.closeIcon ?? closeIcon);
   const maskEnabled = $derived(mask === false ? false : typeof mask === 'object' && mask !== null ? mask.enabled !== false : true);
   const maskClosable = $derived(typeof mask === 'object' && mask !== null ? mask.closable !== false : true);
-  const widthCss = $derived(typeof width === 'number' ? `${width}px` : width);
+  // No width: the token (520 px). A number is px.
+  const widthCss = $derived(width === undefined ? 'var(--ads-modal-width)' : typeof width === 'number' ? `${width}px` : width);
   const dataState = $derived(open ? 'open' : 'closed');
   const okLoading = $derived(Boolean(confirmLoading || okPending || okButtonProps?.loading));
 
