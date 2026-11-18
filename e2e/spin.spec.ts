@@ -35,6 +35,20 @@ async function rect(locator: Locator): Promise<Rect> {
     return { x: r.left, y: r.top, w: r.width, h: r.height };
   });
 }
+/**
+ * Boxes that are compared with each other are read in one page task, so that one layout snapshot is measured. Two separate
+ * commands can straddle a relayout of the page on a loaded machine (a failure seen in WebKit in a full run, 2026-11-18).
+ */
+async function rects<T extends string>(page: Page, selectors: Record<T, string>): Promise<Record<T, Rect>> {
+  return page.evaluate((map) => {
+    const out: Record<string, { x: number; y: number; w: number; h: number }> = {};
+    for (const [name, selector] of Object.entries(map)) {
+      const r = document.querySelector(selector)!.getBoundingClientRect();
+      out[name] = { x: r.left, y: r.top, w: r.width, h: r.height };
+    }
+    return out;
+  }, selectors as Record<string, string>) as Promise<Record<T, Rect>>;
+}
 const centerX = (r: Rect) => r.x + r.w / 2;
 const centerY = (r: Rect) => r.y + r.h / 2;
 const near = (a: number, b: number, tolerance = 1) => Math.abs(a - b) <= tolerance;
@@ -93,9 +107,7 @@ test.describe('Spin: geometry (the Ant Design demos, 2026-11-17)', () => {
       ['large', 32]
     ] as const) {
       await mount(page, { size, description: 'Loading' });
-      const root = await rect(spin(page));
-      const part = await rect(indicator(page));
-      const text = await rect(page.locator('.ads-spin-description'));
+      const { root, part, text } = await rects(page, { root: '[data-testid="spin"]', part: '.ads-spin-indicator', text: '.ads-spin-description' });
       expect(near(centerX(part), centerX(root)), `${size} indicator is centered`).toBe(true);
       expect(near(centerX(text), centerX(root)), `${size} text is centered`).toBe(true);
       expect(near(text.y - (part.y + part.h), 12, 0.6), `${size} gap`).toBe(true);
@@ -109,20 +121,21 @@ test.describe('Spin: geometry (the Ant Design demos, 2026-11-17)', () => {
 
   test('SPN-3: embedded: the indicator is centered in the covered content, horizontally and vertically', async ({ page }) => {
     await mount(page, { 'aria-label': 'Loading' }, 'text');
-    const covered = await rect(container(page));
-    const part = await rect(indicator(page));
+    const { covered, part } = await rects(page, { covered: '.ads-spin-container', part: '.ads-spin-indicator' });
     expect(near(centerX(part), centerX(covered), 1)).toBe(true);
     expect(near(centerY(part), centerY(covered), 1)).toBe(true);
   });
 
   test('SPN-3: embedded with a description: indicator and text are centered as one group', async ({ page }) => {
     await mount(page, { description: 'Loading' }, 'text');
-    const covered = await rect(container(page));
-    const section = await rect(page.locator('.ads-spin-section'));
+    const { covered, section, part, text } = await rects(page, {
+      covered: '.ads-spin-container',
+      section: '.ads-spin-section',
+      part: '.ads-spin-indicator',
+      text: '.ads-spin-description'
+    });
     expect(near(centerX(section), centerX(covered))).toBe(true);
     expect(near(centerY(section), centerY(covered))).toBe(true);
-    const part = await rect(indicator(page));
-    const text = await rect(page.locator('.ads-spin-description'));
     expect(near(text.y - (part.y + part.h), 12, 0.6)).toBe(true);
   });
 
@@ -130,11 +143,10 @@ test.describe('Spin: geometry (the Ant Design demos, 2026-11-17)', () => {
     await mount(page, { size: 'large', description: 'x' }, 'none', { custom: true });
     await expect(dots(page)).toHaveCount(0);
     expect(await computed(indicator(page), 'font-size')).toBe('32px');
-    const box = await rect(indicator(page));
+    const { box, icon } = await rects(page, { box: '.ads-spin-indicator', icon: '[data-testid="custom-indicator"]' });
     expect(box.w).toBeCloseTo(32, 0);
     expect(box.h).toBeCloseTo(32, 0);
     // The icon is 1em, so it fills the box, and the box is centered over the description.
-    const icon = await rect(page.getByTestId('custom-indicator'));
     expect(icon.w).toBeCloseTo(32, 0);
     expect(near(centerX(icon), centerX(box))).toBe(true);
     expect(near(centerY(icon), centerY(box))).toBe(true);
@@ -414,11 +426,10 @@ test.describe('Spin: percent ring (SPN-15, SPN-16)', () => {
 test.describe('Spin: right to left (SPN-21)', () => {
   test('the dots mirror and the indicator and description stay centered', async ({ page }) => {
     await mount(page, { description: 'Loading' }, 'none', { dir: 'rtl' });
-    const root = await rect(spin(page));
-    expect(near(centerX(await rect(indicator(page))), centerX(root))).toBe(true);
-    expect(near(centerX(await rect(page.locator('.ads-spin-description'))), centerX(root))).toBe(true);
+    const { root, part, text, box } = await rects(page, { root: '[data-testid="spin"]', part: '.ads-spin-indicator', text: '.ads-spin-description', box: '.ads-spin-indicator' });
+    expect(near(centerX(part), centerX(root))).toBe(true);
+    expect(near(centerX(text), centerX(root))).toBe(true);
     const corners = await dots(page).evaluateAll((items) => items.map((item) => (item as HTMLElement).offsetLeft));
-    const box = await rect(indicator(page));
     // The first dot is at the start of the line, which is the right edge in right-to-left.
     expect(corners[0]).toBeGreaterThan(box.w / 2 - 1);
     expect(corners[1]).toBe(0);
@@ -426,8 +437,7 @@ test.describe('Spin: right to left (SPN-21)', () => {
 
   test('embedded: the indicator is centered in the covered content', async ({ page }) => {
     await mount(page, { 'aria-label': 'Loading' }, 'text', { dir: 'rtl' });
-    const covered = await rect(container(page));
-    const part = await rect(indicator(page));
+    const { covered, part } = await rects(page, { covered: '.ads-spin-container', part: '.ads-spin-indicator' });
     expect(near(centerX(part), centerX(covered))).toBe(true);
     expect(near(centerY(part), centerY(covered))).toBe(true);
   });
