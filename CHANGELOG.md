@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-18
+
 ### Added
 
 - `Menu`, with `MenuItem`, `MenuSubMenu`, `MenuItemGroup` and `MenuDivider`: a list of choices for navigation. Three types:
