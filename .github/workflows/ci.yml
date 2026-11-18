@@ -53,6 +53,12 @@ jobs:
 
   e2e-library:
     runs-on: ubuntu-24.04
+    # The official image of Playwright: the three browsers and all their system packages are already in it, so a job downloads
+    # nothing and runs no `apt` at the start. (On 2026-11-18 the `apt` of `playwright install --with-deps` timed out on a slow
+    # Ubuntu mirror in every e2e job, `main` included, before a test ran.) The tag is the version of Playwright in
+    # package-lock.json; tests/ciPlaywright.test.ts fails when they differ, so change both together.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
     # About 20 minutes; a slow runner adds 40% to that, so the limit leaves room for it.
     timeout-minutes: 40
     steps:
@@ -64,19 +70,6 @@ jobs:
           cache: npm
 
       - run: npm ci
-
-      # The tests run in Chromium, Firefox and WebKit. The download is cached by the version of Playwright, so most
-      # runs only install the system packages.
-      - name: Cache the browsers of Playwright
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Install the browsers for e2e tests
-        run: npx playwright install --with-deps chromium firefox webkit
-        timeout-minutes: 8
 
       - name: End-to-end tests of the library
         run: npm run test:e2e
@@ -92,6 +85,12 @@ jobs:
 
   e2e-site:
     runs-on: ubuntu-24.04
+    # The official image of Playwright: the three browsers and all their system packages are already in it, so a job downloads
+    # nothing and runs no `apt` at the start. (On 2026-11-18 the `apt` of `playwright install --with-deps` timed out on a slow
+    # Ubuntu mirror in every e2e job, `main` included, before a test ran.) The tag is the version of Playwright in
+    # package-lock.json; tests/ciPlaywright.test.ts fails when they differ, so change both together.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
     # About 25 minutes with the build; the limit leaves room for a slow runner.
     timeout-minutes: 45
     steps:
@@ -109,17 +108,6 @@ jobs:
         run: npm run build
         env:
           BASE_PATH: /ant-design-svelte
-
-      - name: Cache the browsers of Playwright
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Install the browsers for e2e tests
-        run: npx playwright install --with-deps chromium firefox webkit
-        timeout-minutes: 8
 
       - name: Check and test the documentation site
         run: npm run test:docs
