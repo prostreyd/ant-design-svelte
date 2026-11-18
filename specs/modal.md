@@ -344,7 +344,7 @@ covering layer, Vue puts `aria-hidden` on two body-level elements, Angular does 
 - **P6.** `mask: false` draws no mask and keeps every other modal behavior (observed in the React demo "No mask").
 - **P7.** `modalRender` is a snippet that gets the card as a snippet and may wrap it (for a draggable Modal, which the library does not provide).
 - **P8.** Reserved, not in v1.0: `mask.blur`, `width` by breakpoint, `loading`, `ConfigProvider` defaults and locale, `modal.config`.
-- **P9.** The zoom starts at the point of the last press, kept by one document listener that exists only while a Modal exists; a keyboard open starts at the center.
+- **P9.** The zoom starts at the point of the last press, kept by one document listener that exists only while a Modal exists; a keyboard open starts at the center. A press belongs to a Modal that opens in the same task as the click (see "Решения и обоснование") or within 300 ms of it; a Modal opened later (a timer, a request) zooms from the middle.
 - **P10.** The title is a `div` and carries the id of `aria-labelledby`, as in React.
 - **P11.** `wrapClassName` stays although `classNames.wrapper` is the same part (all of React, Vue and Angular have it).
 - **P12.** A Modal opened from inside a popup is a known limit (the press in the Modal is outside the popup and closes it); the page says so and a test shows it; `container` is the remedy.
@@ -403,7 +403,7 @@ English, Russian and Chinese. The page names the limits: iOS before 16, a Modal 
 
 The decisions D1 to D7 and the proposals P1 to P20 above are the maintainer's answers of 2026-11-18 and are final for v1.0. Things that were settled while implementing, each with its test:
 
-- **The zoom starts at the last press (P9).** The origin is computed from the layout offsets of the wrapper after the scroll lock is in place, not from a rectangle read while the card is scaled; the press counts for 300 ms and a click with `detail === 0` (a key) is ignored, so a keyboard open starts at the center.
+- **The zoom starts at the last press (P9).** The origin is computed from the layout offsets of the wrapper after the scroll lock is in place, not from a rectangle read while the card is scaled; the press counts for 300 ms and a click with `detail === 0` (a key) is ignored, so a keyboard open starts at the center. Which press counts is decided by the order of tasks first and by the clock second: the effects of a flush run as microtasks before the next task, so a Modal that opens in the task of the click was opened by it however long a slow page or a busy machine takes (a click was dropped after 300 ms of a starved WebKit, 0.3 to 1.2 s measured with 24 busy loops; 28 of 40 runs of the browser test failed, 40 of 40 pass after the change); a press that is older counts for 300 ms. Tests: `tests/Modal.test.ts` (it fails on the version that only read the clock) and `e2e/modal.spec.ts`.
 - **A handle always resolves.** `closeEntry` is called when the dialog's `open` turns false and again in `onafterclose`, before the entry is removed (and by `destroy` and `destroyAll`); it is idempotent, so the handle resolves with or without a leave animation (`prefers-reduced-motion`).
 - **`oncancel` is not the HTML `oncancel`.** The prop is removed from the inherited attribute type of `ModalProps` and typed as ours.
 - **The widths are tokens** (see "Colors, tokens and sizes"), so a theme changes them without a prop.

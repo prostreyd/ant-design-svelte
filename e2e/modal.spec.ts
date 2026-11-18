@@ -195,7 +195,10 @@ test.describe('the zoom, the leave and reduced motion (R2)', () => {
     await expect(box).toHaveCSS('animation-duration', '0.3s');
     expect(await css(page.locator('.ads-modal-mask'), 'animation-name')).toContain('ads-modal-fade-in');
     await expect(page.locator('.ads-modal-mask')).toHaveCSS('animation-duration', '0.2s');
-    const origin = await box.evaluate((element) => (element as HTMLElement).style.transformOrigin);
+    // The origin is set by an effect that runs a flush after the dialog is in the page, so it is read with a retry (a single read races it).
+    const readOrigin = () => box.evaluate((element) => (element as HTMLElement).style.transformOrigin);
+    await expect.poll(readOrigin).not.toBe('');
+    const origin = await readOrigin();
     await expect.poll(() => log(page)).toContain('afteropenchange:true');
     const final = await rect(box);
     const [ox, oy] = origin.split(' ').map(parseFloat);

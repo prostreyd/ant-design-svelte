@@ -441,6 +441,25 @@ describe('the pointer of a click (P9)', () => {
     expect(dialog().style.transformOrigin).toBe('');
   });
 
+  it('a click in the task that opens the Modal is its press however long the opening takes (a busy machine)', async () => {
+    const { rerender } = mount({ open: false });
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 40, clientY: 50, detail: 1 }));
+    // No timer has run: the opening is still in the task of the click, but the clock says a second has gone by.
+    vi.spyOn(performance, 'now').mockReturnValue(performance.now() + 1000);
+    await rerender({ open: true });
+    expect(dialog().style.transformOrigin).toMatch(/px/);
+  });
+
+  it('after the task of the click a press counts for 300 ms', async () => {
+    const { rerender } = mount({ open: false });
+    const now = performance.now();
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 40, clientY: 50, detail: 1 }));
+    vi.advanceTimersByTime(50);
+    vi.spyOn(performance, 'now').mockReturnValue(now + 200);
+    await rerender({ open: true });
+    expect(dialog().style.transformOrigin).toMatch(/px/);
+  });
+
   it('a click that is older than a moment is forgotten', async () => {
     const { rerender } = mount({ open: false });
     document.body.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 40, clientY: 50, detail: 1 }));
