@@ -47,7 +47,7 @@ the scroll lock and `inert` follow MDN. API inspired by Ant Design (MIT); the im
 
 - **A1** (`leave.ts`). `waitForLeave(element, done)` calls `done` once: when the element's own animation ends or is cancelled
   (the end of an animation of a child does not count), after one second if it never ends, or at once if the element has no
-  animation (`animation-name: none`, which is what `prefers-reduced-motion` sets). It returns a function that cancels it.
+  animation (`animation-name: none`, which is what `prefers-reduced-motion` sets) or there is no element (a panel that is not in the page yet). It returns a function that cancels it.
 - **A2** (`motion.ts`, **not in this branch**). The Web Animations of `Message/motion.ts` move here, with the distance of the slide
   as a parameter (`offsetToken`, which Message fills with its own `--ads-message-motion-offset`), in the branch that comes just
   before Notification. The changes are saved in the private notes of the maintainer's folder (`notes/message-motion-move/`).

@@ -89,6 +89,13 @@ describe('waitForLeave (A1)', () => {
     expect(done).toHaveBeenCalledTimes(1);
   });
 
+  it('calls done at once when there is no element at all', () => {
+    const done = vi.fn();
+    const cancel = waitForLeave(null, done);
+    expect(done).toHaveBeenCalledTimes(1);
+    expect(() => cancel()).not.toThrow();
+  });
+
   it('calls done at once when the style names no animation at all', () => {
     stubStyle({ animationName: '' });
     const done = vi.fn();

@@ -7,13 +7,15 @@ const FALLBACK_MS = 1000;
  *
  * `done` is called when the element's own animation ends or is cancelled (the end of an animation of something inside it is
  * not the end of this one), after one second if it never ends, and **at once** if the element has no animation to wait for:
- * `animation-name` is `none`, which is what `prefers-reduced-motion` sets and what a stylesheet that was not loaded leaves.
+ * `animation-name` is `none`, which is what `prefers-reduced-motion` sets and what a stylesheet that was not loaded leaves, or if there is no
+ * element at all.
  *
  * Returns the function that cancels the wait: `done` is not called after it. Calling it again, or after `done`, does nothing.
  */
-export function waitForLeave(element: HTMLElement, done: () => void, fallback: number = FALLBACK_MS): () => void {
-  const name = getComputedStyle(element).animationName;
-  if (!name || name === 'none') {
+export function waitForLeave(element: HTMLElement | null, done: () => void, fallback: number = FALLBACK_MS): () => void {
+  // No element (a panel that is not in the page yet) has nothing to animate: it is gone at once, as with no animation.
+  const name = element ? getComputedStyle(element).animationName : 'none';
+  if (!element || !name || name === 'none') {
     done();
     return () => {};
   }
