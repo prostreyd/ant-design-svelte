@@ -1,11 +1,12 @@
 name: CI
 
 on:
-  # Every pushed branch, not only main: the full run is the safety net of the smart local checks (`npm run test:affected`),
-  # so it has to be green on the branch before the branch is merged or released (CLAUDE.md 8a). A tag does not start it.
+  # Every pushed branch, not only main: the full run is the safety net of the smart local checks (`npm run test:affected`).
+  # A tag does not start it by itself: publish.yml calls it (`workflow_call`) and publishes only when every job is green.
   push:
     branches: ['**']
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read
