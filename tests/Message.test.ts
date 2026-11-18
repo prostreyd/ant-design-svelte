@@ -983,3 +983,11 @@ describe('on a server', () => {
     expect(html).not.toContain('ads-message');
   });
 });
+
+describe('a message above a Modal (specs/modal.md, D4)', () => {
+  it('the layer carries data-ads-overlay-keep, the attribute that keeps a layer out of what an open Modal puts out of reach', async () => {
+    message.info('Saved', 0);
+    await tick();
+    expect(document.querySelector('.ads-message-list')).toHaveAttribute('data-ads-overlay-keep');
+  });
+});

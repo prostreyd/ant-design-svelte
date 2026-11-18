@@ -13,6 +13,9 @@ export { default as Select } from './Select/Select.svelte';
 export { default as SelectOption } from './Select/SelectOption.svelte';
 export { default as SelectOptGroup } from './Select/SelectOptGroup.svelte';
 export { default as Tooltip } from './Tooltip/Tooltip.svelte';
+export { default as Modal } from './Modal/Modal.svelte';
+export { default as ModalHost } from './Modal/ModalHost.svelte';
+export { modal } from './Modal/modal.js';
 export { default as Spin } from './Spin/Spin.svelte';
 export { default as Row } from './Grid/Row.svelte';
 export { default as Col } from './Grid/Col.svelte';
@@ -182,3 +185,22 @@ export type {
   MenuTooltipProps,
   MenuTriggerAction
 } from './Menu/types.js';
+export { MODAL_KINDS, MODAL_PARTS } from './Modal/types.js';
+export type {
+  ModalApi,
+  ModalButtonProps,
+  ModalClassNames,
+  ModalClosable,
+  ModalContainer,
+  ModalFocusable,
+  ModalFooter,
+  ModalFooterContext,
+  ModalFuncOptions,
+  ModalHandle,
+  ModalKind,
+  ModalMask,
+  ModalPart,
+  ModalProps,
+  ModalStyles,
+  ModalText
+} from './Modal/types.js';

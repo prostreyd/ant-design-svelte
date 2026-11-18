@@ -784,6 +784,10 @@ describe('modal tokens (specs/modal.md)', () => {
     expect(normalize(light.get('--ads-modal-motion-ease')!)).toBe('cubic-bezier(0.08, 0.82, 0.17, 1)');
   });
 
+  it('a message is above a Modal, so a message from the OK button is seen', () => {
+    expect(Number(light.get('--ads-message-z-index'))).toBeGreaterThan(Number(light.get('--ads-modal-z-index')));
+  });
+
   it('the layer is under the three popup layers, so a Select in a Modal opens above it', () => {
     const modal = Number(light.get('--ads-modal-z-index'));
     for (const popup of ['popover', 'dropdown', 'tooltip']) expect(modal, popup).toBeLessThan(Number(light.get(`--ads-${popup}-z-index`)));

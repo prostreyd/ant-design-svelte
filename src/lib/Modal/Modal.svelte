@@ -76,7 +76,7 @@
   const okLoading = $derived(Boolean(confirmLoading || okPending || okButtonProps?.loading));
 
   // The name of the dialog is its title; with none, the app has to give `aria-label` or `aria-labelledby`.
-  const labelled = $derived('aria-label' in rest || 'aria-labelledby' in rest);
+  const labelled = $derived(rest['aria-label'] != null || rest['aria-labelledby'] != null);
   let warned = false;
   $effect(() => {
     if (open && !hasTitle && !labelled && !warned && !isProduction()) {

@@ -92,6 +92,7 @@
   <div
     class={classList('ads-message-list', settings.classNames.list)}
     style={styleText(top !== undefined && `top: ${top}`, settings.styles.list)}
+    data-ads-overlay-keep=""
     {@attach place}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->

@@ -15,7 +15,13 @@ const real = window.getComputedStyle.bind(window);
 function stubAnimation(name = 'ads-modal-zoom-out'): void {
   vi.spyOn(window, 'getComputedStyle').mockImplementation((element: Element, pseudo?: string | null) => {
     const style = real(element, pseudo);
-    return new Proxy(style, { get: (target, key) => (key === 'animationName' ? name : Reflect.get(target, key)) });
+    return new Proxy(style, {
+      get: (target, key) => {
+        if (key === 'animationName') return name;
+        const value = Reflect.get(target, key);
+        return typeof value === 'function' ? value.bind(target) : value;
+      }
+    });
   });
 }
 

@@ -70,7 +70,7 @@ export interface ModalFocusable {
 /** An element, a function that returns one, a selector, or `false` to leave the Modal where it is written. */
 export type ModalContainer = HTMLElement | (() => HTMLElement) | string | false;
 
-export type ModalProps = Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'class' | 'style' | 'title'> & {
+export type ModalProps = Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'class' | 'style' | 'title' | 'oncancel'> & {
   /** Whether the Modal is shown. `bind:open` works: a way to close sets it to `false`. */
   open?: boolean;
   /** The title. No title, no header. */
@@ -124,3 +124,69 @@ export type ModalProps = Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'clas
   /** After the leave animation, when the Modal is gone. */
   onafterclose?: () => void;
 };
+
+/** The five static dialogs. */
+export const MODAL_KINDS = ['confirm', 'info', 'success', 'warning', 'error'] as const;
+
+export type ModalKind = (typeof MODAL_KINDS)[number];
+
+/**
+ * What a static dialog is made of (specs/modal.md, "The static family"): the options of a `Modal` that make sense for a dialog
+ * that is called from code, and the content, the icon and `okCancel` of its own. The defaults differ from the `Modal`'s as in React:
+ * width 416, no close button, the mask does not close it, `closeOnOk` is on, and focus goes to the OK button.
+ */
+export interface ModalFuncOptions {
+  title?: ModalText;
+  /** The text under the title. */
+  content?: ModalText;
+  /** A snippet or a text replaces the icon of the kind, `false` removes it. */
+  icon?: Snippet | string | false;
+  /** `confirm` has Cancel and OK, the others OK only; this changes that. */
+  okCancel?: boolean;
+  footer?: ModalFooter;
+  okText?: ModalText;
+  cancelText?: ModalText;
+  okType?: ButtonType;
+  okButtonProps?: ModalButtonProps;
+  cancelButtonProps?: ModalButtonProps;
+  /** A Promise it returns keeps the OK button loading: a resolve closes the dialog, a reject keeps it open. */
+  onok?: (event: MouseEvent) => void | Promise<unknown>;
+  /** Called on Cancel, Escape and the other ways; a Promise it returns is waited for in the same way. `event.preventDefault()` keeps it open. */
+  oncancel?: (event: MouseEvent | KeyboardEvent) => void | Promise<unknown>;
+  closable?: boolean | ModalClosable;
+  closeIcon?: Snippet;
+  mask?: boolean | ModalMask;
+  keyboard?: boolean;
+  centered?: boolean;
+  width?: string | number;
+  zIndex?: number;
+  container?: ModalContainer;
+  /** `autoFocusButton` defaults to `'ok'` here. */
+  focusable?: ModalFocusable;
+  scrollLock?: boolean;
+  class?: string;
+  style?: string;
+  wrapClassName?: string;
+  classNames?: ModalClassNames;
+  styles?: ModalStyles;
+  onafteropenchange?: (open: boolean) => void;
+  onafterclose?: () => void;
+}
+
+/** What a call returns: close it, change it, or wait for it (`true` for OK, `false` for every other way to close). */
+export interface ModalHandle extends PromiseLike<boolean> {
+  /** Closes the dialog, with the leave animation. It resolves `false`. Does nothing if it is closed already. */
+  destroy(): void;
+  /** Changes the options in place: an object is merged into them, a function gets the previous ones. Does nothing after a close. */
+  update(patch: ModalFuncOptions | ((previous: ModalFuncOptions) => ModalFuncOptions)): void;
+}
+
+export interface ModalApi {
+  confirm(options: ModalFuncOptions): ModalHandle;
+  info(options: ModalFuncOptions): ModalHandle;
+  success(options: ModalFuncOptions): ModalHandle;
+  warning(options: ModalFuncOptions): ModalHandle;
+  error(options: ModalFuncOptions): ModalHandle;
+  /** Closes every static dialog (never a `Modal` written in markup). */
+  destroyAll(): void;
+}
