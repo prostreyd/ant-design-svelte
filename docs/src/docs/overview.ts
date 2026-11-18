@@ -15,13 +15,13 @@ export const WIREFRAMES = [
   'Spin',
   'Message',
   'Menu',
+  'Modal',
   'Typography',
   'Icon',
   'Dropdown',
   'DatePicker',
   'Form',
   'Table',
-  'Modal',
   'Drawer',
   'Notification'
 ] as const;

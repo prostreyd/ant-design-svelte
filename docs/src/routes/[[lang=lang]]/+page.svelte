@@ -39,6 +39,7 @@
     Menu: ['items', 'mode', 'theme', 'selectedKeys', 'openKeys', 'inlineCollapsed', 'multiple', 'classNames'],
     Tooltip: ['title', 'placement', 'trigger', 'arrow', 'color', 'open', 'classNames'],
     Message: ['open', 'type', 'duration', 'key', 'closable', 'stack', 'classNames'],
+    Modal: ['open', 'title', 'footer', 'closeOnOk', 'mask', 'centered', 'width', 'focusable', 'modal.confirm'],
     Spin: ['spinning', 'delay', 'size', 'description', 'percent', 'fullscreen', 'classNames']
   };
 </script>

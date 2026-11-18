@@ -8,6 +8,7 @@ import { demos as gridDemos } from '../src/docs/data/grid.ts';
 import { demos as inputDemos } from '../src/docs/data/input.ts';
 import { demos as menuDemos } from '../src/docs/data/menu.ts';
 import { demos as messageDemos } from '../src/docs/data/message.ts';
+import { demos as modalDemos } from '../src/docs/data/modal.ts';
 import { demos as radioDemos } from '../src/docs/data/radio.ts';
 import { demos as selectDemos } from '../src/docs/data/select.ts';
 import { demos as spinDemos } from '../src/docs/data/spin.ts';
@@ -283,8 +284,8 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Grid', 'Menu', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Spin', 'Message'];
-    const PLANNED = ['Typography', 'Icon', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Notification'];
+    const READY = ['Button', 'Grid', 'Menu', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Spin', 'Modal', 'Message'];
+    const PLANNED = ['Typography', 'Icon', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Drawer', 'Notification'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
       await open(page, 'components/');
@@ -423,8 +424,9 @@ test.describe('home page', () => {
     await expect(now).toContainText('Select');
     await expect(now).toContainText('Tooltip');
     await expect(now).toContainText('Spin');
+    await expect(now).toContainText('Modal');
     await expect(now).toContainText('Message');
-    // The ready components follow the order of the sidebar: Button, Grid, Menu, Input, Checkbox, Radio, Switch, Select, Tooltip, Spin, Message.
+    // The ready components follow the order of the sidebar: Button, Grid, Menu, Input, Checkbox, Radio, Switch, Select, Tooltip, Spin, Modal, Message.
     await expect(now.locator('.chips').nth(1)).toContainText('gutter');
     await expect(now.locator('.chips').nth(2)).toContainText('selectedKeys');
     await expect(now.locator('.chips').nth(3)).toContainText('variant');
@@ -434,7 +436,8 @@ test.describe('home page', () => {
     await expect(now.locator('.chips').nth(7)).toContainText('showSearch');
     await expect(now.locator('.chips').nth(8)).toContainText('placement');
     await expect(now.locator('.chips').nth(9)).toContainText('spinning');
-    await expect(now.locator('.chips').nth(10)).toContainText('stack');
+    await expect(now.locator('.chips').nth(10)).toContainText('closeOnOk');
+    await expect(now.locator('.chips').nth(11)).toContainText('stack');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -1901,6 +1904,155 @@ test.describe('Message page', () => {
     await expect(kept).toBeVisible();
     await kept.locator('.ads-message-close').click();
     await expect(kept).toHaveCount(0);
+  });
+});
+
+test.describe('Modal page', () => {
+  // A Modal zooms in and fades; a rectangle or a focus read in its first frames is the one of a half-shown dialog.
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+  });
+
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    test.slow();
+    await open(page, 'components/modal/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(modalDemos.length);
+
+    for (let i = 0; i < modalDemos.length; i++) {
+      const demo = examples.nth(i);
+      // Nothing is open before a press: a closed Modal is not in the page.
+      await expect(demo.locator('.demo-pre').getByRole('button').first()).toBeAttached();
+
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/modal/${String(i + 1).padStart(2, '0')}-${modalDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  });
+
+  test('basic: a press opens the dialog and focus goes in; Escape closes it and focus comes back; OK closes it too', async ({ page }) => {
+    await open(page, 'components/modal/');
+    const demo = demoOf(page, 'Basic').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const trigger = demo.getByRole('button', { name: 'Open Modal' });
+    await trigger.click();
+
+    const dialog = page.getByRole('dialog', { name: 'Basic Modal' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAttribute('aria-modal', 'true');
+    await expect(dialog.getByRole('button', { name: 'Close' })).toBeVisible();
+    // The page behind is out of reach, and the page does not move.
+    await expect(trigger).not.toBeFocused();
+    await expect.poll(() => page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'))).toBe(true);
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    await expect(demo.locator('output')).toHaveText('cancelled, then closed');
+    await expect(trigger).toBeFocused();
+
+    // OK does not close by itself (closeOnOk is off); this example closes it in onok.
+    await trigger.click();
+    await page.getByRole('dialog', { name: 'Basic Modal' }).getByRole('button', { name: 'OK' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+  });
+
+  test('closeOnOk: the first try is rejected and the dialog stays; the second closes it', async ({ page }) => {
+    await open(page, 'components/modal/');
+    const demo = demoOf(page, 'Asynchronous close').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    await demo.getByRole('button', { name: 'Open (closeOnOk)' }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'Send the form' });
+    await dialog.getByRole('button', { name: 'OK' }).click();
+    // Loading while the Promise is pending; the rejected one keeps the dialog open.
+    await expect(dialog.getByRole('button', { name: 'OK' })).toHaveClass(/loading/);
+    await expect(dialog.getByRole('button', { name: 'OK' })).not.toHaveClass(/loading/, { timeout: 5000 });
+    await expect(dialog).toBeVisible();
+
+    await dialog.getByRole('button', { name: 'OK' }).click();
+    await expect(dialog).toHaveCount(0, { timeout: 5000 });
+  });
+
+  test('static dialogs: confirm is an alertdialog with Cancel and OK and no close button; the answer is awaited', async ({ page }) => {
+    await open(page, 'components/modal/');
+    const demo = demoOf(page, 'The answer').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    await demo.getByRole('button', { name: 'Ask' }).click();
+
+    const dialog = page.getByRole('alertdialog', { name: 'Publish the post?' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Close' })).toHaveCount(0);
+    await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'OK' })).toBeFocused();
+    await dialog.getByRole('button', { name: 'OK' }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(demo.locator('output')).toHaveText('You pressed OK');
+
+    await demo.getByRole('button', { name: 'Ask' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel' }).click();
+    await expect(demo.locator('output')).toHaveText('You cancelled');
+  });
+
+  test('static dialogs: info, success, warning and error have OK only, okCancel gives Cancel too', async ({ page }) => {
+    await open(page, 'components/modal/');
+    const demo = demoOf(page, 'Static dialogs').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    for (const kind of ['info', 'success', 'warning', 'error']) {
+      await demo.getByRole('button', { name: kind, exact: true }).click();
+      const dialog = page.getByRole('alertdialog');
+      await expect(dialog.locator(`.ads-icon-${kind}`)).toBeVisible();
+      await expect(dialog.getByRole('button')).toHaveCount(1);
+      await page.keyboard.press('Enter');
+      await expect(dialog).toHaveCount(0);
+    }
+    await demo.getByRole('button', { name: 'info + okCancel' }).click();
+    await expect(page.getByRole('alertdialog').getByRole('button')).toHaveCount(2);
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Later' }).click();
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  });
+
+  test('independence: the two groups of one example have their own state (a run in one leaves the other as it was)', async ({ page }) => {
+    await open(page, 'components/modal/');
+    const demo = demoOf(page, 'Asynchronous close').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const sending = page.getByRole('dialog', { name: 'Send the form' });
+
+    // The group "closeOnOk" fails its first try and keeps count of the tries.
+    await demo.getByRole('button', { name: 'Open (closeOnOk)' }).click();
+    await sending.getByRole('button', { name: 'OK' }).click();
+    await expect(sending.getByRole('button', { name: 'OK' })).not.toHaveClass(/loading/, { timeout: 5000 });
+    await expect(sending).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(sending).toHaveCount(0);
+
+    // A whole run of the group "confirmLoading": it opens its own dialog, loads, closes itself.
+    await demo.getByRole('button', { name: 'Open (confirmLoading)' }).click();
+    const saving = page.getByRole('dialog', { name: 'Save the file' });
+    await expect(page.getByRole('dialog')).toHaveCount(1);
+    await saving.getByRole('button', { name: 'OK' }).click();
+    await expect(saving).toHaveCount(0, { timeout: 5000 });
+
+    // The first group is as it was left: its count is at one, so the next try (the second) succeeds and closes.
+    await demo.getByRole('button', { name: 'Open (closeOnOk)' }).click();
+    await sending.getByRole('button', { name: 'OK' }).click();
+    await expect(sending).toHaveCount(0, { timeout: 5000 });
+  });
+
+  test('the page does not scroll sideways, and an open dialog fits a phone screen', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await open(page, 'components/modal/');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+    const demo = demoOf(page, 'Basic').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    await demo.getByRole('button', { name: 'Open Modal' }).click();
+    const box = (await page.getByRole('dialog', { name: 'Basic Modal' }).boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(390);
   });
 });
 

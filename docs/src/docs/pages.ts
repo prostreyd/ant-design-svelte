@@ -37,6 +37,7 @@ export const componentPages: PageDef[] = [
   { path: '/components/input/', section: 'components', title: 'in.title', description: 'seo.input' },
   { path: '/components/menu/', section: 'components', title: 'mn.title', description: 'seo.menu' },
   { path: '/components/message/', section: 'components', title: 'msg.title', description: 'seo.message' },
+  { path: '/components/modal/', section: 'components', title: 'mod.title', description: 'seo.modal' },
   { path: '/components/radio/', section: 'components', title: 'rd.title', description: 'seo.radio' },
   { path: '/components/select/', section: 'components', title: 'sel.title', description: 'seo.select' },
   { path: '/components/spin/', section: 'components', title: 'spn.title', description: 'seo.spin' },
@@ -107,7 +108,7 @@ export const componentGroups: ComponentGroup[] = [
     title: 'g.feedback',
     items: [
       { name: 'Spin', note: 'n.spin', phase: 'now', path: '/components/spin/' },
-      { name: 'Modal', note: 'n.modal', phase: 'later' },
+      { name: 'Modal', note: 'n.modal', phase: 'now', path: '/components/modal/' },
       { name: 'Drawer', note: 'n.drawer', phase: 'later' },
       { name: 'Message', note: 'n.message', phase: 'now', path: '/components/message/' },
       { name: 'Notification', note: 'n.notification', phase: 'later' }
