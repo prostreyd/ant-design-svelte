@@ -9,6 +9,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Fixed
+
+- `Modal`: the dialog no longer jumps sideways when it closes. The page was unlocked at the first frame of the closing animation, the scrollbar came back
+  and the page was laid out again, so a dialog in the middle of the window moved half the width of the scrollbar to the side while it was still leaving. The page
+  stays locked until the animation ends.
+
+### Changed
+
+- `Modal` and the static dialogs zoom in and out around their own center by default. They used to fly from the place of the last click and back to it, which on a
+  page with a button at the side looked like a dialog that goes into the corner and shrinks. The new option `zoomFromClick` brings the old behavior back (as in Ant Design).
+
 ## [0.12.0] - 2026-11-18
 
 ### Added

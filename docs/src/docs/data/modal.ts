@@ -54,9 +54,9 @@ export const demos: DemoMeta[] = [
     slug: "position",
     title: { en: "Position and width", ru: "Положение и ширина", zh: "位置与宽度" },
     description: {
-      en: "<code>centered</code> puts the dialog in the middle of the window; by default it is 100px from the top. <code>width</code> is a number (px) or a string, 520 by default, and never wider than the window. <code>style</code> and <code>zIndex</code> adjust the box and the layer (1000, under the popup layers).",
-      ru: "<code>centered</code> ставит окно по центру; по умолчанию оно в 100px от верха. <code>width</code> — число (px) или строка, по умолчанию 520, и никогда не шире окна. <code>style</code> и <code>zIndex</code> настраивают блок и слой (1000, ниже слоёв всплывающих окон).",
-      zh: "<code>centered</code> 使对话框居中；默认距顶部 100px。<code>width</code> 是数字（px）或字符串，默认 520，且不会比窗口更宽。<code>style</code> 与 <code>zIndex</code> 用于调整对话框和浮层（1000，低于弹出层）。"
+      en: "<code>centered</code> puts the dialog in the middle of the window; by default it is 100px from the top. <code>width</code> is a number (px) or a string, 520 by default, and never wider than the window. <code>style</code> and <code>zIndex</code> adjust the box and the layer (1000, under the popup layers). By default the dialog zooms in and out around its own center; <code>zoomFromClick</code> makes it zoom from the place of the last click, as in Ant Design.",
+      ru: "<code>centered</code> ставит окно по центру; по умолчанию оно в 100px от верха. <code>width</code> — число (px) или строка, по умолчанию 520, и никогда не шире окна. <code>style</code> и <code>zIndex</code> настраивают блок и слой (1000, ниже слоёв всплывающих окон). По умолчанию окно увеличивается и уменьшается вокруг своего центра; <code>zoomFromClick</code> включает зум из места последнего клика, как в Ant Design.",
+      zh: "<code>centered</code> 使对话框居中；默认距顶部 100px。<code>width</code> 是数字（px）或字符串，默认 520，且不会比窗口更宽。<code>style</code> 与 <code>zIndex</code> 用于调整对话框和浮层（1000，低于弹出层）。 默认对话框围绕自身中心缩放；<code>zoomFromClick</code> 使其从最近一次点击的位置缩放，与 Ant Design 一致。"
     }
   },
   {
@@ -213,6 +213,7 @@ export const propRows: ApiRow[] = [
   row("forceRender", "boolean", "false", "The Modal is in the page, hidden, before the first opening.", "Окно находится на странице, скрытым, до первого открытия.", "在第一次打开之前，对话框就已存在于页面中（隐藏）。"),
   row("focusable", "{ trap?, focusTriggerAfterClose?, autoFocusButton? }", "{ trap: true, focusTriggerAfterClose: true }", "<code>trap</code>: Tab stays inside. <code>focusTriggerAfterClose</code>: focus goes back to what had it. <code>autoFocusButton</code>: <code>'ok'</code>, <code>'cancel'</code> or <code>null</code> (the dialog); by default the first element Tab reaches.", "<code>trap</code>: Tab остаётся внутри. <code>focusTriggerAfterClose</code>: фокус возвращается туда, где был. <code>autoFocusButton</code>: <code>'ok'</code>, <code>'cancel'</code> или <code>null</code> (само окно); по умолчанию первый элемент, до которого доходит Tab.", "<code>trap</code>：Tab 保持在内部。<code>focusTriggerAfterClose</code>：焦点回到之前的位置。<code>autoFocusButton</code>：<code>'ok'</code>、<code>'cancel'</code> 或 <code>null</code>（对话框本身）；默认是 Tab 能到达的第一个元素。"),
   row("scrollLock", "boolean", "true", "The page does not scroll while the Modal is open.", "Страница не прокручивается, пока окно открыто.", "对话框打开期间页面不滚动。"),
+  row("zoomFromClick", "boolean", "false", "The dialog zooms in and out from the place of the last click, as in Ant Design, instead of around its own center. A keyboard open, or one that comes later than the click, still starts at the center.", "Окно увеличивается и уменьшается из места последнего клика, как в Ant Design, а не вокруг своего центра. Открытие с клавиатуры или позже клика по-прежнему идёт из центра.", "对话框从最近一次点击的位置缩放（与 Ant Design 一致），而不是围绕自身中心。键盘打开或晚于点击的打开仍从中心开始。"),
   row("modalRender", "Snippet<[Snippet]>", "—", "Gets the card as a snippet and may wrap it.", "Получает карточку как snippet и может её обернуть.", "接收卡片 snippet，可以对其进行包装。"),
   row("class", "string", "—", "Extra classes of the dialog box.", "Дополнительные классы блока окна.", "对话框的额外类名。"),
   row("style", "string", "—", "Inline style of the dialog box. The width is kept.", "Инлайн-стиль блока окна. Ширина сохраняется.", "对话框的内联样式。宽度会保留。"),
@@ -246,6 +247,7 @@ export const funcRows: ApiRow[] = [
   row("container", "HTMLElement | (() => HTMLElement) | string | false", "document.body", "Where the layer is moved to.", "Куда переносится слой.", "浮层被移入的位置。"),
   row("focusable", "{ trap?, focusTriggerAfterClose?, autoFocusButton? }", "{ autoFocusButton: 'ok' }", "Focus goes to the OK button by default.", "Фокус по умолчанию уходит на кнопку OK.", "焦点默认移到确定按钮。"),
   row("scrollLock", "boolean", "true", "The page does not scroll while the dialog is open.", "Страница не прокручивается, пока диалог открыт.", "对话框打开期间页面不滚动。"),
+  row("zoomFromClick", "boolean", "false", "The dialog zooms in and out from the place of the last click instead of around its own center.", "Окно увеличивается и уменьшается из места последнего клика, а не вокруг своего центра.", "对话框从最近一次点击的位置缩放，而不是围绕自身中心。"),
   row("class", "string", "—", "Extra classes of the dialog box.", "Дополнительные классы блока окна.", "对话框的额外类名。"),
   row("style", "string", "—", "Inline style of the dialog box.", "Инлайн-стиль блока окна.", "对话框的内联样式。"),
   row("wrapClassName", "string", "—", "Extra classes of the scroll area.", "Дополнительные классы области прокрутки.", "滚动区域的额外类名。"),

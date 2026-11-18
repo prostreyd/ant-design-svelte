@@ -110,6 +110,7 @@ Only one host is active at a time. On a server every `modal` call does nothing a
 | `forceRender` | `boolean` | `false` | Put the Modal in the page, hidden, before the first opening. |
 | `focusable` | `{ trap?, focusTriggerAfterClose?, autoFocusButton? }` | `{ trap: true, focusTriggerAfterClose: true }` | Tab stays inside; focus goes back after a close; `autoFocusButton` is `'ok'`, `'cancel'` or `null` (the dialog itself). |
 | `scrollLock` | `boolean` | `true` | The page does not scroll while the Modal is open. |
+| `zoomFromClick` | `boolean` | `false` | Zoom in and out from the place of the last click, as in Ant Design, instead of around the center of the dialog. |
 | `modalRender` | `Snippet<[Snippet]>` | — | Gets the card and may wrap it. |
 | `class`, `style`, `wrapClassName` | `string` | — | On the dialog box, and on the scroll area. |
 | `classNames`, `styles` | the ten parts | — | `root`, `mask`, `wrapper`, `dialog`, `content`, `close`, `header`, `title`, `body`, `footer`. |

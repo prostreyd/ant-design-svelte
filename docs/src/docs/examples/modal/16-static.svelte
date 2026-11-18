@@ -11,6 +11,7 @@
     <Button onclick={() => modal.warning({ title: 'Careful', content: 'The disk is almost full.' })}>warning</Button>
     <Button onclick={() => modal.error({ title: 'Failed', content: 'The upload did not finish.', okText: 'Got it' })}>error</Button>
     <Button onclick={() => modal.info({ title: 'Update available', content: 'Install it now?', okCancel: true, okText: 'Install', cancelText: 'Later' })}>info + okCancel</Button>
+    <Button onclick={() => modal.info({ title: 'From the click', content: 'This dialog zooms from the place of the click.', zoomFromClick: true })}>info + zoomFromClick</Button>
   </div>
 </div>
 
