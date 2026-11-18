@@ -21,7 +21,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   `okButtonProps`, `cancelButtonProps`, `confirmLoading`, `closable`, `closeIcon`, `mask` (`{ enabled, closable }`), `keyboard`, `centered`, `width`,
   `zIndex`, `container`, `destroyOnHidden`, `forceRender`, `focusable` (`trap`, `focusTriggerAfterClose`, `autoFocusButton`), `scrollLock`, `modalRender`,
   `class`, `style`, `wrapClassName`, `classNames` and `styles` (ten parts), `onafteropenchange` and `onafterclose`. The dialog zooms in from the
-  place of the last click; the motion is off under `prefers-reduced-motion`. Design tokens `--ads-modal-*` (light, dark and accessible).
+  place of the last click; the motion is off under `prefers-reduced-motion`. A Modal opened over another one adds no second dimming layer: the page is
+  as dark as with one Modal, and the upper dialog stands on the mask of the lower one. Design tokens `--ads-modal-*` (light, dark and accessible).
 - Static dialogs: `modal.confirm`, `modal.info`, `modal.success`, `modal.warning` and `modal.error` open a dialog with an icon, a title, a text and
   buttons, with no markup and no state, and `modal.destroyAll()` closes them all. A call returns a handle: `destroy()`, `update(patch)` and a
   promise, so `await modal.confirm(...)` is `true` for OK and `false` for Cancel, Escape and `destroy`. `onok` and `oncancel` may return a Promise

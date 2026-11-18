@@ -1980,10 +1980,14 @@ test.describe('Modal page', () => {
     await page.getByRole('dialog', { name: 'First' }).getByRole('button', { name: 'Open the second' }).click();
     const second = page.getByRole('dialog', { name: 'Second' });
     await expect(second).toBeVisible();
+    // One dimming layer for the page, however many are open: the second one adds none (its dialog stands on the mask of the first).
+    // (The layers of the closed Modals of other examples are in the page, hidden: only the visible masks count.)
+    await expect(page.locator('.ads-modal-mask:visible')).toHaveCount(1);
     await second.getByRole('button', { name: 'OK' }).click();
-    // Only the second is closed; the first is still there and the page is still locked.
+    // Only the second is closed; the first is still there, with its mask.
     await expect(second).toHaveCount(0);
     await expect(page.getByRole('dialog', { name: 'First' })).toBeVisible();
+    await expect(page.locator('.ads-modal-mask:visible')).toHaveCount(1);
   });
 
   test('closeOnOk: the first try is rejected and the dialog stays; the second closes it', async ({ page }) => {

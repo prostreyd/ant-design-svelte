@@ -356,6 +356,7 @@ covering layer, Vue puts `aria-hidden` on two body-level elements, Angular does 
 - **P18.** The `icon` of a static dialog is the shared `Icon` of its type; a `Snippet` or a `string` replaces it, `false` removes it; the colors are tokens (info blue, success green, warning amber, error red).
 - **P19.** `modal.destroyAll()` closes the static dialogs only, never a `Modal` written in markup.
 - **P20.** A static dialog called on the server does nothing and returns a handle that resolves `false`; the library keeps no module state on the server (as Message).
+- **P21 (the maintainer's request on 2026-11-18, after the examples were checked in a browser; React and Vue do not do it).** Only the lowest open Modal draws its mask. A Modal opened over another one is still modal (its layer covers the page, the page is locked, Escape and Tab go to it) but adds no second dimming layer, so the page behind is as dark as with one Modal. The order of the open masks is one reactive list (`masks.svelte.ts`); a Modal joins it while it is shown and leaves it when its leave animation ends. Test: `tests/ModalMask.test.ts` (fails without the rule: two masks), `docs/e2e/site.spec.ts` (nested example: one visible mask, and still one after the upper one closes). A decision of the owner that differs from the three libraries, stated on the page of the nested example.
 
 ## Quality matrix
 

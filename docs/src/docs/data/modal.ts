@@ -81,9 +81,9 @@ export const demos: DemoMeta[] = [
     slug: "nested",
     title: { en: "Nested Modals", ru: "Вложенные окна", zh: "多层对话框" },
     description: {
-      en: "A Modal opened later is above the first one; Escape and Tab go to the Modal on top, and the first is out of reach until the second is closed.",
-      ru: "Окно, открытое позже, лежит выше первого; Escape и Tab действуют в верхнем окне, а первое недоступно, пока закрыто не второе.",
-      zh: "后打开的对话框位于前一个之上；Escape 和 Tab 只作用于最上层的对话框，第二个关闭之前第一个不可操作。"
+      en: "A Modal opened later is above the first one; Escape and Tab go to the Modal on top, and the first is out of reach until the second is closed. Only the first one dims the page: the second adds no second mask.",
+      ru: "Окно, открытое позже, лежит выше первого; Escape и Tab действуют в верхнем окне, а первое недоступно, пока закрыто не второе. Затемняет страницу только первое окно: второе не добавляет второго слоя.",
+      zh: "后打开的对话框位于前一个之上；Escape 和 Tab 只作用于最上层的对话框，第二个关闭之前第一个不可操作。只有第一个对话框会遮暗页面，第二个不会再添加遮罩。"
     }
   },
   {

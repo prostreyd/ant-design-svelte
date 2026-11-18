@@ -131,6 +131,7 @@ Options of a static dialog (`ModalFuncOptions`): the same ones that make sense f
   first), and focus returns to what had it, without scrolling the page.
 - The page behind is `inert` (and `aria-hidden` where the browser does not know `inert`). A message that is already on the page
   stays reachable.
+- A Modal opened over another one draws no second mask: only the lowest open one dims the page (specs/modal.md, P21).
 - A static dialog is an **alert dialog**: `role="alertdialog"`, `aria-describedby` to its text, focus on OK. React, Vue and Angular
   give it the plain dialog role.
 - The icons are decorative. The close button is a native `<button>` named `Close` by default (`closable['aria-label']`). The texts
