@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-11-19
+
 ### Fixed
 
 - `Modal`: the dialog no longer jumps sideways when it closes. The page was unlocked at the first frame of the closing animation, the scrollbar came back
