@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-18
+
 ### Added
 
 - `Spin`: a loading indicator of four turning dots, with `spinning`, `delay`, `size` (`small`, `medium`, `large`; `default` is an
