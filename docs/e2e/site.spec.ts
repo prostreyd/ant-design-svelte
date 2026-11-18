@@ -283,7 +283,7 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Grid', 'Menu', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Message'];
+    const READY = ['Button', 'Grid', 'Menu', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Spin', 'Message'];
     const PLANNED = ['Typography', 'Icon', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Notification'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
@@ -422,8 +422,9 @@ test.describe('home page', () => {
     await expect(now).toContainText('Switch');
     await expect(now).toContainText('Select');
     await expect(now).toContainText('Tooltip');
+    await expect(now).toContainText('Spin');
     await expect(now).toContainText('Message');
-    // The ready components follow the order of the sidebar: Button, Grid, Menu, Input, Checkbox, Radio, Switch, Select, Tooltip, Message.
+    // The ready components follow the order of the sidebar: Button, Grid, Menu, Input, Checkbox, Radio, Switch, Select, Tooltip, Spin, Message.
     await expect(now.locator('.chips').nth(1)).toContainText('gutter');
     await expect(now.locator('.chips').nth(2)).toContainText('selectedKeys');
     await expect(now.locator('.chips').nth(3)).toContainText('variant');
@@ -432,7 +433,8 @@ test.describe('home page', () => {
     await expect(now.locator('.chips').nth(6)).toContainText('classNames');
     await expect(now.locator('.chips').nth(7)).toContainText('showSearch');
     await expect(now.locator('.chips').nth(8)).toContainText('placement');
-    await expect(now.locator('.chips').nth(9)).toContainText('stack');
+    await expect(now.locator('.chips').nth(9)).toContainText('spinning');
+    await expect(now.locator('.chips').nth(10)).toContainText('stack');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
