@@ -482,6 +482,8 @@ built, so the analysis is done after the fact, against `origin/main` at `f1c68ba
   written** (rule 6b, "extract before the second consumer"), and the Dropdown section of its specification must say so. Layout
   (`Sider`) will pass the collapse to the Menu through the existing `inlineCollapsed` prop; nothing is needed here until Layout
   exists.
+- **Primitive `icons`** (since 2026-11-18, `specs/icons.md`): `MenuIcon.svelte` is a thin adapter over the shared `internal/icons/Icon.svelte`, which draws the arrow and the
+  "…" exactly as before; the class names (`ads-menu-icon`) are unchanged.
 
 ## Requirements this puts on the popup primitive
 

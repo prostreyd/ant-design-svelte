@@ -362,6 +362,8 @@ built, so the analysis is done after the fact, against `origin/main` at `1e1ee4f
   `internal/` now (a rename of one file and its imports, no change of behavior); (C) first extract `anim` from `Popup` in a
   branch of its own and rebuild Message on it. The maintainer sent the release command without choosing among them, so the option
   that needs no change and breaks no rule (A) was taken; the move to `internal/` changes no public API and can be made at any time.
+- **Primitive `icons`** (since 2026-11-18, `specs/icons.md`): `MessageIcon.svelte` is a thin adapter over the shared `internal/icons/Icon.svelte`, which draws the
+  four status discs, the spinner and the cross exactly as this component drew them before; the class names (`ads-message-svg`) are unchanged.
 
 ## Decisions for the owner (D1 to D4 answered on 2026-11-16)
 

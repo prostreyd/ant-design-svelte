@@ -16,6 +16,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   before. New shared part for the Modal and the Drawer (`overlay`): the page does not scroll while a layer is open and does
   not jump sideways, the page behind the layer is out of reach of the keyboard, the pointer and assistive technology, focus
   stays inside the layer and comes back, and Escape closes the topmost layer. None of this is exported from the package yet.
+- Internal, no change for users: the icons of `Message`, `Select`, `Input` and `Menu` (the chevron, the tick, the cross, the clear disc, the eye, the
+  search almond, the "…", the four status discs and the spinner) are drawn by one shared part, `internal/icons`, instead of four copies of the same file.
+  Every icon is drawn exactly as before (the same markup, the same pixels in Chromium, Firefox and WebKit, the same class names), and the three spinners
+  share one animation. The Modal will use the same part.
 
 ### Documentation
 
