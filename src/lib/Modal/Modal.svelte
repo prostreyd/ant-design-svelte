@@ -8,6 +8,7 @@
   import { openOverlay } from '../internal/overlay/overlay.js';
   import { portal, type PortalContainer } from '../internal/portal/portal.svelte.js';
   import { classList, styleText } from '../internal/semantic.js';
+  import { claimMask, maskCovered } from './masks.svelte.js';
   import { recentPress, trackPress } from './pointer.js';
   import type { ModalProps, ModalText } from './types.js';
 
@@ -70,6 +71,18 @@
   const closableConfig = $derived(typeof closable === 'object' && closable !== null ? closable : {});
   const closeIconSnippet = $derived(closableConfig.closeIcon ?? closeIcon);
   const maskEnabled = $derived(mask === false ? false : typeof mask === 'object' && mask !== null ? mask.enabled !== false : true);
+  // The mask is claimed while the Modal is shown. A Modal opened over another one with a mask draws no second mask.
+  let maskId = $state(0);
+  const maskDrawn = $derived(maskEnabled && !(maskId !== 0 && maskCovered(maskId)));
+  $effect(() => {
+    if (!shown || !maskEnabled) return;
+    const claim = claimMask();
+    maskId = claim.id;
+    return () => {
+      claim.release();
+      maskId = 0;
+    };
+  });
   const maskClosable = $derived(typeof mask === 'object' && mask !== null ? mask.closable !== false : true);
   // No width: the token (520 px). A number is px.
   const widthCss = $derived(width === undefined ? 'var(--ads-modal-width)' : typeof width === 'number' ? `${width}px` : width);
@@ -318,7 +331,7 @@
     bind:this={rootElement}
     {@attach portal(target)}
   >
-    {#if maskEnabled}
+    {#if maskDrawn}
       <div class={classList('ads-modal-mask', classNames?.mask)} style={styleText(styles?.mask)} data-state={dataState}></div>
     {/if}
     <!-- The press on the area around the dialog: a mouse or a finger (the dialog has its own keys). -->
