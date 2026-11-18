@@ -56,6 +56,25 @@ describe('waitForLeave (A1)', () => {
     expect(done).toHaveBeenCalledTimes(1);
   });
 
+  it('the cancel of another animation of the element (the enter one, interrupted by the change of style) is not the end of the leave', () => {
+    const { element, done } = animated();
+    waitForLeave(element, done);
+    element.dispatchEvent(Object.assign(new Event('animationcancel'), { animationName: 'ads-popup-in' }));
+    expect(done).not.toHaveBeenCalled();
+    element.dispatchEvent(Object.assign(new Event('animationend'), { animationName: 'ads-popup-out' }));
+    expect(done).toHaveBeenCalledTimes(1);
+  });
+
+  it('an element with several animations ends its leave with any of them', () => {
+    stubStyle({ animationName: 'fade, ads-popup-out' });
+    const element = document.createElement('div');
+    document.body.append(element);
+    const done = vi.fn();
+    waitForLeave(element, done);
+    element.dispatchEvent(Object.assign(new Event('animationend'), { animationName: 'ads-popup-out' }));
+    expect(done).toHaveBeenCalledTimes(1);
+  });
+
   it('the end of an animation of something inside the element is not the end of this one', () => {
     const { element, child, done } = animated();
     waitForLeave(element, done);

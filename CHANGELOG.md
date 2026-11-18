@@ -16,6 +16,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 - `Modal`: the dialog no longer jumps sideways when it closes. The page was unlocked at the first frame of the closing animation, the scrollbar came back
   and the page was laid out again, so a dialog in the middle of the window moved half the width of the scrollbar to the side while it was still leaving. The page
   stays locked until the animation ends.
+- `Modal`, `Tooltip`, `Select` and `Menu`: a panel that was closed while it was still opening (in its first 0.2 to 0.3 s) disappeared at once, with no closing animation, because the
+  cancelled opening animation was taken for the end of the closing one. The closing animation plays now.
 
 ### Changed
 

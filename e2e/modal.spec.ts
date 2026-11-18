@@ -209,35 +209,47 @@ test.describe('the zoom, the leave and reduced motion (R2)', () => {
 
   test('by default the dialog zooms around its own center: the center stays put while it opens and while it closes (P22, P23)', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    // Stops the animation of the dialog at a moment and says where the dialog is then (the animation is seeked, so no frame is waited for).
-    const at = (name: string, time: number) =>
+    // The animations are stretched to 30 s and seeked, so that nothing depends on how fast the machine is (at 0.3 s a busy one finishes the leave
+    // before the test has looked at it).
+    await page.addStyleTag({ content: ".ads-modal[data-state] { animation-duration: 30s !important; }" });
+    // Says where the dialog is when its animation is at a part of its way (0 to 1); the animation is stopped there.
+    const at = (name: string, part: number) =>
       page.evaluate(
-        ([animationName, ms]) => {
-          const box = [...document.querySelectorAll<HTMLElement>('.ads-modal[data-state]')].find((element) => element.closest('.ads-modal-root:not([hidden])'))!;
-          const animation = document.getAnimations().find((item) => (item as CSSAnimation).animationName?.endsWith(animationName as string) && (item.effect as KeyframeEffect).target === box)!;
-          animation.pause();
-          animation.currentTime = ms as number;
-          const r = box.getBoundingClientRect();
+        async ([animationName, fraction]) => {
+          const find = () => {
+            const box = [...document.querySelectorAll<HTMLElement>('.ads-modal[data-state]')].find((element) => element.closest('.ads-modal-root:not([hidden])'));
+            const animation = document.getAnimations().find((item) => (item as CSSAnimation).animationName?.endsWith(animationName as string) && (item.effect as KeyframeEffect).target === box);
+            return { box, animation };
+          };
+          let found = find();
+          // The animation exists a frame after the state changes.
+          for (let frame = 0; frame < 60 && !found.animation; frame++) {
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            found = find();
+          }
+          const { box, animation } = found;
+          animation!.pause();
+          animation!.currentTime = (fraction as number) * 30000;
+          const r = box!.getBoundingClientRect();
           return { cx: r.x + r.width / 2, cy: r.y + r.height / 2, width: r.width };
         },
-        [name, time]
+        [name, part]
       );
     // A click far from the dialog (the page button is at the start side): the dialog must not fly towards it.
     const button = await rect(page.getByTestId('open'));
     await page.mouse.click(button.x + 4, button.y + 4);
     await expect(dialog(page)).toBeVisible();
     expect(await dialog(page).evaluate((element) => (element as HTMLElement).style.transformOrigin)).toBe('');
-    const rest = await at('ads-modal-zoom-in', 300);
-    const opening = await at('ads-modal-zoom-in', 100);
+    const opening = await at('ads-modal-zoom-in', 0.1);
+    const rest = await at('ads-modal-zoom-in', 1);
     // The zoom was really running (the dialog was smaller), and its center was where it ends up.
     expect(opening.width).toBeLessThan(rest.width - 40);
     near(opening.cx, rest.cx, 2);
     near(opening.cy, rest.cy, 2);
-    await at('ads-modal-zoom-in', 300);
 
     // The leave: the scrollbar of the page does not come back at its first frame, which moved the dialog sideways (P23).
     await page.keyboard.press('Escape');
-    const closing = await at('ads-modal-zoom-out', 150);
+    const closing = await at('ads-modal-zoom-out', 0.5);
     expect(closing.width).toBeLessThan(rest.width - 40);
     near(closing.cx, rest.cx, 2);
     near(closing.cy, rest.cy, 2);

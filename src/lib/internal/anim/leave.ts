@@ -5,8 +5,8 @@ const FALLBACK_MS = 1000;
  * Waits for the leave animation of `element` to end, then calls `done` once (specs/overlay.md, A1). A panel that is hidden
  * the moment it is asked to close would not leave: it plays its CSS animation first.
  *
- * `done` is called when the element's own animation ends or is cancelled (the end of an animation of something inside it is
- * not the end of this one), after one second if it never ends, and **at once** if the element has no animation to wait for:
+ * `done` is called when the element's own leave animation ends or is cancelled (the end of an animation of something inside it, or the
+ * cancel of the enter animation that the change of style interrupted, is not the end of this one), after one second if it never ends, and **at once** if the element has no animation to wait for:
  * `animation-name` is `none`, which is what `prefers-reduced-motion` sets and what a stylesheet that was not loaded leaves, or if there is no
  * element at all.
  *
@@ -19,6 +19,9 @@ export function waitForLeave(element: HTMLElement | null, done: () => void, fall
     done();
     return () => {};
   }
+  // The animations the element has now are the leave. The enter animation that was still running when the panel was asked to close is cancelled
+  // by the change of style, and its `animationcancel` is not the end of the leave: only the events of these names count.
+  const names = name.split(',').map((part) => part.trim());
   const cancel = () => {
     element.removeEventListener('animationend', end);
     element.removeEventListener('animationcancel', end);
@@ -26,6 +29,8 @@ export function waitForLeave(element: HTMLElement | null, done: () => void, fall
   };
   const end = (event?: Event) => {
     if (event && event.target !== element) return;
+    const named = (event as AnimationEvent | undefined)?.animationName;
+    if (named !== undefined && !names.includes(named)) return;
     cancel();
     done();
   };
