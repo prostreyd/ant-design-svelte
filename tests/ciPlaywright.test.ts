@@ -35,6 +35,11 @@ describe('the Playwright image of the CI', () => {
     expect(steps).not.toMatch(/apt-get|apt install/);
   });
 
+  it('the steps that run Playwright set HOME=/root, or Firefox does not start in a container job', () => {
+    const steps = ci.replace(/^\s*#.*$/gm, '');
+    expect(steps.match(/^\s+HOME:\s*\/root\s*$/gm) ?? []).toHaveLength(2);
+  });
+
   it('the host of every job is the pinned Ubuntu 24.04 runner, not a moving label', () => {
     const hosts = [...ci.matchAll(/^\s+runs-on:\s*(\S+)\s*$/gm)].map((match) => match[1]);
     expect(hosts).toHaveLength(3);

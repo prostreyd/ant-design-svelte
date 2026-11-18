@@ -22,8 +22,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   holds the three browsers and their system packages, so a job downloads and installs nothing at the start. Before, each run
   installed them with `apt`, and on 2026-11-18 the Ubuntu mirror of the runners was so slow (76 packages in 8 minutes) that every
   browser job of the day, the one of `main` included, timed out there before a test ran. `tests/ciPlaywright.test.ts` keeps the
-  tag of the image equal to the version of Playwright in `package-lock.json`. `ci.yml` can now also be called from another
-  workflow (`workflow_call`). The rules for AI assistants say how a release goes
+  tag of the image equal to the version of Playwright in `package-lock.json`. In a container job Firefox does not start unless
+  `HOME=/root` is set (the `$HOME` of the container belongs to another user), so the two steps that run Playwright set it, and
+  the same test keeps it. `ci.yml` can now also be called from another workflow (`workflow_call`). The rules for AI assistants say how a release goes
   now: the tag is set right after the merge into `main`, and GitHub decides whether to publish.
 
 ## [0.10.0] - 2026-11-18

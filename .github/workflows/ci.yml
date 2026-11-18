@@ -73,6 +73,11 @@ jobs:
 
       - name: End-to-end tests of the library
         run: npm run test:e2e
+        env:
+          # In a container job `$HOME` is /github/home, owned by another user, while the steps run as root, and Firefox refuses to
+          # start then ("Firefox is unable to launch if the $HOME folder isn't owned by the current user"). The workaround that
+          # Playwright documents for GitHub Actions is HOME=/root.
+          HOME: /root
 
       - name: Upload Playwright report on failure
         if: failure()
@@ -113,6 +118,8 @@ jobs:
         run: npm run test:docs
         env:
           BASE_PATH: /ant-design-svelte
+          # See the HOME of the library job above: Firefox does not start in a container without it.
+          HOME: /root
 
       - name: Upload Playwright report on failure
         if: failure()
