@@ -18,7 +18,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   tests and the build, so a red browser test did not stop a release (the browser tests of 0.10.0 had not run when it was
   published). A red stage leaves npm untouched; a job that failed only because the runner could not install the browsers is run
   again with "Re-run failed jobs". Trusted Publishing is unchanged (the file is still `publish.yml`, the environment `npm`).
-  `ci.yml` can now also be called from another workflow (`workflow_call`). The rules for AI assistants say how a release goes
+  The two browser jobs of the CI now run in the official Playwright image (`mcr.microsoft.com/playwright:v1.65.0-noble`), which already
+  holds the three browsers and their system packages, so a job downloads and installs nothing at the start. Before, each run
+  installed them with `apt`, and on 2026-11-18 the Ubuntu mirror of the runners was so slow (76 packages in 8 minutes) that every
+  browser job of the day, the one of `main` included, timed out there before a test ran. `tests/ciPlaywright.test.ts` keeps the
+  tag of the image equal to the version of Playwright in `package-lock.json`. `ci.yml` can now also be called from another
+  workflow (`workflow_call`). The rules for AI assistants say how a release goes
   now: the tag is set right after the merge into `main`, and GitHub decides whether to publish.
 
 ## [0.10.0] - 2026-11-18
