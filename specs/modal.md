@@ -1,6 +1,6 @@
 # Modal specification
 
-Status: **decisions D1 to D7 answered by the maintainer on 2026-11-18; proposals P1 to P20 open for objection, then stage 3 (implementation)**. Stage 1 (analysis) is done. Nothing is implemented. The
+Status: **implemented on `feat/modal` (2026-11-18): decisions D1 to D7 answered, proposals P1 to P20 accepted by the maintainer, tests, the page on the site and the Orca test done; nothing is pushed yet**. The
 Modal is built on the branch `feat/modal`, stacked on `feat/overlay-primitives` (`specs/overlay.md`) and `feat/internal-icons` (`specs/icons.md`); that is a conscious exception to rule 6b, recorded under
 "Dependencies". The answers: **D1** the cancel ways close the Modal unless the handler vetoes (C), and a new prop `closeOnOk`; **D2 A**, the static family (`modal.confirm`, `info`, `success`, `warning`,
 `error`) is in v1.0; **D3 B**, the icons are extracted first; **D4 B**, the Message layer carries `data-ads-overlay-keep`; **D5** to **D7** as recommended (the host as in Message, a handle that
@@ -158,7 +158,7 @@ until then `okText`, `cancelText` and `closable['aria-label']` take the words of
 | `okType` | `ButtonType` | `primary` | the `type` of the OK button |
 | `okButtonProps`, `cancelButtonProps` | `ComponentProps<typeof Button>` | none | rule 6b; their `onclick` runs **and then** the Modal's own `onok`, `oncancel` (React 6.6.4, 6.6.8) |
 | `confirmLoading` | `boolean` | `false` | `loading` of the OK button; no change of its size |
-| `onok` | `(event: MouseEvent) => void \| Promise<unknown>` | none | the OK button was pressed; the Modal closes only with `closeOnOk` |
+| `onok` | `(event: MouseEvent) => unknown` | none | the OK button was pressed; a Promise it returns keeps the OK button loading (with `closeOnOk`); the Modal closes only with `closeOnOk`. The type is `unknown` so that `onok={() => (open = false)}` type-checks |
 | `closeOnOk` | `boolean` | `false` | D1. `false`: as in all three libraries, the app closes the Modal after it checked or saved. `true`: the confirm behavior, R4 |
 | `oncancel` | `(event: MouseEvent \| KeyboardEvent) => void` | none | D1: close button, Cancel, Escape, the mask |
 | `closable` | `boolean \| { closeIcon?: Snippet; disabled?: boolean; 'aria-label'?: string }` | `true` | `disabled` shows the button but it does nothing |
@@ -171,7 +171,7 @@ until then `okText`, `cancelText` and `closable['aria-label']` take the words of
 | `container` | `HTMLElement \| (() => HTMLElement) \| string \| false` | `document.body` | `string` is a selector; `false` leaves the Modal in place (React `getContainer`) |
 | `destroyOnHidden` | `boolean` | `false` | the content is removed on every close |
 | `forceRender` | `boolean` | `false` | the Modal is in the page, hidden, before the first opening |
-| `focusable` | `{ trap?: boolean; focusTriggerAfterClose?: boolean }` | `{ trap: true, focusTriggerAfterClose: true }` | R9 |
+| `focusable` | `{ trap?: boolean; focusTriggerAfterClose?: boolean; autoFocusButton?: 'ok' \| 'cancel' \| null }` | `{ trap: true, focusTriggerAfterClose: true }`, no `autoFocusButton` | R9. `autoFocusButton` is a widening of React, where only the static methods have it: here the plain Modal takes it too (cheap, same code); without it focus goes to the first element Tab reaches |
 | `scrollLock` | `boolean` | `true` | R10 |
 | `modalRender` | `Snippet<[Snippet]>` | none | gets the card and may wrap it (P7) |
 | `class`, `style` | `string` | none | on the `dialog` box |
@@ -231,14 +231,14 @@ keyboard event for Escape); after it the Modal closes unless the handler called 
 are read each time and never changed.
 **R4. OK.** `onok(event)`. With `closeOnOk` **false** (the default, as in all three libraries) the Modal does not close: the app checks or saves, and closes it by setting `open = false`, with `confirmLoading` on the button meanwhile. With
 `closeOnOk` **true**: after `onok` returns the Modal closes; if `onok` returned a Promise, the OK button is in its loading state until it settles, a resolve closes the Modal, a reject keeps it open; `event.preventDefault()` in `onok` keeps it open
-in both modes. `confirmLoading` puts the OK button into its loading state: the button keeps its size and its place. A user's `onclick` in `okButtonProps` or `cancelButtonProps` runs first and does not stop `onok` or `oncancel`.
+in both modes. `confirmLoading` puts the OK button into its loading state: the footer keeps its height and the buttons keep their rows (the OK button may grow by its spinner towards the start side, as a loading `Button` does, and is still 32 px high). A user's `onclick` in `okButtonProps` or `cancelButtonProps` runs first and does not stop `onok` or `oncancel`.
 **R5. Footer.** `undefined`: Cancel then OK, at the end, 8 px apart. `null`: no footer and no gap. A string or number: that text. A snippet gets `{ origin, ok, cancel }`.
 **R6. Title and close.** The header exists only with a title; the title is what the dialog is named by. The close button is 32 px, in the corner of the
 end side, with an accessible name (default `Close`) and a cross that is hidden from assistive technology. `closable={false}` removes it.
 **R7. Layout.** Width 520, at most `100vw - 32px`; the top is 100 px, or the dialog is centered; a long body scrolls the wrapper, not the page; on a narrow screen the
-margin is 8 px. Right-to-left mirrors the close button and the footer. Opening or closing does not move anything behind the layer.
+margin is 8 px. Right-to-left mirrors the close button and the footer. `.ads-modal-body` is `display: flow-root`, so the margins of the content (a first paragraph) do not collapse through the card. Opening or closing does not move anything behind the layer.
 **R8. Layers.** `z-index` 1000 (`--ads-modal-z-index`), below the popover, dropdown and tooltip layers of `Popup` (1030, 1050, 1070), so a Select in a Modal opens above it. A
-second Modal opened later is above the first; `container` puts the layer elsewhere (`false`: in place, and then the layer is `position: absolute` in its container).
+second Modal opened later is above the first; `container` puts the layer elsewhere (`false`: where the Modal is written). The layer is always `position: fixed`: inside a container with a `transform`, a `filter` or `contain: layout` it is fixed to that container (as the layer of the Message).
 **R9. Focus and keyboard** (all of it comes from `openOverlay`). On open focus goes to the first element that Tab reaches (the close button), or to the dialog if there is none; Tab and
 Shift+Tab stay inside (`focusable.trap`); on close focus goes back to what had it (`focusable.focusTriggerAfterClose`), without scrolling. Escape closes the topmost layer; an
 open Select inside closes its list first. No `tabindex="0"` sentinel elements. A Select inside a scrolling Modal keeps its list under the field.
@@ -267,7 +267,7 @@ A static dialog is an **alert dialog** (the APG pattern for a message that needs
 New tokens `--ads-modal-*` in `tokens.css` (light and dark; `tokens-accessible.css` only where a color is below 4.5:1): `z-index`, `mask-bg`, `content-bg`, `radius`, `shadow`, `padding`,
 `title-color`, `title-font-size`, `title-line-height`, `title-font-weight`, `body-color`, `close-size`, `close-color`, `close-hover-color`, `close-hover-bg`, `footer-gap`, `width`, `top`, `motion-ease`, and for the static dialogs
 `confirm-width` (416), `confirm-icon-size` (22), `confirm-icon-gap` (12) and the four icon colors `confirm-icon-info`, `-success`, `-warning`, `-error`.
-Ant Design's `motionEaseOutCirc` (`cubic-bezier(0.08, 0.82, 0.17, 1)`) is not among our motion tokens yet: it is `--ads-modal-motion-ease`, not a new global one.
+The default widths are the tokens: a `Modal` without `width` is `var(--ads-modal-width)` wide, a static dialog without `width` is `var(--ads-modal-confirm-width)`; a `width` prop wins. Ant Design's `motionEaseOutCirc` (`cubic-bezier(0.08, 0.82, 0.17, 1)`) is not among our motion tokens yet: it is `--ads-modal-motion-ease`, not a new global one.
 
 ## Scope v1.0 (CLAUDE.md section 5a)
 
@@ -301,6 +301,8 @@ Rule 6b, step 0 of the workflow, done on 2026-11-18 against the stack `feat/over
   `inert`, that is `aria-hidden` on an ancestor of the element that still has focus, which Chrome reports and ignores (React tracker 50170, Vue 7838). Now focus goes in first, then the page is
   hidden. Tests: the order of the steps (they fail without the fix), `specs/overlay.md` O5.
 - **F2 (test added, no fault found).** A quick open, close, open leaves one lock, no stale `inert` and a working layer (React 6.0.0, PR 52753): a unit test and a browser test in three engines.
+
+- **F3 (fixed on `feat/overlay-primitives`).** The stack of layers cancelled the Escape key **before** it asked the layer to close, so a handler that vetoed the close (`event.preventDefault()` in `oncancel`) could not be told from the stack's own cancel. Now the stack passes the uncancelled event to the layer and cancels it after (in a `finally`). Test: a veto keeps the Modal open and Escape still does not reach the page.
 
 ## Decisions (answered by the maintainer on 2026-11-18)
 
@@ -355,23 +357,21 @@ covering layer, Vue puts `aria-hidden` on two body-level elements, Angular does 
 - **P19.** `modal.destroyAll()` closes the static dialogs only, never a `Modal` written in markup.
 - **P20.** A static dialog called on the server does nothing and returns a handle that resolves `false`; the library keeps no module state on the server (as Message).
 
-## Quality matrix (plan)
+## Quality matrix
 
-The real `## Quality matrix` is written in stage 4; this is the plan.
+| Row | Status | Where |
+|---|---|---|
+| WAI-ARIA | test | `tests/ModalA11y.test.ts` (axe-core: no critical or serious violation for an open Modal, a Modal with no title and an `aria-label`, no footer, a custom footer, a loading OK button, and the five static dialogs; a guard test shows that an unnamed dialog is reported) and `tests/ModalBehavior.test.ts`, `e2e/modal.spec.ts`: compared with the APG pattern Dialog (Modal): `role="dialog"` (`alertdialog` for a static one), `aria-modal`, `aria-labelledby`, `aria-describedby` of an alert dialog, focus in and back, Tab and Shift+Tab that wrap, Escape, the page behind `inert` (`aria-hidden` where `inert` is unknown) |
+| Forced colors | test | `e2e/modal.spec.ts` (the forced-colors case, three engines): the card has a border because the shadow is gone, the buttons and the cross stay visible |
+| IME | n/a | the Modal has no text input of its own; Escape during a composition in an input inside it is ignored by the stack of layers (`tests/overlayStack.test.ts`, `event.isComposing`) |
+| Touch | test | `e2e/modal-touch.chromium.spec.ts` (emulated touch, Chromium): a tap on the mask closes it and a tap inside does not, the close button and the footer buttons are targets of at least 32 px, a swipe on the layer does not scroll the page and a swipe that ends on the mask does not close. A real touch device is **not checked**; the page and the README say so |
+| Browsers | test | `npm run test:e2e` (Chromium, Firefox and WebKit): `e2e/modal.spec.ts` and `e2e/overlay.spec.ts` |
+| Browser floor | test | `npm run test:floor`: five Modal checks (`modalPage` in `scripts/floor/smoke.cjs`: the layer and the geometry, focus and Tab, the scroll lock, the page behind, a static dialog) and the checks of the primitives (`overlayPage`) in Chromium 90, Firefox 85 and WebKit 15.4. WebKit 15.4 on Linux gives a `button` a 2 px margin, so the gap between the footer buttons is measured between their margin boxes |
+| Screen reader | test | `screen-reader/modal.spec.ts`: Orca with Firefox through Guidepup (run in Docker on 2026-11-18, four runs in a row passed): with a Modal open the document starts inside it (the title and the close button, then the body lines, the field, Cancel and OK), nothing of the page behind is read, Tab goes around inside it and never reaches the page, Escape closes it and the page is read again from its heading; a static dialog is read from its title with its text and its two buttons, and has no close button. Whether Orca **announces a dialog when it opens** is not shown (this setup does not speak a focus move made by a script); NVDA, JAWS, VoiceOver and a phone are **not checked**; the page and the README say so |
 
-| Row | Plan |
-|---|---|
-| WAI-ARIA | tests against the Dialog (Modal) pattern: roles, name, focus in, Tab wrap, Escape, return; axe without critical or serious |
-| Forced colors | `e2e/modal.spec.ts` with `forcedColors: 'active'` in three engines |
-| IME | n/a: no text input of its own; Escape during a composition in an input inside it is ignored (the stack, `tests/overlayStack.test.ts`) |
-| Touch | emulated touch in Chromium (`e2e/modal-touch.chromium.spec.ts`); a real device **manual pending** |
-| Browsers | `npm run test:e2e` |
-| Browser floor | checks in `scripts/floor/smoke.cjs` |
-| Screen reader | `screen-reader/modal.spec.ts` (Orca, on GitHub: the dialog name, the alert dialog and its text, the close button); NVDA, JAWS, VoiceOver and a phone **manual pending** |
+## Список тестов
 
-## Список тестов (plan)
-
-Each item is at least one test. Unit in jsdom; geometry, focus, scroll and the engines in `e2e/modal.spec.ts`.
+Each item is at least one test. Unit in jsdom (`tests/Modal.test.ts`, `ModalBehavior.test.ts`, `ModalStatic.test.ts`, `ModalStore.test.ts`, `ModalMessage.test.ts`, `ModalA11y.test.ts`); geometry, focus, scroll and the engines in `e2e/modal.spec.ts`; touch in `e2e/modal-touch.chromium.spec.ts`; the page of the site in `tests/docs/modal-page.test.ts` and `docs/e2e/site.spec.ts`.
 
 - R1: nothing before the first open; stays after a close; `destroyOnHidden`; `forceRender`; the server renders nothing; the layer is in the container, `false` leaves it in place.
 - R2: enter and leave play, `onafteropenchange` and `onafterclose` fire once with the right argument after the animation; reduced motion; open during the leave; open, close, open quickly (F2).
@@ -393,12 +393,19 @@ Each item is at least one test. Unit in jsdom; geometry, focus, scroll and the e
 - Layout: opening and closing do not move anything behind the layer; `confirmLoading` does not move the buttons; a long title and a short one.
 - Mutation testing: `npm run test:mutation -- --target=Modal`.
 
-## Страница на сайте (plan, stage 6)
+## Страница на сайте (done, stage 6)
 
-Examples in the two-column order, each on its own row: basic; async close with `confirmLoading`; custom footer, and the render form; `mask` (none, not closing); `centered` and `width`; custom buttons through
-`okButtonProps`; no title and no footer; a long body; two Modals; `destroyOnHidden`; `container`; `classNames` and `styles`; `focusable` and `scrollLock`; `modalRender`. The static family: the five calls, the handle (`update`, `destroy`, `await`), an asynchronous OK, `modal.destroyAll`, and a `ModalHost`. Tables of props, parts and tokens in
+Twenty examples in the two-column order (`docs/src/docs/examples/modal/`): basic; asynchronous close (`confirmLoading` and `closeOnOk`); footer and its render form; texts and props of the buttons; mask and keyboard; position and width; title and close button; long
+content; nested Modals; `destroyOnHidden` and `forceRender`; `container`; `classNames` and `styles`; `focusable` and `scrollLock`; `modalRender`; a Select inside; the five static calls (and `okCancel`); the awaited answer; an OK and a Cancel that wait for a Promise; `update`, `destroy` and `destroyAll`; a `ModalHost`. Tables of props, static options, methods and tokens in
 English, Russian and Chinese. The page names the limits: iOS before 16, a Modal inside a popup, a message that is already on the page (D4), the English default texts.
 
 ## Решения и обоснование
 
-(To be filled when the maintainer answers D1 to D4 and the proposals.)
+The decisions D1 to D7 and the proposals P1 to P20 above are the maintainer's answers of 2026-11-18 and are final for v1.0. Things that were settled while implementing, each with its test:
+
+- **The zoom starts at the last press (P9).** The origin is computed from the layout offsets of the wrapper after the scroll lock is in place, not from a rectangle read while the card is scaled; the press counts for 300 ms and a click with `detail === 0` (a key) is ignored, so a keyboard open starts at the center.
+- **A handle always resolves.** `closeEntry` is called when the dialog's `open` turns false and again in `onafterclose`, before the entry is removed (and by `destroy` and `destroyAll`); it is idempotent, so the handle resolves with or without a leave animation (`prefers-reduced-motion`).
+- **`oncancel` is not the HTML `oncancel`.** The prop is removed from the inherited attribute type of `ModalProps` and typed as ours.
+- **The widths are tokens** (see "Colors, tokens and sizes"), so a theme changes them without a prop.
+- **A static dialog changes only what its role needs:** `alertdialog`, `aria-describedby`, focus on OK (D7).
+- **Source of Ant Design:** not read for this component, so there is no section "Исходник, консультации"; the public record above is the only trace used.

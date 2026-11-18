@@ -9,8 +9,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- `Modal`: a dialog over the page that the user has to deal with before going on. Write it in the markup (`<Modal bind:open title>`; the
+  body is the content, the footer has Cancel and OK) or call a ready-made one from code. While it is open the page does not scroll and
+  does not jump sideways, the page behind it is out of reach of the keyboard, the pointer and assistive technology, focus goes in and
+  comes back to what had it, Tab stays inside and Escape closes it. The close button, Cancel, Escape and a press on the mask call
+  `oncancel(event)` and then close, unless the handler calls `event.preventDefault()`. OK never closes by itself, because the app checks or
+  saves first (`confirmLoading` shows it); the new `closeOnOk` makes it close after `onok`, waiting for a Promise that `onok` returns (a
+  rejection keeps it open). Props: `title`, `footer` (a text, `null`, or a snippet that gets the buttons), `okText`, `cancelText`, `okType`,
+  `okButtonProps`, `cancelButtonProps`, `confirmLoading`, `closable`, `closeIcon`, `mask` (`{ enabled, closable }`), `keyboard`, `centered`, `width`,
+  `zIndex`, `container`, `destroyOnHidden`, `forceRender`, `focusable` (`trap`, `focusTriggerAfterClose`, `autoFocusButton`), `scrollLock`, `modalRender`,
+  `class`, `style`, `wrapClassName`, `classNames` and `styles` (ten parts), `onafteropenchange` and `onafterclose`. The dialog zooms in from the
+  place of the last click; the motion is off under `prefers-reduced-motion`. Design tokens `--ads-modal-*` (light, dark and accessible).
+- Static dialogs: `modal.confirm`, `modal.info`, `modal.success`, `modal.warning` and `modal.error` open a dialog with an icon, a title, a text and
+  buttons, with no markup and no state, and `modal.destroyAll()` closes them all. A call returns a handle: `destroy()`, `update(patch)` and a
+  promise, so `await modal.confirm(...)` is `true` for OK and `false` for Cancel, Escape and `destroy`. `onok` and `oncancel` may return a Promise
+  (the button loads; a resolve closes, a rejection keeps it open). A static dialog is an alert dialog (`role="alertdialog"`, described by its text), has no
+  close button, is not closed by a press on the mask, and focus starts on OK. `<ModalHost />` draws the static dialogs where it stands, so they see
+  the context of that place; with none the library makes a layer in the body.
+- The page of the `Modal` on the documentation site, with twenty examples and the tables of props, options, methods and tokens in English,
+  Russian and Chinese. Checked with a real screen reader (Orca with Firefox): the document starts inside an open dialog, the page behind is not
+  read, Tab stays inside. Not checked: NVDA, JAWS, VoiceOver, a phone screen reader, a real touch device. A Modal opened from inside a popup
+  (the not-found area of a `Select`, say) is not supported: the press in the Modal is outside the popup and closes it; use `container`.
+
 ### Changed
 
+- The layer of `Message` is kept reachable while a `Modal` is open (it carries `data-ads-overlay-keep`), so a message that is already on the page,
+  or one that an OK button opens, is still read by a screen reader. Nothing else changes for `Message`.
 - Internal, no change for users: the parts that every layer needs are now shared. Moving a panel out of its place in the page
   (`portal`) and waiting for a leave animation (`anim`) were taken out of `Popup`; `Popup`, `Tooltip` and `Select` behave as
   before. New shared part for the Modal and the Drawer (`overlay`): the page does not scroll while a layer is open and does
@@ -19,7 +45,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 - Internal, no change for users: the icons of `Message`, `Select`, `Input` and `Menu` (the chevron, the tick, the cross, the clear disc, the eye, the
   search almond, the "…", the four status discs and the spinner) are drawn by one shared part, `internal/icons`, instead of four copies of the same file.
   Every icon is drawn exactly as before (the same markup, the same pixels in Chromium, Firefox and WebKit, the same class names), and the three spinners
-  share one animation. The Modal will use the same part.
+  share one animation. The Modal uses the same part.
 
 ### Documentation
 
