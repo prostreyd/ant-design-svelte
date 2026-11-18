@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-18
+
 ### Added
 
 - `Modal`: a dialog over the page that the user has to deal with before going on. Write it in the markup (`<Modal bind:open title>`; the
