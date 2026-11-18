@@ -9,6 +9,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Documentation
+
+- `Menu`: a popup that opens beside a vertical menu is flipped to the side with more room but not moved inside the window, so on a
+  screen narrower than the menu and its popup it can be cut off (the public demos of Ant Design differ here: React leaves it off
+  the screen or opens it above, Vue pushes it over its menu, Angular does not flip). The page, the README and the specification now say
+  so and advise `mode="inline"` there, and the examples with vertical menus are narrower on a phone, so their popups stay inside the
+  screen; a test of the site checks it at 390 and 360 px.
+
 ## [0.11.0] - 2026-11-18
 
 ### Added
