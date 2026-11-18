@@ -5,7 +5,7 @@
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
 // It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab, the
-// Tooltip lab, the Radio lab, the grid lab, the Message lab, the Spin lab, the Menu lab and the overlay lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// Tooltip lab, the Radio lab, the grid lab, the Message lab, the Spin lab, the Menu lab, the overlay lab and the Modal lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -1039,6 +1039,95 @@ async function overlayPage(context) {
   await page.close();
 }
 
+async function modalPage(context) {
+  const page = await newPage(context, base + '/#modal');
+  await page.waitForSelector(idOf('open'));
+  await settle(page);
+  const lab = (patch) => page.evaluate((p) => window.__modalLab.set(p), patch);
+  const active = () => page.evaluate(() => (document.activeElement && (document.activeElement.getAttribute('aria-label') || document.activeElement.textContent.trim().slice(0, 12))) || '');
+  const marker = () => rectOf(page, idOf('marker'));
+
+  await check('modal: 520 px wide, 100 px from the top, in the middle, the page stays where it was, is out of reach, and focus goes to the close button', async () => {
+    const before = await marker();
+    await lab({ open: true });
+    await page.waitForSelector('.ads-modal');
+    await settle(page);
+    const box = await rectOf(page, '.ads-modal');
+    const during = await marker();
+    const state = await page.evaluate(() => {
+      const known = 'inert' in HTMLElement.prototype;
+      var outside = document.querySelector('[data-testid="page"]');
+      var hidden = false;
+      for (var node = outside; node && node !== document.body; node = node.parentElement) {
+        if (node.hasAttribute('inert') && (known || node.getAttribute('aria-hidden') === 'true')) hidden = true;
+      }
+      return { hidden: hidden, body: document.body.style.overflow, modalRole: document.querySelector('.ads-modal').getAttribute('role'), modal: document.querySelector('.ads-modal').getAttribute('aria-modal') };
+    });
+    const middle = Math.abs(box.x + box.width / 2 - (await page.evaluate(() => document.documentElement.clientWidth)) / 2);
+    const moved = Math.abs(during.x - before.x) + Math.abs(during.width - before.width);
+    const focus = await active();
+    return [Math.abs(box.width - 520) <= 1 && Math.abs(box.y - 100) <= 1 && middle <= 1.5 && moved <= 1 && state.hidden && state.body === 'hidden' && state.modalRole === 'dialog' && state.modal === 'true' && focus === 'Close', `width ${box.width}, top ${box.y}, off-centre ${middle}, page moved ${moved}, page hidden ${state.hidden}, overflow ${state.body}, focus ${focus}`];
+  });
+
+  await check('modal: the card, the title, the footer buttons and the close button are the sizes of the design', async () => {
+    const title = await rectOf(page, '.ads-modal-title');
+    const cancel = await rectOf(page, '[data-ads-modal-cancel]');
+    const ok = await rectOf(page, '[data-ads-modal-ok]');
+    const close = await rectOf(page, '.ads-modal-close');
+    const box = await rectOf(page, '.ads-modal');
+    // The gap is the `gap` of the footer, between the margin boxes: the WebKit 15.4 of Linux gives a `button` a margin of 2px of its own, which is
+    // not ours to measure.
+    const margins = await page.evaluate(() => ({ cancel: parseFloat(getComputedStyle(document.querySelector('[data-ads-modal-cancel]')).marginRight) || 0, ok: parseFloat(getComputedStyle(document.querySelector('[data-ads-modal-ok]')).marginLeft) || 0 }));
+    const gap = ok.x - margins.ok - (cancel.x + cancel.width + margins.cancel);
+    return [Math.abs(title.y - (box.y + 20)) <= 1 && Math.abs(title.height - 24) <= 1 && Math.abs(ok.height - 32) <= 1 && Math.abs(gap - 8) <= 1 && Math.abs(close.width - 32) <= 1 && Math.abs(close.x - (box.x + box.width - 44)) <= 1, `title ${title.y - box.y}/${title.height}, ok height ${ok.height}, gap ${gap} (button margins ${margins.cancel} and ${margins.ok}), close ${close.width} at ${box.x + box.width - close.x}`];
+  });
+
+  await check('modal: Tab on the last element goes to the first, Shift+Tab on the first to the last, and Escape closes it and gives focus back', async () => {
+    await page.focus('[data-ads-modal-ok]');
+    await page.keyboard.press('Tab');
+    const first = await active();
+    await page.keyboard.press('Shift+Tab');
+    const last = await active();
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(700);
+    const hidden = await page.evaluate(() => { var layer = document.querySelector('.ads-modal-root'); return !layer || layer.hasAttribute('hidden') || getComputedStyle(layer).display === 'none'; });
+    const free = await page.evaluate(() => document.body.style.overflow === '' && !document.querySelector('[data-testid="page"]').closest('[inert]'));
+    return [first === 'Close' && last === 'OK' && hidden && free, `Tab -> ${first}, Shift+Tab -> ${last}, hidden ${hidden}, page free ${free}`];
+  });
+
+  await check('modal: a mask press closes it, but not one that started inside the dialog', async () => {
+    await lab({ open: true });
+    await page.waitForSelector('.ads-modal');
+    await settle(page);
+    const cancels = () => page.evaluate(() => window.__modalLab.log().filter(function (entry) { return entry === 'cancel'; }).length);
+    const before = await cancels();
+    const field = await rectOf(page, idOf('field'));
+    await page.mouse.move(field.x + 5, field.y + 5);
+    await page.mouse.down();
+    await page.mouse.move(30, 30);
+    await page.mouse.up();
+    const stayed = (await cancels()) === before;
+    await page.mouse.click(30, 30);
+    await page.waitForTimeout(700);
+    const closed = (await cancels()) === before + 1;
+    return [stayed && closed, `stayed after a drag ${stayed}, closed by a press ${closed}`];
+  });
+
+  await check('modal: a confirm is an alert dialog 416 px wide with focus on OK, and await gives true for OK', async () => {
+    await page.evaluate(() => { window.__result = undefined; window.__modalLab.modal.confirm({ title: 'Sure?', content: 'Really.' }).then(function (v) { window.__result = v; }); });
+    await page.waitForSelector('[role="alertdialog"]');
+    await settle(page);
+    const box = await rectOf(page, '[role="alertdialog"]');
+    const focus = await active();
+    await page.click('[role="alertdialog"] [data-ads-modal-ok]');
+    await page.waitForTimeout(700);
+    const result = await page.evaluate(() => window.__result);
+    return [Math.abs(box.width - 416) <= 1 && focus === 'OK' && result === true, `width ${box.width}, focus ${focus}, result ${result}`];
+  });
+
+  await page.close();
+}
+
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await playwright[engine].launch();
@@ -1060,6 +1149,7 @@ async function overlayPage(context) {
     await spinPage(context);
     await menuPage(context);
     await overlayPage(context);
+    await modalPage(context);
   } catch (error) {
     record('run', false, `threw: ${String(error && error.message ? error.message : error).split('\n')[0]}`);
   }
