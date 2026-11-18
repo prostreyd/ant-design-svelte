@@ -50,8 +50,9 @@
     font-size: 12px;
   }
 
+  /* A submenu opens beside the menu, so on a phone the menu stays narrower than the screen less the room of its popup. */
   .frame {
-    width: 256px;
+    width: clamp(140px, calc(100vw - 220px), 256px);
     max-width: 100%;
   }
 

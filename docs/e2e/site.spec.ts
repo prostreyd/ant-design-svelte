@@ -1994,6 +1994,39 @@ test.describe('Menu page', () => {
     await expect.poll(async () => (await menu.boundingBox())?.width).toBeGreaterThan(200);
   });
 
+  // A popup that opens beside a vertical menu leaves the window when the menu is too wide for a phone (the popup is only flipped to the
+  // side with more room, never moved inside the window: specs/popup.md, R2). The examples keep their vertical menus narrower on a phone.
+  for (const width of [390, 360]) {
+    test(`on a phone of ${width} px the popup of a submenu of every vertical menu stays inside the screen`, async ({ page }) => {
+      test.slow();
+      await page.setViewportSize({ width, height: 844 });
+      await open(page, 'components/menu/');
+      const menus = page.locator('section.demo ul.ads-menu-root.ads-menu-vertical');
+      const count = await menus.count();
+      expect(count).toBeGreaterThanOrEqual(5);
+      let opened = 0;
+      for (let i = 0; i < count; i++) {
+        const title = menus.nth(i).locator(':scope > li > .ads-menu-submenu-title:not([aria-disabled="true"])').first();
+        if ((await title.count()) === 0) continue;
+        await title.scrollIntoViewIfNeeded();
+        await title.hover();
+        const popup = page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list').first();
+        // A menu that opens on a click (triggerSubMenuAction="click") does not react to the pointer on the title.
+        await page.waitForTimeout(200);
+        if (!(await popup.isVisible())) await title.click();
+        await expect(popup, `vertical menu ${i + 1} opens a popup`).toBeVisible();
+        const box = (await popup.boundingBox())!;
+        expect(box.x, `vertical menu ${i + 1}: the popup starts inside the screen`).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width, `vertical menu ${i + 1}: the popup ends inside the screen`).toBeLessThanOrEqual(width);
+        opened += 1;
+        await page.keyboard.press('Escape');
+        await page.mouse.move(2, 2);
+        await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list')).toHaveCount(0);
+      }
+      expect(opened).toBeGreaterThanOrEqual(4);
+    });
+  }
+
   test('top navigation demo: a narrow container moves the items that do not fit into the "…" item', async ({ page }) => {
     await open(page, 'components/menu/');
     const demo = demoOf(page, 'Top navigation').locator('.demo-pre');
