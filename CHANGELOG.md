@@ -9,6 +9,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Changed
+
+- Publishing to npm now waits for every check of the CI. A version tag starts three stages in `publish.yml`, and nothing is
+  published unless all of them are green: a quick guard (the tag matches the version in `package.json`, the tagged commit is on
+  `main`, the version is not in npm yet), then every job of `ci.yml` (lint, types, unit tests with coverage, the package, the
+  browser tests of the library and of the site in three browsers), then `npm publish`. Before, the tag ran only lint, types, unit
+  tests and the build, so a red browser test did not stop a release (the browser tests of 0.10.0 had not run when it was
+  published). A red stage leaves npm untouched; a job that failed only because the runner could not install the browsers is run
+  again with "Re-run failed jobs". Trusted Publishing is unchanged (the file is still `publish.yml`, the environment `npm`).
+  `ci.yml` can now also be called from another workflow (`workflow_call`). The rules for AI assistants say how a release goes
+  now: the tag is set right after the merge into `main`, and GitHub decides whether to publish.
+
 ## [0.10.0] - 2026-11-18
 
 ### Added
