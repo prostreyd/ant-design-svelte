@@ -260,8 +260,8 @@ describe('accessible tokens (tokens-accessible.css)', () => {
     for (const token of accessible.keys()) expect(light.has(token), token).toBe(true);
   });
 
-  it('changes the -solid, -text, link, switch, checkbox, radio, input, select, message and menu tokens, and nothing else', () => {
-    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color)|message-icon-(success|warning)|menu-(item-selected-color|submenu-selected-color|horizontal-(hover|selected)-color|group-title-color|danger-(color|hover-color|selected-color)|dark-(item-selected-bg|danger-selected-bg|danger-active-bg)))$/;
+  it('changes the -solid, -text, link, switch, checkbox, radio, input, select, message, spin and menu tokens, and nothing else', () => {
+    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color)|message-icon-(success|warning)|spin-(description-color|mask-bg)|menu-(item-selected-color|submenu-selected-color|horizontal-(hover|selected)-color|group-title-color|danger-(color|hover-color|selected-color)|dark-(item-selected-bg|danger-selected-bg|danger-active-bg)))$/;
     for (const token of accessible.keys()) expect(token, token).toMatch(allowed);
   });
 
@@ -636,6 +636,56 @@ describe('tooltip tokens (specs/tooltip.md)', () => {
   });
 });
 
+describe('spin tokens', () => {
+  // The sizes and times of the Ant Design token documentation and the public demos (React 6.7.1, read 2026-11-17).
+  it('default light: the dimensions, the content opacity and the layer of the documentation', () => {
+    expect(light.get('--ads-spin-dot-size')).toBe('20px');
+    expect(light.get('--ads-spin-dot-size-sm')).toBe('14px');
+    expect(light.get('--ads-spin-dot-size-lg')).toBe('32px');
+    expect(light.get('--ads-spin-gap')).toBe('12px');
+    expect(light.get('--ads-spin-container-opacity')).toBe('0.5');
+    expect(light.get('--ads-spin-fullscreen-z-index')).toBe('1000');
+    expect(light.get('--ads-spin-mask-bg')).toBe('rgba(0, 0, 0, 0.45)');
+    expect(light.get('--ads-spin-color')).toBe('#1677ff');
+    expect(light.get('--ads-spin-duration')).toBe('1.2s');
+    expect(light.get('--ads-spin-pulse-duration')).toBe('1s');
+  });
+
+  it('the dots reach 3:1 on the page (WCAG 1.4.11) in the default light set, the accessible set and the dark theme', () => {
+    expect(ratio(light, '--ads-spin-color', '--ads-color-bg-container')).toBeGreaterThanOrEqual(3);
+    expect(ratio(lightAccessible, '--ads-spin-color', '--ads-color-bg-container')).toBeGreaterThanOrEqual(3);
+    expect(ratio(darkTheme, '--ads-spin-color', '--ads-color-bg-container')).toBeGreaterThanOrEqual(3);
+  });
+
+  it('the description is below 4.5:1 in the default light set, which is why the accessible file darkens it', () => {
+    expect(ratio(light, '--ads-spin-description-color', '--ads-color-bg-container')).toBeLessThan(4.5);
+  });
+
+  it('the description reaches 4.5:1 as text with the accessible file and in the dark theme', () => {
+    expect(ratio(lightAccessible, '--ads-spin-description-color', '--ads-color-bg-container')).toBeGreaterThanOrEqual(4.5);
+    expect(ratio(darkTheme, '--ads-spin-description-color', '--ads-color-bg-container')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  /** The white text of a fullscreen Spin against the mask over the page of the theme. */
+  function whiteOnMask(tokens: Map<string, string>): number {
+    const page = over(parse(tokens.get('--ads-color-bg-container')!), { r: 255, g: 255, b: 255, a: 1 });
+    const masked = over(parse(tokens.get('--ads-spin-mask-bg')!), page);
+    const [hi, lo] = [luminance(parse(tokens.get('--ads-spin-fullscreen-color')!)), luminance(masked)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+
+  it('fullscreen: the white dots reach 3:1 on the default mask over a white page, but the white text does not reach 4.5:1', () => {
+    expect(light.get('--ads-spin-fullscreen-color')).toBe('#ffffff');
+    expect(whiteOnMask(light)).toBeGreaterThanOrEqual(3);
+    expect(whiteOnMask(light)).toBeLessThan(4.5);
+  });
+
+  it('fullscreen: the accessible mask gives the white text 4.5:1 over a white page, and the dark theme over its page', () => {
+    expect(whiteOnMask(lightAccessible)).toBeGreaterThanOrEqual(4.5);
+    expect(whiteOnMask(darkTheme)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
 describe('message tokens (specs/message.md)', () => {
   // Measured on the Ant Design demo (React 6.7.1, 2026-11-16, Chromium, light and dark theme).
   const measuredLight: Record<string, string> = {
@@ -693,7 +743,7 @@ describe('message tokens (specs/message.md)', () => {
   });
 
   it('the dark theme overrides everything that is a color of the box', () => {
-    for (const token of ['bg', 'color', 'shadow', 'icon-info', 'icon-success', 'icon-error', 'icon-warning', 'close-color', 'close-color-hover', 'close-bg-hover']) {
+    for (const token of ['bg', 'color', 'shadow', 'icon-info', 'icon-success', 'icon-error', 'icon-warning', 'close-color', 'close-color-hover', 'close-bg', 'close-bg-hover']) {
       expect(dark.has(`--ads-message-${token}`), token).toBe(true);
     }
   });

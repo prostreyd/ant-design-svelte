@@ -126,7 +126,7 @@ describe('what runs everything', () => {
 });
 
 describe('what needs no browser test', () => {
-  it.each(['specs/select.md', 'CHANGELOG.md', 'README.md', 'ai/CLAUDE.md', '.github/workflows/ci.yml', 'scripts/test-affected.mjs', 'tests/Select.test.ts', 'tests/docs/overview.test.ts', 'docs/README.md', 'LICENSE'])('%s', (file) => {
+  it.each(['specs/select.md', 'CHANGELOG.md', 'README.md', 'ai/CLAUDE.md', '.github/workflows/ci.yml', 'screen-reader/message.spec.ts', 'screen-reader/package.json', 'scripts/test-affected.mjs', 'tests/Select.test.ts', 'tests/docs/overview.test.ts', 'docs/README.md', 'LICENSE'])('%s', (file) => {
     const result = plan([file]);
     expect(result.all).toBeNull();
     expect(runsLibrary(result)).toBe(false);

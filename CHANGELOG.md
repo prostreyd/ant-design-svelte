@@ -41,6 +41,48 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 - The rules also describe a joint release of several finished components: one branch that gathers them, one CI run on GitHub, one
   version (+0.1.0 once, whatever the number of the new components) and one tag.
 
+## [0.10.0] - 2026-11-18
+
+### Added
+
+- `Spin`: a loading indicator of four turning dots, with `spinning`, `delay`, `size` (`small`, `medium`, `large`; `default` is an
+  alias of `medium`), `description` (a string or a snippet), `indicator` (a snippet), `percent`, `fullscreen`, `classNames` and
+  `styles` for the parts `root`, `section`, `indicator`, `description` and `container`. Standalone it is only the indicator and renders
+  nothing while it is not spinning; with children the content is dimmed (half opacity) and ignores the mouse and the text selection,
+  and the indicator is centered over it. The API is inspired by Ant Design; the implementation is original for Svelte.
+  - `delay` starts again every time `spinning` becomes true (also at mount), turning it off hides at once and a repeated true starts no
+    second timer, so a quick load never flashes. Embedded, the content is not dimmed until the indicator appears, and a Spin that is
+    spinning at mount is dimmed from the first paint, with no fade from full opacity.
+  - `percent` draws a progress ring (`role="progressbar"`, named by the description or `aria-label`); `percent="auto"` is an
+    indeterminate ring that turns, with no timer and no changing value for a screen reader (the Ant Design one is simulated in script).
+  - `fullscreen` is a dimmed backdrop over the viewport, drawn in place (`position: fixed`), that blocks the pointer; it has no focus
+    trap and does not lock the scroll, and the page says so. It leaves at once, so it never blocks the page after the loading ends.
+  - A screen reader hears the `description` in a `role="status"` element; the covered content gets `aria-busy` (not `inert`: the
+    keyboard still reaches it). A Spin with no description or name logs one warning in development.
+  - Dots and ring are visible in forced-colors modes such as Windows High Contrast (the default indicator of Ant Design disappears there),
+    and `prefers-reduced-motion` slows the turn instead of ignoring the setting. With `tokens-accessible.css` the description keeps 4.5:1
+    and white text on the fullscreen backdrop keeps 4.5:1 over a white page.
+  - Page of `Spin` on the documentation site, with 9 examples and the API, semantic parts and token tables in English, Russian and Chinese.
+    Not checked with a real screen reader (Orca, NVDA, JAWS, VoiceOver); the page and the README say so.
+  - Not taken: `tip` and `wrapperClassName` (deprecated in Ant Design), the function form of `classNames` and `styles`,
+    `Spin.setDefaultIndicator` and `nzSimple`. A default `indicator` and `size` are reserved for ConfigProvider in v1.1.
+
+### Documentation
+
+- `npm run test:affected` no longer runs every browser test when a file in `screen-reader/` changes. Those tests use a real
+  screen reader (Orca) and run only in the workflow `Screen reader` on GitHub (on `main`, on pull requests and by hand), never on
+  this machine, so a change there has nothing to run here. Before, such a file was "unknown" to the plan and started the whole
+  run, which took about half an hour. The rules for AI assistants say it too.
+
+## [0.9.1] - 2026-11-17
+
+### Fixed
+
+- `Message`: the close button (`closable`) is easier to see. The cross was 12px with a thin line and no background, and next to the
+  disc of an `error` message, which has a cross in it too, it did not read as a button. The cross is now 16px with a thicker
+  line, the button has a faint background at rest (`--ads-message-close-bg`) and a stronger one on hover, in the light and
+  the dark theme. The box keeps its 40px height. One token is new: `--ads-message-close-bg`.
+
 ## [0.9.0] - 2026-11-17
 
 ### Added

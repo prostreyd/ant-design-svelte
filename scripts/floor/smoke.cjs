@@ -5,7 +5,7 @@
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
 // It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab, the
-// Tooltip lab, the Radio lab, the grid lab, the Message lab and the Menu lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// Tooltip lab, the Radio lab, the grid lab, the Message lab, the Spin lab and the Menu lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -600,6 +600,114 @@ async function gridPage(context) {
   await page.close();
 }
 
+async function spinPage(context) {
+  const page = await newPage(context, base + '/#spin');
+  await page.waitForFunction(() => Boolean(window.__spinLab));
+  const mount = (props, content, options) =>
+    page.evaluate((args) => window.__spinLab.set(args), Object.assign({ props: props, content: content || 'none' }, options || {}));
+  const rect = (selector) => rectOf(page, selector);
+  const near = (a, b, tolerance) => Math.abs(a - b) <= (tolerance === undefined ? 1 : tolerance);
+  const cx = (r) => r.x + r.width / 2;
+  const cy = (r) => r.y + r.height / 2;
+
+  await check('spin: the dot box is 14, 20 and 32 px, the root is exactly that without a description', async () => {
+    const sizes = [];
+    for (const size of ['small', 'medium', 'large']) {
+      await mount({ size: size, 'aria-label': 'Loading' });
+      const r = await rect('.ads-spin');
+      sizes.push(Math.round(r.width) + 'x' + Math.round(r.height));
+    }
+    return [sizes.join(' ') === '14x14 20x20 32x32', sizes.join(' ')];
+  });
+
+  await check('spin: the indicator is centered over the description, 12 px apart', async () => {
+    await mount({ description: 'Loading' });
+    const root = await rect('.ads-spin');
+    const part = await rect('.ads-spin-indicator');
+    const text = await rect('.ads-spin-description');
+    const gap = text.y - (part.y + part.height);
+    return [near(cx(part), cx(root)) && near(cx(text), cx(root)) && near(gap, 12, 0.6), 'gap ' + gap];
+  });
+
+  await check('spin: the dots turn and pulse (a running animation whose clock moves)', async () => {
+    await mount({ 'aria-label': 'Loading' });
+    const sample = () =>
+      page.evaluate(() => {
+        const found = document.querySelector('.ads-spin-dots').getAnimations()[0];
+        return found ? { state: found.playState, time: Number(found.currentTime) } : null;
+      });
+    const first = await sample();
+    await page.waitForTimeout(250);
+    const second = await sample();
+    return [Boolean(first && second && second.state === 'running' && second.time > first.time), JSON.stringify([first, second])];
+  });
+
+  await check('spin: embedded: the indicator is centered in the content, the content is dimmed and takes no pointer', async () => {
+    await mount({ 'aria-label': 'Loading' }, 'button');
+    await settle(page);
+    const covered = await rect('.ads-spin-container');
+    const part = await rect('.ads-spin-indicator');
+    const style = await page.evaluate(() => {
+      const s = getComputedStyle(document.querySelector('.ads-spin-container'));
+      return { opacity: s.opacity, events: s.pointerEvents };
+    });
+    const button = await rect(idOf('inner-button'));
+    await page.mouse.click(cx(button), cy(button));
+    const clicks = await page.evaluate(() => window.__spinLab.clicks());
+    const centered = near(cx(part), cx(covered)) && near(cy(part), cy(covered));
+    return [centered && style.opacity === '0.5' && style.events === 'none' && clicks === 0, JSON.stringify(style) + ' clicks ' + clicks];
+  });
+
+  await check('spin: the content does not move or resize when spinning toggles', async () => {
+    await mount({ spinning: false, description: 'Loading' }, 'text');
+    const before = JSON.stringify([await rect('.ads-spin-container'), await rect(idOf('after'))]);
+    await page.evaluate(() => window.__spinLab.update({ spinning: true }));
+    await settle(page);
+    const during = JSON.stringify([await rect('.ads-spin-container'), await rect(idOf('after'))]);
+    return [before === during, before === during ? '' : before + ' -> ' + during];
+  });
+
+  await check('spin: the delay holds the indicator back for the whole time (the clock of the page)', async () => {
+    await mount({ delay: 400, description: 'Loading' }, 'text');
+    await page.waitForSelector('[role="status"]', { timeout: 5000 });
+    const waited = await page.evaluate(() => window.__spinLab.appearedAt - window.__spinLab.mountedAt);
+    return [waited >= 390 && waited < 3000, 'waited ' + Math.round(waited) + ' ms'];
+  });
+
+  await check('spin: fullscreen covers the viewport, centers the indicator and takes the clicks', async () => {
+    await mount({ fullscreen: true, description: 'Loading' });
+    const box = await rect('.ads-spin-fullscreen');
+    const section = await rect('.ads-spin-section');
+    const outside = await rect(idOf('outside'));
+    const hit = await page.evaluate(
+      (point) => Boolean(document.elementFromPoint(point[0], point[1]).closest('.ads-spin-fullscreen')),
+      [cx(outside), cy(outside)]
+    );
+    const covers = box.x === 0 && box.y === 0 && box.width === VIEWPORT.width && box.height === VIEWPORT.height;
+    return [covers && near(cx(section), VIEWPORT.width / 2, 1.5) && near(cy(section), VIEWPORT.height / 2, 1.5) && hit, JSON.stringify(box)];
+  });
+
+  await check('spin: the progress ring fills the dot box and starts at 12 o\'clock', async () => {
+    await mount({ percent: 25, size: 'large', 'aria-label': 'Upload' });
+    const svg = await rect('svg.ads-spin-ring');
+    const arc = await page.evaluate(() => {
+      const circle = document.querySelector('.ads-spin-ring-arc');
+      return { offset: circle.getAttribute('stroke-dashoffset'), transform: circle.getAttribute('transform') };
+    });
+    return [near(svg.width, 32, 0.6) && arc.offset === '75' && arc.transform === 'rotate(-90 50 50)', JSON.stringify(arc)];
+  });
+
+  await check('spin: right to left: the first dot is at the right edge and the indicator stays centered', async () => {
+    await mount({ description: 'Loading' }, 'none', { dir: 'rtl' });
+    const root = await rect('.ads-spin');
+    const part = await rect('.ads-spin-indicator');
+    const first = await page.evaluate(() => document.querySelector('.ads-spin-dots > span').offsetLeft);
+    return [near(cx(part), cx(root)) && first > part.width / 2 - 1, 'first dot at ' + first];
+  });
+
+  await page.close();
+}
+
 async function selectPage(context) {
   const page = await newPage(context, base + '/#select');
   await page.waitForSelector(idOf('single'));
@@ -888,6 +996,7 @@ async function menuPage(context) {
     await radioPage(context);
     await gridPage(context);
     await messagePage(context);
+    await spinPage(context);
     await menuPage(context);
   } catch (error) {
     record('run', false, `threw: ${String(error && error.message ? error.message : error).split('\n')[0]}`);

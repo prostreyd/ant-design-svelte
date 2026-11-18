@@ -183,12 +183,13 @@ test.describe('the timer, with the real pointer and focus', () => {
   });
 
   test('focus on the close button holds it', async ({ page }) => {
-    await call(page, 'info', { content: 'x', duration: 1, closable: true });
+    // 2 s, not 1: on a machine that is busy the call and the focus can take longer than a second, and the message is gone before it has focus.
+    await call(page, 'info', { content: 'x', duration: 2, closable: true });
     await page.locator('.ads-message-close').focus();
-    await page.waitForTimeout(1600);
+    await page.waitForTimeout(2600);
     await expect(boxes(page)).toHaveCount(1);
     await page.locator('[data-testid="before"]').focus();
-    await expect(boxes(page)).toHaveCount(0, { timeout: 3000 });
+    await expect(boxes(page)).toHaveCount(0, { timeout: 5000 });
   });
 });
 
@@ -203,6 +204,27 @@ test.describe('the close button and the keyboard', () => {
         await button.focus();
         await page.keyboard.press(how);
       }
+      await expect(boxes(page)).toHaveCount(0);
+    }
+  });
+
+  test('the button shows where it is: a faint background at rest, a stronger one on hover, and a cross 16 px across, in both themes', async ({ page }) => {
+    // Remark of the maintainer on 0.9.0: the cross was 12 px, thin, on no background, and beside the cross of the `error` disc it did not read as a button.
+    const alpha = (color: string) => Number(/rgba\(.*,\s*([0-9.]+)\)$/.exec(color)?.[1] ?? 1);
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate((name) => document.documentElement.setAttribute('data-theme', name), theme);
+      await call(page, 'error', { content: `Upload failed, ${theme}`, duration: 0, closable: true });
+      await settle(page);
+      const button = page.locator('.ads-message-close');
+      await page.mouse.move(2, 400);
+      await expect(button, theme).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+      const resting = alpha(await button.evaluate((element) => getComputedStyle(element).backgroundColor));
+      expect(resting, theme).toBeGreaterThan(0.02);
+      near((await rect(button.locator('svg'))).width, 16, 0.5);
+      near((await rect(button)).height, 24, 0.5);
+      await button.hover();
+      await expect.poll(async () => alpha(await button.evaluate((element) => getComputedStyle(element).backgroundColor)), { message: theme }).toBeGreaterThan(resting + 0.03);
+      await call(page, 'destroy');
       await expect(boxes(page)).toHaveCount(0);
     }
   });

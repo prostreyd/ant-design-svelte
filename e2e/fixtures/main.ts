@@ -10,6 +10,7 @@ import MessageLab from './MessageLab.svelte';
 import PopupLab from './PopupLab.svelte';
 import RadioLab from './RadioLab.svelte';
 import SelectLab from './SelectLab.svelte';
+import SpinLab from './SpinLab.svelte';
 import TooltipLab from './TooltipLab.svelte';
 
 const target = document.getElementById('app');
@@ -18,8 +19,8 @@ if (!target) {
 }
 
 // `/#popup` opens the lab of the popup primitive, `/#select` the one of the Select, `/#tooltip` the one of the
-// Tooltip, `/#radio` the one of the Radio, `/#grid` the one of the Row and Col, `/#menu` the one of the Menu and `/#message` the one of the
-// Message; every other URL is the component page.
+// Tooltip, `/#radio` the one of the Radio, `/#grid` the one of the Row and Col, `/#menu` the one of the Menu, `/#message` the one of the
+// Message and `/#spin` the one of the Spin; every other URL is the component page.
 const pages: Record<string, typeof App> = {
   '#popup': PopupLab,
   '#select': SelectLab,
@@ -27,6 +28,7 @@ const pages: Record<string, typeof App> = {
   '#radio': RadioLab,
   '#grid': GridLab,
   '#menu': MenuLab,
-  '#message': MessageLab
+  '#message': MessageLab,
+  '#spin': SpinLab
 };
 mount(pages[location.hash] ?? App, { target });
