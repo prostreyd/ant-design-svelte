@@ -1954,11 +1954,36 @@ test.describe('Modal page', () => {
     await expect(demo.locator('output')).toHaveText('cancelled, then closed');
     await expect(trigger).toBeFocused();
 
-    // OK does not close by itself (closeOnOk is off); this example closes it in onok.
+    // OK does not close by itself (closeOnOk is off); this example closes it in onok and says so, and the old text is gone.
     await trigger.click();
+    await expect(demo.locator('output')).toHaveText('');
     await page.getByRole('dialog', { name: 'Basic Modal' }).getByRole('button', { name: 'OK' }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(demo.locator('output')).toHaveText('OK pressed, then closed');
     await expect(trigger).toBeFocused();
+  });
+
+  test('the other examples set closeOnOk: OK closes a Modal whose close button is off, and a nested one on its own', async ({ page }) => {
+    await open(page, 'components/modal/');
+    const title = demoOf(page, 'Title and close button').locator('.demo-pre');
+    await title.scrollIntoViewIfNeeded();
+    await title.getByRole('button', { name: 'closable: false' }).click();
+    const noClose = page.getByRole('dialog', { name: 'No close button' });
+    await expect(noClose).toBeVisible();
+    await expect(noClose.getByRole('button', { name: 'Close' })).toHaveCount(0);
+    await noClose.getByRole('button', { name: 'OK' }).click();
+    await expect(noClose).toHaveCount(0);
+
+    const nested = demoOf(page, 'Nested Modals').locator('.demo-pre');
+    await nested.scrollIntoViewIfNeeded();
+    await nested.getByRole('button', { name: 'Open the first' }).click();
+    await page.getByRole('dialog', { name: 'First' }).getByRole('button', { name: 'Open the second' }).click();
+    const second = page.getByRole('dialog', { name: 'Second' });
+    await expect(second).toBeVisible();
+    await second.getByRole('button', { name: 'OK' }).click();
+    // Only the second is closed; the first is still there and the page is still locked.
+    await expect(second).toHaveCount(0);
+    await expect(page.getByRole('dialog', { name: 'First' })).toBeVisible();
   });
 
   test('closeOnOk: the first try is rejected and the dialog stays; the second closes it', async ({ page }) => {

@@ -10,6 +10,7 @@
   <Modal
     bind:open
     title="Styled"
+    closeOnOk
     class="fancy-box"
     style="width: 480px"
     wrapClassName="fancy-wrap"

@@ -11,13 +11,13 @@
   <div class="field">
     <span class="caption">default: the content is kept</span>
     <Button onclick={() => (kept = true)}>Keeps what you typed</Button>
-    <Modal bind:open={kept} title="Kept"><input aria-label="Draft" placeholder="Type, close, open again" /></Modal>
+    <Modal closeOnOk bind:open={kept} title="Kept"><input aria-label="Draft" placeholder="Type, close, open again" /></Modal>
   </div>
 
   <div class="field">
     <span class="caption">destroyOnHidden</span>
     <Button onclick={() => (fresh = true)}>Starts empty each time</Button>
-    <Modal bind:open={fresh} title="Fresh" destroyOnHidden><input aria-label="Draft" placeholder="Type, close, open again" /></Modal>
+    <Modal closeOnOk bind:open={fresh} title="Fresh" destroyOnHidden><input aria-label="Draft" placeholder="Type, close, open again" /></Modal>
   </div>
 
   <div class="field">
@@ -26,6 +26,7 @@
     <Modal
       bind:open={present}
       title="Present"
+      closeOnOk
       forceRender
       onafteropenchange={(opened) => (log = [...log, opened ? 'opened' : 'closed'])}
       onafterclose={() => (log = [...log, 'afterclose'])}

@@ -13,9 +13,9 @@
     <Button onclick={() => (high = true)}>Style and zIndex</Button>
   </div>
 
-  <Modal bind:open={centered} title="Centered" centered><p>In the middle of the window.</p></Modal>
-  <Modal bind:open={wide} title="Width 720" width={720}><p>A number is px; a string such as <code>'60%'</code> is used as it is. On a narrow window it is never wider than the window.</p></Modal>
-  <Modal bind:open={high} title="Style and zIndex" style="top: 20px" zIndex={1100}><p>20px from the top, above the default layer.</p></Modal>
+  <Modal closeOnOk bind:open={centered} title="Centered" centered><p>In the middle of the window.</p></Modal>
+  <Modal closeOnOk bind:open={wide} title="Width 720" width={720}><p>A number is px; a string such as <code>'60%'</code> is used as it is. On a narrow window it is never wider than the window.</p></Modal>
+  <Modal closeOnOk bind:open={high} title="Style and zIndex" style="top: 20px" zIndex={1100}><p>20px from the top, above the default layer.</p></Modal>
 </div>
 
 <style>

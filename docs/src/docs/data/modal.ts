@@ -9,9 +9,9 @@ export const demos: DemoMeta[] = [
     slug: "basic",
     title: { en: "Basic", ru: "Базовый пример", zh: "基本用法" },
     description: {
-      en: "A Modal written into the markup with <code>bind:open</code>. The close button, Cancel, Escape and a press on the mask close it by themselves; OK does not: it is for you to close the Modal once you have checked or saved. <code>oncancel</code> is called first.",
-      ru: "Modal, записанный в разметке, с <code>bind:open</code>. Кнопка закрытия, Cancel, Escape и нажатие на маску закрывают его сами; OK — нет: закрыть окно после проверки или сохранения нужно вам. Сначала вызывается <code>oncancel</code>.",
-      zh: "写在模板中的对话框，配合 <code>bind:open</code> 使用。关闭按钮、取消、Escape 和点击遮罩都会自动关闭它；确定则不会：校验或保存之后由你来关闭。<code>oncancel</code> 会先被调用。"
+      en: "A Modal written into the markup with <code>bind:open</code>. The close button, Cancel, Escape and a press on the mask close it by themselves; OK does not: it is for you to close the Modal once you have checked or saved, so here <code>onok</code> closes it and says so. The other examples set <code>closeOnOk</code>, so that OK closes them. <code>oncancel</code> is called first.",
+      ru: "Modal, записанный в разметке, с <code>bind:open</code>. Кнопка закрытия, Cancel, Escape и нажатие на маску закрывают его сами; OK — нет: закрыть окно после проверки или сохранения нужно вам, поэтому здесь <code>onok</code> закрывает его и сообщает об этом. В остальных примерах задан <code>closeOnOk</code>, и OK закрывает окно. Сначала вызывается <code>oncancel</code>.",
+      zh: "写在模板中的对话框，配合 <code>bind:open</code> 使用。关闭按钮、取消、Escape 和点击遮罩都会自动关闭它；确定则不会：校验或保存之后由你来关闭，所以这里由 <code>onok</code> 关闭并给出提示。其余示例设置了 <code>closeOnOk</code>，因此点击确定会关闭对话框。<code>oncancel</code> 会先被调用。"
     }
   },
   {

@@ -15,7 +15,7 @@
 
 <div class="stack">
   <Button onclick={() => (open = true)}>modalRender</Button>
-  <Modal bind:open title="Wrapped" modalRender={framed}><p>The card is inside a box of your own.</p></Modal>
+  <Modal closeOnOk bind:open title="Wrapped" modalRender={framed}><p>The card is inside a box of your own.</p></Modal>
 </div>
 
 <style>

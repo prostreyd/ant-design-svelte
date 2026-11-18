@@ -22,10 +22,10 @@
   <div id="modal-container" class="box" bind:this={box}>the Modal goes into this box</div>
   <output class="caption">{where}</output>
 
-  <Modal bind:open={selected} title="Into the box" container="#modal-container" data-demo="selector" onafteropenchange={(opened) => opened && report('selector')}>
+  <Modal closeOnOk bind:open={selected} title="Into the box" container="#modal-container" data-demo="selector" onafteropenchange={(opened) => opened && report('selector')}>
     <p>Its layer is a child of the box in the page.</p>
   </Modal>
-  <Modal bind:open={inPlace} title="In place" container={false} data-demo="false" onafteropenchange={(opened) => opened && report('false')}>
+  <Modal closeOnOk bind:open={inPlace} title="In place" container={false} data-demo="false" onafteropenchange={(opened) => opened && report('false')}>
     <p>Its layer stays where the component is written.</p>
   </Modal>
 </div>

@@ -18,10 +18,10 @@
     <Button onclick={() => (own = true)}>closeIcon and a name</Button>
   </div>
 
-  <Modal bind:open={plain} aria-label="A dialog with no title"><p>No title, no header: give it a name with <code>aria-label</code>.</p></Modal>
-  <Modal bind:open={rich} title={richTitle}><p>The title is a string, a number or a snippet.</p></Modal>
-  <Modal bind:open={noClose} title="No close button" closable={false}><p>Only Cancel, OK, Escape and the mask close it.</p></Modal>
-  <Modal bind:open={own} title="Own icon" closeIcon={crossIcon} closable={{ 'aria-label': 'Close the dialog' }}><p>The cross is a snippet, and the button has its own name.</p></Modal>
+  <Modal closeOnOk bind:open={plain} aria-label="A dialog with no title"><p>No title, no header: give it a name with <code>aria-label</code>.</p></Modal>
+  <Modal closeOnOk bind:open={rich} title={richTitle}><p>The title is a string, a number or a snippet.</p></Modal>
+  <Modal closeOnOk bind:open={noClose} title="No close button" closable={false}><p>Only Cancel, OK, Escape and the mask close it.</p></Modal>
+  <Modal closeOnOk bind:open={own} title="Own icon" closeIcon={crossIcon} closable={{ 'aria-label': 'Close the dialog' }}><p>The cross is a snippet, and the button has its own name.</p></Modal>
 </div>
 
 <style>

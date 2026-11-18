@@ -152,6 +152,44 @@ describe('Modal page: examples', () => {
     });
   }
 
+  /** The opening tags `<Modal ...>` of an example (the end of a tag is the first `>` outside braces and quotes: `onok={() => ...}` has one inside). */
+  function modalTags(source: string): string[] {
+    const tags: string[] = [];
+    for (let start = source.indexOf('<Modal'); start !== -1; start = source.indexOf('<Modal', start + 1)) {
+      if (!/[\s>]/.test(source[start + 6] ?? '')) continue;
+      let depth = 0;
+      let quote = '';
+      let end = start;
+      for (; end < source.length; end++) {
+        const char = source[end];
+        if (quote) {
+          if (char === quote) quote = '';
+        } else if (char === '"' || char === "'") quote = char;
+        else if (char === '{') depth++;
+        else if (char === '}') depth--;
+        else if (char === '>' && depth === 0) break;
+      }
+      tags.push(source.slice(start, end + 1));
+    }
+    return tags;
+  }
+
+  it('the parser of the tags finds the tags of an example, with an arrow function inside one', () => {
+    const tags = modalTags('<Modal bind:open title="A" onok={() => (open = false)}><p>x</p></Modal><ModalHost /><Modal\n  bind:open={b}\n  closeOnOk>y</Modal>');
+    expect(tags).toEqual(['<Modal bind:open title="A" onok={() => (open = false)}>', '<Modal\n  bind:open={b}\n  closeOnOk>']);
+  });
+
+  it('in every example the OK button of a Modal does something: onok, closeOnOk, or a footer of its own', () => {
+    let seen = 0;
+    for (const [file, source] of Object.entries(code)) {
+      for (const tag of modalTags(source)) {
+        seen++;
+        expect(/\bonok=|\bcloseOnOk\b|\bfooter=/.test(tag), `${file.split('/').pop()}: ${tag.replace(/\s+/g, ' ').slice(0, 90)} has an OK button that closes nothing`).toBe(true);
+      }
+    }
+    expect(seen).toBeGreaterThan(25);
+  });
+
   it('every prop and every option is used in at least one example, and every method', () => {
     const all = Object.values(code).join('\n');
     // `children` is the content between the tags, which every example writes.

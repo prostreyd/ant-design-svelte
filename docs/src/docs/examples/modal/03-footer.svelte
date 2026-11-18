@@ -23,7 +23,7 @@
   <div class="field">
     <span class="caption">the render form: origin keeps both buttons</span>
     <Button onclick={() => (custom = true)}>Custom footer</Button>
-    <Modal bind:open={custom} title="Custom footer">
+    <Modal closeOnOk bind:open={custom} title="Custom footer">
       <p>The footer gets <code>origin</code>, <code>ok</code> and <code>cancel</code>.</p>
       {#snippet footer({ origin })}
         <Button type="link" onclick={() => (custom = false)}>Skip</Button>
@@ -35,7 +35,7 @@
   <div class="field">
     <span class="caption">the render form: ok and cancel placed apart</span>
     <Button onclick={() => (parts = true)}>Buttons apart</Button>
-    <Modal bind:open={parts} title="Buttons apart">
+    <Modal closeOnOk bind:open={parts} title="Buttons apart">
       <p>The two buttons are placed by hand.</p>
       {#snippet footer({ ok, cancel })}
         <div class="row" style="justify-content: space-between; width: 100%">

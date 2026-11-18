@@ -11,13 +11,13 @@
     <Button onclick={() => (loose = true)}>scrollLock: false</Button>
   </div>
 
-  <Modal bind:open title="Long content">
+  <Modal closeOnOk bind:open title="Long content">
     {#each Array.from({ length: 40 }, (_, index) => index) as index (index)}
       <p>Paragraph {index + 1}: the window scrolls, the page behind does not, and it does not jump sideways when its scrollbar goes away.</p>
     {/each}
   </Modal>
 
-  <Modal bind:open={loose} title="The page may scroll" scrollLock={false}>
+  <Modal closeOnOk bind:open={loose} title="The page may scroll" scrollLock={false}>
     <p>The page behind keeps scrolling while this is open (the Modal does not hold the scroll).</p>
   </Modal>
 </div>

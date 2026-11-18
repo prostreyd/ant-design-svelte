@@ -10,19 +10,19 @@
   <div class="field">
     <span class="caption">mask: {'{ closable: false }'}</span>
     <Button onclick={() => (sticky = true)}>The mask does not close it</Button>
-    <Modal bind:open={sticky} title="Sticky" mask={{ closable: false }}><p>A press outside does nothing. The close button, Cancel and Escape still close it.</p></Modal>
+    <Modal closeOnOk bind:open={sticky} title="Sticky" mask={{ closable: false }}><p>A press outside does nothing. The close button, Cancel, OK and Escape still close it.</p></Modal>
   </div>
 
   <div class="field">
     <span class="caption">mask: false</span>
     <Button onclick={() => (bare = true)}>No mask</Button>
-    <Modal bind:open={bare} title="No mask" mask={false}><p>No dim layer is drawn, but the page behind is still out of reach, as in Ant Design.</p></Modal>
+    <Modal closeOnOk bind:open={bare} title="No mask" mask={false}><p>No dim layer is drawn, but the page behind is still out of reach, as in Ant Design.</p></Modal>
   </div>
 
   <div class="field">
     <span class="caption">keyboard: false</span>
     <Button onclick={() => (silent = true)}>Escape does not close it</Button>
-    <Modal bind:open={silent} title="No Escape" keyboard={false}><p>Escape does nothing here.</p></Modal>
+    <Modal closeOnOk bind:open={silent} title="No Escape" keyboard={false}><p>Escape does nothing here; the close button, Cancel, OK and the mask still close it.</p></Modal>
   </div>
 </div>
 

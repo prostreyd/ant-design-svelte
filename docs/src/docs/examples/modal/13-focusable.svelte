@@ -10,13 +10,13 @@
   <div class="field">
     <span class="caption">focusable: trap false</span>
     <Button onclick={() => (free = true)}>Tab may leave the dialog</Button>
-    <Modal bind:open={free} title="No trap" focusable={{ trap: false }}><p>Tab is left to the browser. The page behind is still out of reach.</p></Modal>
+    <Modal closeOnOk bind:open={free} title="No trap" focusable={{ trap: false }}><p>Tab is left to the browser. The page behind is still out of reach.</p></Modal>
   </div>
 
   <div class="field">
     <span class="caption">focusable: focusTriggerAfterClose false</span>
     <Button onclick={() => (lost = true)}>Focus does not come back</Button>
-    <Modal bind:open={lost} title="No return" focusable={{ focusTriggerAfterClose: false }}><p>After it closes, focus stays where it is.</p></Modal>
+    <Modal closeOnOk bind:open={lost} title="No return" focusable={{ focusTriggerAfterClose: false }}><p>After it closes, focus stays where it is.</p></Modal>
   </div>
 
   <div class="field">
