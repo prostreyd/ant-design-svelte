@@ -470,6 +470,46 @@
   --ads-menu-dark-danger-selected-color: #ffffff;
   --ads-menu-dark-danger-selected-bg: #ff4d4f;
   --ads-menu-dark-danger-active-bg: #ff4d4f;
+
+  /*
+   * Modal: the values measured on the Ant Design demo (React 6.7.1, 2026-11-18, specs/modal.md): the box 520 px wide at 100 px from the top,
+   * the card with 20px 24px padding, radius 8 and the three-layer shadow, a title of 16/24 px and weight 600, the close button 32 px at 12 px
+   * from the corner, the mask rgba(0, 0, 0, 0.45), the layer at 1000 (under the popup layers, 1030 and up). A static dialog is 416 px wide
+   * with a 22 px icon and a 12 px gap. The icons of a static dialog are decorative (the title and the text carry the meaning) but are held to
+   * 3:1 (WCAG 1.4.11): the green and the amber are below it on white, and `tokens-accessible.css` darkens them, as it does for the Message.
+   */
+  --ads-modal-z-index: 1000;
+  --ads-modal-width: 520px;
+  --ads-modal-top: 100px;
+  --ads-modal-mask-bg: rgba(0, 0, 0, 0.45);
+  --ads-modal-content-bg: #ffffff;
+  --ads-modal-radius: 8px;
+  --ads-modal-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  --ads-modal-padding: 20px 24px;
+  --ads-modal-title-color: rgba(0, 0, 0, 0.88);
+  --ads-modal-title-font-size: 16px;
+  --ads-modal-title-line-height: 24px;
+  --ads-modal-title-font-weight: 600;
+  --ads-modal-header-gap: 8px;
+  --ads-modal-body-color: rgba(0, 0, 0, 0.88);
+  --ads-modal-footer-margin-top: 12px;
+  --ads-modal-footer-gap: 8px;
+  --ads-modal-close-size: 32px;
+  --ads-modal-close-inset: 12px;
+  --ads-modal-close-color: rgba(0, 0, 0, 0.45);
+  --ads-modal-close-color-hover: rgba(0, 0, 0, 0.88);
+  --ads-modal-close-bg-hover: rgba(0, 0, 0, 0.06);
+  /* `motionEaseOutCirc` of Ant Design; it is not a global motion token because only the Modal uses it. */
+  --ads-modal-motion-ease: cubic-bezier(0.08, 0.82, 0.17, 1);
+  --ads-modal-confirm-width: 416px;
+  --ads-modal-confirm-icon-size: 22px;
+  --ads-modal-confirm-icon-gap: 12px;
+  --ads-modal-confirm-icon-info: #1677ff;
+  --ads-modal-confirm-icon-success: #52c41a;
+  --ads-modal-confirm-icon-warning: #faad14;
+  --ads-modal-confirm-icon-error: #ff4d4f;
 }
 
 :root[data-theme='dark'] {
@@ -679,4 +719,19 @@
   --ads-menu-dark-item-selected-bg: #1668dc;
   --ads-menu-dark-danger-selected-bg: #d9363e;
   --ads-menu-dark-danger-active-bg: #d9363e;
+
+  /* Modal in the dark theme: an elevated card one step lighter than the page, the text of Ant Design (85% white), and the dark status colors. */
+  --ads-modal-content-bg: #1f1f1f;
+  --ads-modal-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.32), 0 3px 6px -4px rgba(0, 0, 0, 0.48),
+    0 9px 28px 8px rgba(0, 0, 0, 0.2);
+  --ads-modal-title-color: rgba(255, 255, 255, 0.85);
+  --ads-modal-body-color: rgba(255, 255, 255, 0.85);
+  --ads-modal-close-color: rgba(255, 255, 255, 0.45);
+  --ads-modal-close-color-hover: rgba(255, 255, 255, 0.88);
+  --ads-modal-close-bg-hover: rgba(255, 255, 255, 0.12);
+  --ads-modal-confirm-icon-info: #3c9ae8;
+  --ads-modal-confirm-icon-success: #49aa19;
+  --ads-modal-confirm-icon-warning: #d89614;
+  --ads-modal-confirm-icon-error: #dc4446;
 }

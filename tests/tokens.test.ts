@@ -260,8 +260,8 @@ describe('accessible tokens (tokens-accessible.css)', () => {
     for (const token of accessible.keys()) expect(light.has(token), token).toBe(true);
   });
 
-  it('changes the -solid, -text, link, switch, checkbox, radio, input, select, message, spin and menu tokens, and nothing else', () => {
-    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color)|message-icon-(success|warning)|spin-(description-color|mask-bg)|menu-(item-selected-color|submenu-selected-color|horizontal-(hover|selected)-color|group-title-color|danger-(color|hover-color|selected-color)|dark-(item-selected-bg|danger-selected-bg|danger-active-bg)))$/;
+  it('changes the -solid, -text, link, switch, checkbox, radio, input, select, message, modal, spin and menu tokens, and nothing else', () => {
+    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color)|message-icon-(success|warning)|modal-confirm-icon-(success|warning)|spin-(description-color|mask-bg)|menu-(item-selected-color|submenu-selected-color|horizontal-(hover|selected)-color|group-title-color|danger-(color|hover-color|selected-color)|dark-(item-selected-bg|danger-selected-bg|danger-active-bg)))$/;
     for (const token of accessible.keys()) expect(token, token).toMatch(allowed);
   });
 
@@ -745,6 +745,86 @@ describe('message tokens (specs/message.md)', () => {
   it('the dark theme overrides everything that is a color of the box', () => {
     for (const token of ['bg', 'color', 'shadow', 'icon-info', 'icon-success', 'icon-error', 'icon-warning', 'close-color', 'close-color-hover', 'close-bg', 'close-bg-hover']) {
       expect(dark.has(`--ads-message-${token}`), token).toBe(true);
+    }
+  });
+});
+
+describe('modal tokens (specs/modal.md)', () => {
+  // Measured on the Ant Design demo (React 6.7.1, 2026-11-18, Chromium, light theme).
+  const measured: Record<string, string> = {
+    '--ads-modal-z-index': '1000',
+    '--ads-modal-width': '520px',
+    '--ads-modal-top': '100px',
+    '--ads-modal-mask-bg': 'rgba(0, 0, 0, 0.45)',
+    '--ads-modal-content-bg': '#ffffff',
+    '--ads-modal-radius': '8px',
+    '--ads-modal-padding': '20px 24px',
+    '--ads-modal-title-color': 'rgba(0, 0, 0, 0.88)',
+    '--ads-modal-title-font-size': '16px',
+    '--ads-modal-title-line-height': '24px',
+    '--ads-modal-title-font-weight': '600',
+    '--ads-modal-header-gap': '8px',
+    '--ads-modal-footer-margin-top': '12px',
+    '--ads-modal-footer-gap': '8px',
+    '--ads-modal-close-size': '32px',
+    '--ads-modal-close-inset': '12px',
+    '--ads-modal-close-color': 'rgba(0, 0, 0, 0.45)',
+    '--ads-modal-confirm-width': '416px',
+    '--ads-modal-confirm-icon-size': '22px',
+    '--ads-modal-confirm-icon-gap': '12px',
+    '--ads-modal-confirm-icon-success': '#52c41a',
+    '--ads-modal-confirm-icon-error': '#ff4d4f',
+    '--ads-modal-confirm-icon-warning': '#faad14',
+    '--ads-modal-confirm-icon-info': '#1677ff'
+  };
+
+  it('the light values are the ones measured on the Ant Design demo', () => {
+    for (const [token, value] of Object.entries(measured)) expect(normalize(light.get(token) ?? ''), token).toBe(normalize(value));
+    expect(normalize(light.get('--ads-modal-shadow')!)).toContain('0 6px 16px 0 rgba(0, 0, 0, 0.08)');
+    expect(normalize(light.get('--ads-modal-motion-ease')!)).toBe('cubic-bezier(0.08, 0.82, 0.17, 1)');
+  });
+
+  it('the layer is under the three popup layers, so a Select in a Modal opens above it', () => {
+    const modal = Number(light.get('--ads-modal-z-index'));
+    for (const popup of ['popover', 'dropdown', 'tooltip']) expect(modal, popup).toBeLessThan(Number(light.get(`--ads-${popup}-z-index`)));
+  });
+
+  it('the dark theme has the card #1f1f1f with the text of Ant Design (85% white)', () => {
+    expect(normalize(dark.get('--ads-modal-content-bg')!)).toBe('#1f1f1f');
+    expect(normalize(dark.get('--ads-modal-title-color')!)).toBe('rgba(255, 255, 255, 0.85)');
+    expect(normalize(dark.get('--ads-modal-body-color')!)).toBe('rgba(255, 255, 255, 0.85)');
+  });
+
+  for (const [theme, tokens] of [['light with the accessible file', lightAccessible], ['dark', darkTheme]] as const) {
+    describe(theme, () => {
+      it('the title and the body reach 4.5:1 on the card', () => {
+        expect(ratio(tokens, '--ads-modal-title-color', '--ads-modal-content-bg')).toBeGreaterThanOrEqual(4.5);
+        expect(ratio(tokens, '--ads-modal-body-color', '--ads-modal-content-bg')).toBeGreaterThanOrEqual(4.5);
+      });
+
+      it('the close icon reaches 3:1 on the card in rest and in hover (WCAG 1.4.11)', () => {
+        expect(ratio(tokens, '--ads-modal-close-color', '--ads-modal-content-bg')).toBeGreaterThanOrEqual(3);
+        expect(ratio(tokens, '--ads-modal-close-color-hover', '--ads-modal-content-bg')).toBeGreaterThanOrEqual(3);
+      });
+
+      it('each icon of a static dialog reaches 3:1 on the card', () => {
+        for (const type of ['info', 'success', 'error', 'warning']) {
+          expect(ratio(tokens, `--ads-modal-confirm-icon-${type}`, '--ads-modal-content-bg'), type).toBeGreaterThanOrEqual(3);
+        }
+      });
+    });
+  }
+
+  it('the default light green and amber are below 3:1 on the white card, which is why the accessible file darkens them', () => {
+    expect(ratio(light, '--ads-modal-confirm-icon-success', '--ads-modal-content-bg')).toBeLessThan(3);
+    expect(ratio(light, '--ads-modal-confirm-icon-warning', '--ads-modal-content-bg')).toBeLessThan(3);
+    expect(ratio(light, '--ads-modal-confirm-icon-error', '--ads-modal-content-bg')).toBeGreaterThanOrEqual(3);
+    expect(ratio(light, '--ads-modal-confirm-icon-info', '--ads-modal-content-bg')).toBeGreaterThanOrEqual(3);
+  });
+
+  it('the dark theme overrides everything that is a color of the card', () => {
+    for (const token of ['content-bg', 'shadow', 'title-color', 'body-color', 'close-color', 'close-color-hover', 'close-bg-hover', 'confirm-icon-info', 'confirm-icon-success', 'confirm-icon-warning', 'confirm-icon-error']) {
+      expect(dark.has(`--ads-modal-${token}`), token).toBe(true);
     }
   });
 });

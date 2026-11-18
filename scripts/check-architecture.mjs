@@ -33,7 +33,8 @@ export const INTERNAL = 'internal';
  * @type {{ from: string, to: string, why: string }[]}
  */
 export const DEPENDENCIES = [
-  { from: 'Input', to: 'Button', why: 'InputSearch draws the same button the user sees for `enterButton`' }
+  { from: 'Input', to: 'Button', why: 'InputSearch draws the same button the user sees for `enterButton`' },
+  { from: 'Modal', to: 'Button', why: 'the OK and Cancel buttons are the same element the user sees elsewhere, set with the same props (`okButtonProps`)' }
 ];
 
 /** Specifications that predate rule 6b (2026-11-17) and have no dependencies section yet. */
