@@ -6,6 +6,7 @@
   import Icon from '../internal/icons/Icon.svelte';
   import { tabbables } from '../internal/overlay/focus.js';
   import { openOverlay } from '../internal/overlay/overlay.js';
+  import { lockScroll } from '../internal/overlay/scrollLock.js';
   import { portal, type PortalContainer } from '../internal/portal/portal.svelte.js';
   import { classList, styleText } from '../internal/semantic.js';
   import { claimMask, maskCovered } from './masks.svelte.js';
@@ -40,6 +41,7 @@
     forceRender = false,
     focusable,
     scrollLock = true,
+    zoomFromClick = false,
     modalRender,
     class: customClass,
     style: customStyle,
@@ -157,7 +159,10 @@
     };
   });
 
-  $effect(() => trackPress());
+  // The place of the last click is kept only for a Modal that zooms from it.
+  // (A derived value, so that the effect runs again only when the option changes, not each time any prop is set: stopping the listener forgets the click.)
+  const followClicks = $derived(zoomFromClick === true);
+  $effect(() => (followClicks ? trackPress() : undefined));
 
   /** What gets focus when the Modal opens: the button asked for, or the first element Tab reaches, or the dialog itself. */
   function initialFocus(): HTMLElement {
@@ -172,7 +177,7 @@
     return tabbables(box)[0] ?? box;
   }
 
-  // While it is open the Modal holds the page: the scroll, what is behind it, focus, and Escape (`specs/overlay.md`).
+  // While it is open the Modal holds the page: what is behind it, focus, and Escape (`specs/overlay.md`). The scroll is held by the next effect.
   $effect(() => {
     if (!open || !shown || !rootElement || !dialogElement) return;
     const root = rootElement;
@@ -180,7 +185,7 @@
     return openOverlay({
       root: box,
       scope: root,
-      lockScroll: scrollLock ? undefined : false,
+      lockScroll: false,
       trapFocus: focusable?.trap !== false,
       restoreFocus: focusable?.focusTriggerAfterClose !== false,
       initialFocus,
@@ -189,12 +194,19 @@
     });
   });
 
-  // The zoom starts at the click that opened the Modal. It is worked out after the page is locked (the next effect): without a
-  // scrollbar the window is wider, and the dialog stands a few pixels further.
+  // The page does not scroll while the Modal is shown, **up to the end of its leave animation**: when the lock went with `open`, the scrollbar came back at
+  // the first frame of the leave, the page was laid out again, and the dialog (and what is behind it) jumped half the width of the bar sideways (specs/modal.md, P23).
+  $effect(() => {
+    if (!shown || !scrollLock) return;
+    return lockScroll();
+  });
+
+  // With `zoomFromClick` the zoom starts at the click that opened the Modal; otherwise it is around the center of the dialog. The place is
+  // worked out after the page is locked (the next effect): without a scrollbar the window is wider, and the dialog stands a few pixels further.
   $effect(() => {
     if (!open || !shown || !dialogElement) return;
     const box = dialogElement;
-    const press = recentPress();
+    const press = followClicks ? recentPress() : null;
     if (!press) {
       box.style.removeProperty('transform-origin');
       return;

@@ -184,8 +184,9 @@ test.describe('geometry (R7): the values measured on the Ant Design demo', () =>
 });
 
 test.describe('the zoom, the leave and reduced motion (R2)', () => {
-  test('it zooms in from the click that opened it: 0.3 s, and the mask fades in in 0.2 s', async ({ page }) => {
+  test('with zoomFromClick it zooms in from the click that opened it: 0.3 s, and the mask fades in in 0.2 s', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
+    await set(page, { zoomFromClick: true });
     const button = page.getByTestId('open');
     const at = await rect(button);
     await page.mouse.click(at.x + 10, at.y + 8);
@@ -206,7 +207,45 @@ test.describe('the zoom, the leave and reduced motion (R2)', () => {
     near(oy, at.y + 8 - final.y, 3);
   });
 
-  test('a keyboard open zooms from the middle, not from the old click', async ({ page }) => {
+  test('by default the dialog zooms around its own center: the center stays put while it opens and while it closes (P22, P23)', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    // Stops the animation of the dialog at a moment and says where the dialog is then (the animation is seeked, so no frame is waited for).
+    const at = (name: string, time: number) =>
+      page.evaluate(
+        ([animationName, ms]) => {
+          const box = [...document.querySelectorAll<HTMLElement>('.ads-modal[data-state]')].find((element) => element.closest('.ads-modal-root:not([hidden])'))!;
+          const animation = document.getAnimations().find((item) => (item as CSSAnimation).animationName?.endsWith(animationName as string) && (item.effect as KeyframeEffect).target === box)!;
+          animation.pause();
+          animation.currentTime = ms as number;
+          const r = box.getBoundingClientRect();
+          return { cx: r.x + r.width / 2, cy: r.y + r.height / 2, width: r.width };
+        },
+        [name, time]
+      );
+    // A click far from the dialog (the page button is at the start side): the dialog must not fly towards it.
+    const button = await rect(page.getByTestId('open'));
+    await page.mouse.click(button.x + 4, button.y + 4);
+    await expect(dialog(page)).toBeVisible();
+    expect(await dialog(page).evaluate((element) => (element as HTMLElement).style.transformOrigin)).toBe('');
+    const rest = await at('ads-modal-zoom-in', 300);
+    const opening = await at('ads-modal-zoom-in', 100);
+    // The zoom was really running (the dialog was smaller), and its center was where it ends up.
+    expect(opening.width).toBeLessThan(rest.width - 40);
+    near(opening.cx, rest.cx, 2);
+    near(opening.cy, rest.cy, 2);
+    await at('ads-modal-zoom-in', 300);
+
+    // The leave: the scrollbar of the page does not come back at its first frame, which moved the dialog sideways (P23).
+    await page.keyboard.press('Escape');
+    const closing = await at('ads-modal-zoom-out', 150);
+    expect(closing.width).toBeLessThan(rest.width - 40);
+    near(closing.cx, rest.cx, 2);
+    near(closing.cy, rest.cy, 2);
+    expect(await page.evaluate(() => window.innerWidth - document.documentElement.clientWidth)).toBe(0);
+  });
+
+  test('with zoomFromClick a keyboard open zooms from the middle, not from the old click', async ({ page }) => {
+    await set(page, { zoomFromClick: true });
     await page.getByTestId('open').focus();
     await page.keyboard.press('Enter');
     await expect(dialog(page)).toBeVisible();

@@ -112,6 +112,8 @@ export type ModalProps = Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'clas
   focusable?: ModalFocusable;
   /** The page does not scroll while the Modal is open. Default `true`. */
   scrollLock?: boolean;
+  /** The dialog zooms in and out from the point of the last click, as in Ant Design, instead of around its own center. Default `false`. */
+  zoomFromClick?: boolean;
   /** Gets the card and may wrap it. */
   modalRender?: Snippet<[Snippet]>;
   class?: string;
@@ -164,6 +166,8 @@ export interface ModalFuncOptions {
   /** `autoFocusButton` defaults to `'ok'` here. */
   focusable?: ModalFocusable;
   scrollLock?: boolean;
+  /** The dialog zooms in and out from the point of the last click instead of around its own center. Default `false`. */
+  zoomFromClick?: boolean;
   class?: string;
   style?: string;
   wrapClassName?: string;

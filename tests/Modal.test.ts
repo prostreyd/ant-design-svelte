@@ -178,6 +178,18 @@ describe('R2: opening and closing', () => {
     expect(onafterclose).toHaveBeenCalledTimes(1);
   });
 
+  it('holds the scroll lock to the end of the leave animation, so the scrollbar does not come back and move the dialog (P23)', async () => {
+    stubAnimation();
+    const { rerender } = mount({ open: true });
+    expect(document.body.style.overflow).toBe('hidden');
+    await rerender({ open: false });
+    // The dialog is still leaving: the page is still locked.
+    expect(document.body.style.overflow).toBe('hidden');
+    dialog().dispatchEvent(new Event('animationend'));
+    await tick();
+    expect(document.body.style.overflow).toBe('');
+  });
+
   it('hides the layer after a second if the animation never ends', async () => {
     stubAnimation();
     const onafterclose = vi.fn();
@@ -427,9 +439,9 @@ describe('R11: customization', () => {
   });
 });
 
-describe('the pointer of a click (P9)', () => {
+describe('the pointer of a click (P9, with zoomFromClick)', () => {
   it('the zoom starts at a click that came a moment before the opening, and at the center otherwise', async () => {
-    const { rerender } = mount({ open: false });
+    const { rerender } = mount({ open: false, zoomFromClick: true });
     // A click with a place, in the same task as the opening.
     document.body.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 40, clientY: 50, detail: 1 }));
     await rerender({ open: true });
@@ -442,7 +454,7 @@ describe('the pointer of a click (P9)', () => {
   });
 
   it('a click in the task that opens the Modal is its press however long the opening takes (a busy machine)', async () => {
-    const { rerender } = mount({ open: false });
+    const { rerender } = mount({ open: false, zoomFromClick: true });
     document.body.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 40, clientY: 50, detail: 1 }));
     // No timer has run: the opening is still in the task of the click, but the clock says a second has gone by.
     vi.spyOn(performance, 'now').mockReturnValue(performance.now() + 1000);
@@ -451,7 +463,7 @@ describe('the pointer of a click (P9)', () => {
   });
 
   it('after the task of the click a press counts for 300 ms', async () => {
-    const { rerender } = mount({ open: false });
+    const { rerender } = mount({ open: false, zoomFromClick: true });
     const now = performance.now();
     document.body.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 40, clientY: 50, detail: 1 }));
     vi.advanceTimersByTime(50);
@@ -461,7 +473,7 @@ describe('the pointer of a click (P9)', () => {
   });
 
   it('a click that is older than a moment is forgotten', async () => {
-    const { rerender } = mount({ open: false });
+    const { rerender } = mount({ open: false, zoomFromClick: true });
     document.body.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 40, clientY: 50, detail: 1 }));
     vi.advanceTimersByTime(1000);
     vi.spyOn(performance, 'now').mockReturnValue(performance.now() + 1000);
@@ -471,14 +483,41 @@ describe('the pointer of a click (P9)', () => {
 
   it('the listener goes with the last Modal', () => {
     const remove = vi.spyOn(document, 'removeEventListener');
-    const first = mount({ open: false });
-    const second = mount({ open: false });
+    const first = mount({ open: false, zoomFromClick: true });
+    const second = mount({ open: false, zoomFromClick: true });
     // Svelte removes its own delegated `click` listener too: the one of the Modal is the one in the capture phase.
     const mine = () => remove.mock.calls.filter(([type, , options]) => type === 'click' && options === true);
     first.unmount();
     expect(mine()).toHaveLength(0);
     second.unmount();
     expect(mine()).toHaveLength(1);
+  });
+});
+
+describe('the zoom is around the center unless zoomFromClick is on (P22)', () => {
+  it('by default a click with a place does not move the origin: the dialog zooms around its own center', async () => {
+    const { rerender } = mount({ open: false });
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 40, clientY: 50, detail: 1 }));
+    await rerender({ open: true });
+    expect(dialog().style.transformOrigin).toBe('');
+  });
+
+  it('by default the library does not listen to clicks at all', () => {
+    const add = vi.spyOn(document, 'addEventListener');
+    mount({ open: false });
+    expect(add.mock.calls.filter(([type, , options]) => type === 'click' && options === true)).toHaveLength(0);
+  });
+
+  it('turning zoomFromClick on later starts to follow the clicks, and turning it off lets the origin go', async () => {
+    const { rerender } = mount({ open: true });
+    expect(dialog().style.transformOrigin).toBe('');
+    await rerender({ open: false });
+    await rerender({ zoomFromClick: true });
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 40, clientY: 50, detail: 1 }));
+    await rerender({ open: true });
+    expect(dialog().style.transformOrigin).toMatch(/px/);
+    await rerender({ zoomFromClick: false });
+    expect(dialog().style.transformOrigin).toBe('');
   });
 });
 

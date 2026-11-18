@@ -164,6 +164,7 @@
   container={options.container}
   {focusable}
   scrollLock={options.scrollLock}
+  zoomFromClick={options.zoomFromClick}
   class={options.class}
   style={options.style}
   wrapClassName={options.wrapClassName}

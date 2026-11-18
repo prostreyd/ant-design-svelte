@@ -173,6 +173,7 @@ until then `okText`, `cancelText` and `closable['aria-label']` take the words of
 | `forceRender` | `boolean` | `false` | the Modal is in the page, hidden, before the first opening |
 | `focusable` | `{ trap?: boolean; focusTriggerAfterClose?: boolean; autoFocusButton?: 'ok' \| 'cancel' \| null }` | `{ trap: true, focusTriggerAfterClose: true }`, no `autoFocusButton` | R9. `autoFocusButton` is a widening of React, where only the static methods have it: here the plain Modal takes it too (cheap, same code); without it focus goes to the first element Tab reaches |
 | `scrollLock` | `boolean` | `true` | R10 |
+| `zoomFromClick` | `boolean` | `false` | the dialog zooms in and out from the point of the last click (P9, as React and Vue) instead of around its own center (P22); a keyboard open and a Modal opened later than the click still start at the center |
 | `modalRender` | `Snippet<[Snippet]>` | none | gets the card and may wrap it (P7) |
 | `class`, `style` | `string` | none | on the `dialog` box |
 | `wrapClassName` | `string` | none | on the `wrapper` (the same part as `classNames.wrapper`) |
@@ -221,8 +222,8 @@ dialog may return a Promise: while it is pending the OK button is loading, a res
 
 **R1. Rendering.** Nothing is in the page until the first opening (unless `forceRender`); then the layer is in the container and stays, hidden, after a
 close, unless `destroyOnHidden` removes the content. The server renders nothing. The portal places the layer when it mounts (`specs/overlay.md`, P1).
-**R2. Opening and closing.** The mask fades in (0.2 s, linear) and the dialog zooms in (0.3 s, `cubic-bezier(0.08, 0.82, 0.17, 1)`) from the
-point of the last press (the transform origin), as React does; leaving is the reverse, and the layer is hidden when the animation ends
+**R2. Opening and closing.** The mask fades in (0.2 s, linear) and the dialog zooms in (0.3 s, `cubic-bezier(0.08, 0.82, 0.17, 1)`) around
+its own center; with `zoomFromClick` it zooms from the point of the last press instead (the transform origin), as React and Vue do; leaving is the reverse, and the layer is hidden when the animation ends
 (`waitForLeave`), at once under `prefers-reduced-motion`. `onafteropenchange(true)` after the enter, `onafteropenchange(false)` and `onafterclose` after the leave.
 Opening again during the leave cancels the hiding. Opening, closing and opening again quickly leaves the page scrollable, reachable and with one lock held.
 **R3. Dismissal.** Four ways: the close button, Cancel, Escape (`keyboard`), the mask (`mask.closable`). Each calls `oncancel(event)` (a mouse event, or the
@@ -242,7 +243,7 @@ second Modal opened later is above the first; `container` puts the layer elsewhe
 **R9. Focus and keyboard** (all of it comes from `openOverlay`). On open focus goes to the first element that Tab reaches (the close button), or to the dialog if there is none; Tab and
 Shift+Tab stay inside (`focusable.trap`); on close focus goes back to what had it (`focusable.focusTriggerAfterClose`), without scrolling. Escape closes the topmost layer; an
 open Select inside closes its list first. No `tabindex="0"` sentinel elements. A Select inside a scrolling Modal keeps its list under the field.
-**R10. Scroll and the page behind.** `scrollLock`: the page does not scroll and does not jump sideways; the page behind is `inert` (and `aria-hidden` where the engine
+**R10. Scroll and the page behind.** `scrollLock`: the page does not scroll and does not jump sideways, from the opening to the end of the leave animation (P23); the page behind is `inert` (and `aria-hidden` where the engine
 does not know `inert`); `aria-modal="true"`. A mask-less Modal (`mask: false` or `{ enabled: false }`) only draws no mask: it is modal in every other way, as React's is (P6).
 **R11. Customization.** `class` and `style` on the box; `wrapClassName`; `classNames` and `styles` on the ten parts; `modalRender` wraps the card; the rest of the attributes on the box.
 **R12. Server.** Nothing is rendered and the DOM is not touched.
@@ -344,7 +345,7 @@ covering layer, Vue puts `aria-hidden` on two body-level elements, Angular does 
 - **P6.** `mask: false` draws no mask and keeps every other modal behavior (observed in the React demo "No mask").
 - **P7.** `modalRender` is a snippet that gets the card as a snippet and may wrap it (for a draggable Modal, which the library does not provide).
 - **P8.** Reserved, not in v1.0: `mask.blur`, `width` by breakpoint, `loading`, `ConfigProvider` defaults and locale, `modal.config`.
-- **P9.** The zoom starts at the point of the last press, kept by one document listener that exists only while a Modal exists; a keyboard open starts at the center. A press belongs to a Modal that opens in the same task as the click (see "Решения и обоснование") or within 300 ms of it; a Modal opened later (a timer, a request) zooms from the middle.
+- **P9 (now opt-in, see P22).** With `zoomFromClick`, the zoom starts at the point of the last press, kept by one document listener that exists only while a Modal exists; a keyboard open starts at the center. A press belongs to a Modal that opens in the same task as the click (see "Решения и обоснование") or within 300 ms of it; a Modal opened later (a timer, a request) zooms from the middle.
 - **P10.** The title is a `div` and carries the id of `aria-labelledby`, as in React.
 - **P11.** `wrapClassName` stays although `classNames.wrapper` is the same part (all of React, Vue and Angular have it).
 - **P12.** A Modal opened from inside a popup is a known limit (the press in the Modal is outside the popup and closes it); the page says so and a test shows it; `container` is the remedy.
@@ -357,6 +358,8 @@ covering layer, Vue puts `aria-hidden` on two body-level elements, Angular does 
 - **P19.** `modal.destroyAll()` closes the static dialogs only, never a `Modal` written in markup.
 - **P20.** A static dialog called on the server does nothing and returns a handle that resolves `false`; the library keeps no module state on the server (as Message).
 - **P21 (the maintainer's request on 2026-11-18, after the examples were checked in a browser; React and Vue do not do it).** Only the lowest open Modal draws its mask. A Modal opened over another one is still modal (its layer covers the page, the page is locked, Escape and Tab go to it) but adds no second dimming layer, so the page behind is as dark as with one Modal. The order of the open masks is one reactive list (`masks.svelte.ts`); a Modal joins it while it is shown and leaves it when its leave animation ends. Test: `tests/ModalMask.test.ts` (fails without the rule: two masks), `docs/e2e/site.spec.ts` (nested example: one visible mask, and still one after the upper one closes). A decision of the owner that differs from the three libraries, stated on the page of the nested example.
+- **P22 (the maintainer's request on 2026-11-19, after 0.12.0 was in production).** The default zoom is around the center of the dialog, not from the click. The click origin (P9, which React and Vue do, measured within 1 px in three engines) made the dialog fly to the button that opened it and back on close, which on the documentation site (a button in the right column) read as a dialog that "goes into the right corner and shrinks". The shape is not distorted (the ratio of the sides is constant during the leave, measured), it is the flight that was unwanted. `zoomFromClick` (false by default) keeps the Ant Design behavior for whoever wants it; the same option exists on `ModalFuncOptions`. Released as a fix, 0.12.1. A change of the default of a released component, decided by the maintainer.
+- **P23 (found by the test of P22, 2026-11-19).** The scroll lock is held **to the end of the leave animation**, not released with `open`. It was released at the first frame of the leave: the scrollbar came back, the page was laid out again, and the dialog (centered in the window) and the page behind jumped half the width of the bar (7.5 px of 15) sideways while the dialog was still leaving, which with the zoom from the click read as a dialog that slips to the side. Now the Modal holds the lock itself while it is shown (`shown` turns false when the leave ends); focus, Escape and the page behind still go back when `open` turns false. Tests: `tests/Modal.test.ts` (the lock is still there during the leave; it fails on the old code) and `e2e/modal.spec.ts` (the center of the dialog and the width of the scrollbar during the leave, three engines; it fails on the old code with 632.5 against 640).
 
 ## Quality matrix
 
@@ -410,3 +413,20 @@ The decisions D1 to D7 and the proposals P1 to P20 above are the maintainer's an
 - **The widths are tokens** (see "Colors, tokens and sizes"), so a theme changes them without a prop.
 - **A static dialog changes only what its role needs:** `alertdialog`, `aria-describedby`, focus on OK (D7).
 - **Source of Ant Design:** not read for this component, so there is no section "Исходник, консультации"; the public record above is the only trace used.
+
+## Исходник, консультации
+
+**2026-11-19, до чтения (rule 3a, standing permission; the maintainer repeated it for this question on the same day).**
+
+- **Question.** How do the other implementations (React `antd` with its dialog part, Vue `ant-design-vue`) choose and keep the point from which the dialog zooms, and what do they do on the leave animation and on a keyboard or touch open? Is there any way for an app to turn the click origin off? The reason: the click origin made the dialog fly to the button and back (P22), and we want to know whether they do something that avoids it, before we settle the default and the shape of `zoomFromClick`.
+- **What to find out (only this mechanism).** (1) where the click is recorded and for how long it is kept; (2) where the origin is applied (open only, or open and leave); (3) what happens with no click (keyboard, programmatic open); (4) whether an app can switch it off.
+- **Our decision written before reading.** The default zoom is around the center of the dialog; `zoomFromClick` (default `false`) keeps the click origin (P22). Hypothesis: the others record the last click with a document listener and forget it after a short time, apply the origin once on open and reuse it on leave, have no switch for an app, and therefore fly to the click as we did; if so, the default of P22 is a deliberate difference and nothing needs to be adopted. If they have something that avoids the flight, we reconsider and write the change here.
+- **How.** Read by the main session (a small mechanism), only the lines about the click position and the transform origin, from the public repositories into a temporary folder outside this repository, deleted after reading. Nothing from it goes into `src/lib/`, tests, comments, documentation, commits or this file.
+
+**2026-11-19, after reading (main session, only the lines about the click position and the origin; the files were deleted).**
+
+- **What was read.** In React, the module of the Ant Design `Modal` that records the click, and the content part of its dialog (the `rc` dialog) that applies the origin; in Vue, the module of the `Modal` that records the click and passes it on.
+- **Confirmed.** (1) React and Vue are the same design: one document-level listener in the capture phase records the position of the last click, and a timer of 100 ms forgets it; a comment says that only a click zooms from its place and every other way to open simply zooms. (2) The origin is worked out once, when the enter animation is being prepared, as the click minus the offset of the dialog on the page, kept as state, and **reused for the leave**: so they fly to the click and back, exactly as ours did. (3) No click, or a zero position, means no origin, so the zoom is around the center. (4) There is no switch for an app: the `Modal` takes a `mousePosition` prop that replaces the recorded point (a nullish value falls back to the recorded one, so it cannot turn the origin off; a zero point does it by accident).
+- **Not confirmed.** Nothing in them avoids the flight; the hypothesis above was right.
+- **What it means for us.** The default of P22 (around the center) is a deliberate difference, and `zoomFromClick` keeps their behavior on request. The timer of 100 ms forgets the click after the current task, so a slow open that happens in the task of the click still has it; our rule "the same task, or 300 ms" (P21's neighbor, the fix of `pointer.ts` in 0.12.0) does the same thing without a timer for the opening itself. The `mousePosition` prop (an app that gives its own point) is **not taken** now; it would be additive later (`zoomFromClick` could become a point). Our decision did not change after reading.
+- **How ours differs.** Ours: a boolean option, off by default, a press kept for the task of the click and 300 ms, an origin recomputed from layout offsets after the scroll lock. Theirs: always on, a position object, a 100 ms timer, an origin from the offset on the page.
