@@ -5,7 +5,7 @@
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
 // It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab, the
-// Tooltip lab, the Radio lab, the grid lab and the Message lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// Tooltip lab, the Radio lab, the grid lab, the Message lab and the overlay lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -766,6 +766,67 @@ async function messagePage(context) {
   await page.close();
 }
 
+async function overlayPage(context) {
+  const page = await newPage(context, base + '/#overlay');
+  await page.waitForSelector(idOf('open-a'));
+  await settle(page);
+  const active = () => page.evaluate(() => (document.activeElement && document.activeElement.getAttribute('data-testid')) || '');
+  const marker = () => rectOf(page, idOf('marker'));
+
+  await check('overlay: a layer locks the scroll, keeps the page where it was, puts the page out of reach and takes focus', async () => {
+    const bar = await page.evaluate(() => window.innerWidth - document.documentElement.clientWidth);
+    const before = await marker();
+    await page.click(idOf('open-a'));
+    await page.waitForSelector(idOf('box-a'));
+    await settle(page);
+    const during = await marker();
+    const state = await page.evaluate(() => {
+      const known = 'inert' in HTMLElement.prototype;
+      // The page is what stands beside the layer in the body: where the engine knows `inert` it carries it, and where it does not
+      // (the floor) it carries `aria-hidden`, and the Tab trap keeps the keyboard in.
+      var outside = document.querySelector('[data-testid="page"]');
+      var hidden = false;
+      for (var node = outside; node && node !== document.body; node = node.parentElement) {
+        if (node.hasAttribute('inert') && (known || node.getAttribute('aria-hidden') === 'true')) hidden = true;
+      }
+      return { known: known, hidden: hidden, body: document.body.style.overflow, html: document.documentElement.style.overflow };
+    });
+    const moved = Math.abs(during.x - before.x) + Math.abs(during.width - before.width);
+    return [moved <= 1 && state.body === 'hidden' && state.html === 'hidden' && state.hidden && (await active()) === 'box-a', `scrollbar ${bar}px, moved ${moved}, inert known ${state.known}, page hidden ${state.hidden}, overflow ${state.body}/${state.html}, focus ${await active()}`];
+  });
+
+  await check('overlay: Tab on the last element goes to the first and Shift+Tab on the first goes to the last', async () => {
+    await page.focus(idOf('last-a'));
+    await page.keyboard.press('Tab');
+    const first = await active();
+    await page.keyboard.press('Shift+Tab');
+    const last = await active();
+    return [first === 'first-a' && last === 'last-a', `Tab -> ${first}, Shift+Tab -> ${last}`];
+  });
+
+  await check('overlay: Escape closes the list of a Select first and the layer second, and the page is given back with focus on its button', async () => {
+    await page.click('[role="combobox"]');
+    await settle(page);
+    const listOpen = await page.evaluate(() => Boolean(document.querySelector('.ads-popup:not([hidden]) [role="listbox"]')));
+    await page.keyboard.press('Escape');
+    await settle(page);
+    const listGone = await page.evaluate(() => !document.querySelector('.ads-popup:not([hidden]) [role="listbox"]'));
+    const stillOpen = await page.evaluate(() => Boolean(document.querySelector('[data-testid="box-a"]')));
+    await page.keyboard.press('Escape');
+    await settle(page);
+    const state = await page.evaluate(() => ({
+      gone: !document.querySelector('[data-testid="box-a"]'),
+      reachable: !document.querySelector('[data-testid="page"]').closest('[inert]'),
+      body: document.body.style.overflow,
+      html: document.documentElement.style.overflow
+    }));
+    const focus = await active();
+    return [listOpen && listGone && stillOpen && state.gone && state.reachable && state.body === '' && state.html === '' && focus === 'open-a', `list open ${listOpen}, list gone ${listGone}, layer stayed ${stillOpen}, layer gone ${state.gone}, page reachable ${state.reachable}, overflow "${state.body}"/"${state.html}", focus ${focus}`];
+  });
+
+  await page.close();
+}
+
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await playwright[engine].launch();
@@ -784,6 +845,7 @@ async function messagePage(context) {
     await radioPage(context);
     await gridPage(context);
     await messagePage(context);
+    await overlayPage(context);
   } catch (error) {
     record('run', false, `threw: ${String(error && error.message ? error.message : error).split('\n')[0]}`);
   }
