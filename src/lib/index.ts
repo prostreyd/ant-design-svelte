@@ -1,6 +1,6 @@
 // Public API of the library. Components are re-exported from here.
 
-export const VERSION = '0.9.0';
+export const VERSION = '0.11.0';
 
 export { default as Button } from './Button/Button.svelte';
 export { default as Switch } from './Switch/Switch.svelte';
@@ -13,6 +13,7 @@ export { default as Select } from './Select/Select.svelte';
 export { default as SelectOption } from './Select/SelectOption.svelte';
 export { default as SelectOptGroup } from './Select/SelectOptGroup.svelte';
 export { default as Tooltip } from './Tooltip/Tooltip.svelte';
+export { default as Spin } from './Spin/Spin.svelte';
 export { default as Row } from './Grid/Row.svelte';
 export { default as Col } from './Grid/Col.svelte';
 export { Breakpoints } from './Grid/Breakpoints.js';
@@ -27,6 +28,11 @@ export type {
   RowAlign,
   RowJustify
 } from './Grid/types.js';
+export { default as Menu } from './Menu/Menu.svelte';
+export { default as MenuItem } from './Menu/MenuItem.svelte';
+export { default as MenuSubMenu } from './Menu/MenuSubMenu.svelte';
+export { default as MenuItemGroup } from './Menu/MenuItemGroup.svelte';
+export { default as MenuDivider } from './Menu/MenuDivider.svelte';
 export { default as Input } from './Input/Input.svelte';
 export { message } from './Message/message.js';
 export { default as MessageHost } from './Message/MessageHost.svelte';
@@ -103,6 +109,7 @@ export type {
   RadioStyles,
   RadioValue
 } from './Radio/types.js';
+export type { SpinClassNames, SpinSemanticName, SpinSize, SpinStyles } from './Spin/types.js';
 export type {
   SwitchClassNames,
   SwitchSemanticName,
@@ -148,3 +155,30 @@ export type {
   TooltipStyles,
   TooltipTrigger
 } from './Tooltip/types.js';
+export type {
+  MenuClassNames,
+  MenuClickInfo,
+  MenuContent,
+  MenuDividerProps,
+  MenuDividerType,
+  MenuExpandIconInfo,
+  MenuGroupType,
+  MenuItemEntry,
+  MenuItemGroupProps,
+  MenuItemProps,
+  MenuItemType,
+  MenuItems,
+  MenuMode,
+  MenuPopupInfo,
+  MenuProps,
+  MenuSelectInfo,
+  MenuSemanticName,
+  MenuStyles,
+  MenuSubMenuProps,
+  MenuSubMenuSemanticName,
+  MenuSubMenuType,
+  MenuTheme,
+  MenuTitleClickInfo,
+  MenuTooltipProps,
+  MenuTriggerAction
+} from './Menu/types.js';

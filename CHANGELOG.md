@@ -17,6 +17,108 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   not jump sideways, the page behind the layer is out of reach of the keyboard, the pointer and assistive technology, focus
   stays inside the layer and comes back, and Escape closes the topmost layer. None of this is exported from the package yet.
 
+### Documentation
+
+- `Menu`: a popup that opens beside a vertical menu is flipped to the side with more room but not moved inside the window, so on a
+  screen narrower than the menu and its popup it can be cut off (the public demos of Ant Design differ here: React leaves it off
+  the screen or opens it above, Vue pushes it over its menu, Angular does not flip). The page, the README and the specification now say
+  so and advise `mode="inline"` there, and the examples with vertical menus are narrower on a phone, so their popups stay inside the
+  screen; a test of the site checks it at 390 and 360 px.
+
+## [0.11.0] - 2026-11-18
+
+### Added
+
+- `Menu`, with `MenuItem`, `MenuSubMenu`, `MenuItemGroup` and `MenuDivider`: a list of choices for navigation. Three types:
+  `horizontal` (a bar; items that do not fit move into a "…" item), `vertical` (submenus open in popups) and `inline`
+  (submenus expand in place, with `inlineIndent`; `inlineCollapsed` narrows it to icons with a tip on every item and popup
+  submenus). `theme` `light` or `dark`, and a submenu may have a theme of its own for its popup. The content is `items`
+  (items, submenus, groups, dividers; `label` and `icon` as text or a snippet, `extra`, `title`, `disabled`, `danger`,
+  `popupClassName`, `popupOffset`, `ontitleclick`, `popupRender`) or the markup components, in the order of the markup also
+  after `{#if}` and `{#each}`. `bind:selectedKeys` and `bind:openKeys` (no `defaultSelectedKeys` or `defaultOpenKeys`),
+  `multiple`, `selectable`, `triggerSubMenuAction`, `subMenuOpenDelay` and `subMenuCloseDelay` (seconds), `forceSubMenuRender`,
+  `expandIcon`, `overflowedIndicator`, `overflowLabel`, `tooltip`, `classNames`, `styles`, `popupRender`, and the callbacks
+  `onclick`, `onselect`, `ondeselect` and `onopenchange` (the user's changes only). Keys are strings. Accessibility follows the
+  menu and menubar patterns of the WAI-ARIA Authoring Practices: one Tab stop on an item, the arrow keys, `Home`, `End`,
+  `Enter`, `Space`, `Escape` and typing a letter; a selected item is `menuitemradio` (`menuitemcheckbox` with `multiple`) with
+  `aria-checked`, so it is spoken; icons are hidden from assistive technology; ids are unique per menu; the keyboard and touch
+  open a popup whatever `triggerSubMenuAction` says. Three colors of the Ant Design token table are below 4.5:1 (the selected
+  item, the group title, the danger item) and so are two fills of the dark menu; `tokens-accessible.css` darkens them and the
+  dark theme of the page needs no file. Forced-colors modes, `prefers-reduced-motion` and right-to-left are covered; selecting,
+  hovering and focusing never move an item. Not checked with a real screen reader or on a real touch device. The page with
+  examples, the API and the design tokens is on the documentation site, in English, Russian and Chinese.
+
+### Changed
+
+- Publishing to npm now waits for every check of the CI. A version tag starts three stages in `publish.yml`, and nothing is
+  published unless all of them are green: a quick guard (the tag matches the version in `package.json`, the tagged commit is on
+  `main`, the version is not in npm yet), then every job of `ci.yml` (lint, types, unit tests with coverage, the package, the
+  browser tests of the library and of the site in three browsers), then `npm publish`. Before, the tag ran only lint, types, unit
+  tests and the build, so a red browser test did not stop a release (the browser tests of 0.10.0 had not run when it was
+  published). A red stage leaves npm untouched; a job that failed only because the runner could not install the browsers is run
+  again with "Re-run failed jobs". Trusted Publishing is unchanged (the file is still `publish.yml`, the environment `npm`).
+  The two browser jobs of the CI now run in the official Playwright image (`mcr.microsoft.com/playwright:v1.65.0-noble`), which already
+  holds the three browsers and their system packages, so a job downloads and installs nothing at the start. Before, each run
+  installed them with `apt`, and on 2026-11-18 the Ubuntu mirror of the runners was so slow (76 packages in 8 minutes) that every
+  browser job of the day, the one of `main` included, timed out there before a test ran. `tests/ciPlaywright.test.ts` keeps the
+  tag of the image equal to the version of Playwright in `package-lock.json`. In a container job Firefox does not start unless
+  `HOME=/root` is set (the `$HOME` of the container belongs to another user), so the two steps that run Playwright set it, and
+  the same test keeps it. `ci.yml` can now also be called from another workflow (`workflow_call`). The rules for AI assistants say how a release goes
+  now: the tag is set right after the merge into `main`, and GitHub decides whether to publish.
+
+### Documentation
+
+- The rules for AI assistants say what a component checks on this machine before it is released: only its own browser tests, the
+  tests of the components that import it or whose shared code it changed (extending the popup primitive checks `Select` and
+  `Tooltip`), and the pages of these components on the site. The files that every new component adds its own lines to (tokens,
+  the exports, the test stand, the registries of the site) no longer make the machine run everything; the planner of the checks is
+  asked with the files of the component (`--files`). The full run of every component is done by the CI on GitHub. A port of a
+  test server is checked for its owner, not only for being free: a run once went to the build of another worktree.
+- The rules also describe a joint release of several finished components: one branch that gathers them, one CI run on GitHub, one
+  version (+0.1.0 once, whatever the number of the new components) and one tag.
+
+## [0.10.0] - 2026-11-18
+
+### Added
+
+- `Spin`: a loading indicator of four turning dots, with `spinning`, `delay`, `size` (`small`, `medium`, `large`; `default` is an
+  alias of `medium`), `description` (a string or a snippet), `indicator` (a snippet), `percent`, `fullscreen`, `classNames` and
+  `styles` for the parts `root`, `section`, `indicator`, `description` and `container`. Standalone it is only the indicator and renders
+  nothing while it is not spinning; with children the content is dimmed (half opacity) and ignores the mouse and the text selection,
+  and the indicator is centered over it. The API is inspired by Ant Design; the implementation is original for Svelte.
+  - `delay` starts again every time `spinning` becomes true (also at mount), turning it off hides at once and a repeated true starts no
+    second timer, so a quick load never flashes. Embedded, the content is not dimmed until the indicator appears, and a Spin that is
+    spinning at mount is dimmed from the first paint, with no fade from full opacity.
+  - `percent` draws a progress ring (`role="progressbar"`, named by the description or `aria-label`); `percent="auto"` is an
+    indeterminate ring that turns, with no timer and no changing value for a screen reader (the Ant Design one is simulated in script).
+  - `fullscreen` is a dimmed backdrop over the viewport, drawn in place (`position: fixed`), that blocks the pointer; it has no focus
+    trap and does not lock the scroll, and the page says so. It leaves at once, so it never blocks the page after the loading ends.
+  - A screen reader hears the `description` in a `role="status"` element; the covered content gets `aria-busy` (not `inert`: the
+    keyboard still reaches it). A Spin with no description or name logs one warning in development.
+  - Dots and ring are visible in forced-colors modes such as Windows High Contrast (the default indicator of Ant Design disappears there),
+    and `prefers-reduced-motion` slows the turn instead of ignoring the setting. With `tokens-accessible.css` the description keeps 4.5:1
+    and white text on the fullscreen backdrop keeps 4.5:1 over a white page.
+  - Page of `Spin` on the documentation site, with 9 examples and the API, semantic parts and token tables in English, Russian and Chinese.
+    Not checked with a real screen reader (Orca, NVDA, JAWS, VoiceOver); the page and the README say so.
+  - Not taken: `tip` and `wrapperClassName` (deprecated in Ant Design), the function form of `classNames` and `styles`,
+    `Spin.setDefaultIndicator` and `nzSimple`. A default `indicator` and `size` are reserved for ConfigProvider in v1.1.
+
+### Documentation
+
+- `npm run test:affected` no longer runs every browser test when a file in `screen-reader/` changes. Those tests use a real
+  screen reader (Orca) and run only in the workflow `Screen reader` on GitHub (on `main`, on pull requests and by hand), never on
+  this machine, so a change there has nothing to run here. Before, such a file was "unknown" to the plan and started the whole
+  run, which took about half an hour. The rules for AI assistants say it too.
+
+## [0.9.1] - 2026-11-17
+
+### Fixed
+
+- `Message`: the close button (`closable`) is easier to see. The cross was 12px with a thin line and no background, and next to the
+  disc of an `error` message, which has a cross in it too, it did not read as a button. The cross is now 16px with a thicker
+  line, the button has a faint background at rest (`--ads-message-close-bg`) and a stronger one on hover, in the light and
+  the dark theme. The box keeps its 40px height. One token is new: `--ads-message-close-bg`.
+
 ## [0.9.0] - 2026-11-17
 
 ### Added

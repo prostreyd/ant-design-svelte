@@ -107,6 +107,7 @@ const RULES = [
   [/\.md$/, NONE, 'text: nothing to run in a browser'],
   [/^(LICENSE|VERSION|\.gitignore|\.gitattributes|\.npmignore)$/, NONE, 'no code'],
   [/^\.github\//, NONE, 'a workflow: the branch pushed to GitHub runs it'],
+  [/^screen-reader\//, NONE, 'tests with a real screen reader (Orca): the workflow "Screen reader" on GitHub runs them all, not this machine'],
   [/^scripts\//, NONE, 'a script with its own tests and checks'],
   [/^tests\//, NONE, 'unit tests: they run in full every time'],
   [/^src\/lib\/tokens(-accessible)?\.css$/, ALL, 'design tokens reach every component through var()'],

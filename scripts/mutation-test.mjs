@@ -173,7 +173,29 @@ const OPERATORS = [
   { id: 'cb-reset-listener', description: 'the reset listener is never removed', pattern: /return \(\) => form\.removeEventListener\('reset', restore\);/g, replace: '' },
   { id: 'cb-reset-no-form', description: 'a checkbox outside a form also listens', pattern: /if \(!form\) return;/g, replace: '' },
   { id: 'cb-reset-unmounted', description: 'restore runs on an unmounted checkbox', pattern: /if \(!input\) return;/g, replace: '' },
-  { id: 'cb-has-options', description: 'empty options also hide the children', pattern: /normalized\.length > 0/g, replace: 'options !== undefined' }
+  { id: 'cb-has-options', description: 'empty options also hide the children', pattern: /normalized\.length > 0/g, replace: 'options !== undefined' },
+
+  // Spin
+  { id: 'spin-class', description: 'corrupt a Spin class name', pattern: /'ads-spin[\w-]*'/g, replace: (m) => m[0].replace(/'$/, "-x'") },
+  { id: 'spin-default-active', description: 'spinning defaults to false', pattern: /spinning = true/g, replace: 'spinning = false' },
+  { id: 'spin-delay-zero', description: 'delayMs === 0 → === 1', pattern: /delayMs === 0/g, replace: 'delayMs === 1' },
+  { id: 'spin-delay-ge', description: 'delay >= 0 → delay > 0', pattern: /delay >= 0/g, replace: 'delay > 0' },
+  { id: 'spin-delay-reset', description: 'a stopped Spin keeps the elapsed delay', pattern: /delayElapsed = false;/g, replace: '' },
+  { id: 'spin-size-alias', description: 'default no longer maps to medium', pattern: /value === 'default' \? 'medium' : value/g, replace: 'value' },
+  { id: 'spin-clamp-max', description: 'percent is not clamped above', pattern: /Math\.min\(100, Math\.max\(0, percent\)\)/g, replace: 'Math.max(0, percent)' },
+  { id: 'spin-clamp-min', description: 'percent is not clamped below', pattern: /Math\.max\(0, percent\)/g, replace: 'percent' },
+  { id: 'spin-dashoffset', description: 'the arc shows the rest, not the value', pattern: /100 - \(ringValue as number\)/g, replace: '(ringValue as number)' },
+  { id: 'spin-indicator-wins', description: 'the ring wins over a custom indicator', pattern: /indicator === undefined && ringValue !== undefined/g, replace: 'ringValue !== undefined' },
+  { id: 'spin-shape-swap', description: 'children make a standalone Spin', pattern: /children !== undefined \? 'embedded' : 'standalone'/g, replace: "children !== undefined ? 'standalone' : 'embedded'" },
+  { id: 'spin-busy', description: 'the container is never busy', pattern: /aria-busy=\{visible \? true : undefined\}/g, replace: 'aria-busy={undefined}' },
+  { id: 'spin-label-priority', description: 'the ring takes aria-label over the description', pattern: /hasDescription \? undefined : ariaLabel/g, replace: 'ariaLabel' },
+  { id: 'spin-labelledby-priority', description: 'the ring ignores the description as its name', pattern: /hasDescription \? descriptionId : ariaLabelledby/g, replace: 'ariaLabelledby' },
+  { id: 'spin-role-status', description: 'role status → alert', pattern: /role="status"/g, replace: 'role="alert"' },
+  { id: 'spin-role-progressbar', description: 'role progressbar → meter', pattern: /role="progressbar"/g, replace: 'role="meter"' },
+  { id: 'spin-warn-once', description: 'the warning repeats', pattern: /warned = true;/g, replace: '' },
+  { id: 'spin-style-order', description: 'styles.root before style', pattern: /styleText\(customStyle, styles\?\.root, /g, replace: 'styleText(styles?.root, customStyle, ' },
+  { id: 'spin-section-merge', description: 'a standalone Spin ignores classNames.section', pattern: /shape === 'standalone' && classNames\?\.section/g, replace: 'false' },
+  { id: 'spin-auto-offset', description: 'the indeterminate arc has an offset', pattern: /ringValue === 'auto' \? 0 :/g, replace: "ringValue === 'auto' ? 5 :" }
 ];
 
 function lineOf(index) {

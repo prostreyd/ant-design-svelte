@@ -58,6 +58,9 @@
   {:else if name === 'Tooltip'}
     <rect class="fl" x="38" y="8" width="84" height="26" rx="6" /><path d="M50 21h40M72 34l8 7 8-7" />
     <rect x="62" y="48" width="36" height="18" rx="5" />
+  {:else if name === 'Spin'}
+    <circle class="fl" cx="80" cy="14" r="6" /><circle class="acc" cx="94" cy="28" r="6" /><circle cx="80" cy="42" r="6" /><circle cx="66" cy="28" r="6" />
+    <path d="M58 62h44" />
   {:else if name === 'Modal'}
     <rect class="dash" x="8" y="4" width="144" height="68" rx="8" />
     <rect x="32" y="12" width="96" height="52" rx="6" /><path d="M42 24h40M42 36h72" />

@@ -6,9 +6,11 @@ import { demos } from '../src/docs/data/button.ts';
 import { demos as checkboxDemos } from '../src/docs/data/checkbox.ts';
 import { demos as gridDemos } from '../src/docs/data/grid.ts';
 import { demos as inputDemos } from '../src/docs/data/input.ts';
+import { demos as menuDemos } from '../src/docs/data/menu.ts';
 import { demos as messageDemos } from '../src/docs/data/message.ts';
 import { demos as radioDemos } from '../src/docs/data/radio.ts';
 import { demos as selectDemos } from '../src/docs/data/select.ts';
+import { demos as spinDemos } from '../src/docs/data/spin.ts';
 import { demos as switchDemos } from '../src/docs/data/switch.ts';
 import { demos as tooltipDemos } from '../src/docs/data/tooltip.ts';
 import { allPages, localize, type SitePath } from '../src/docs/pages.ts';
@@ -52,7 +54,7 @@ async function accessibilityViolations(page: Page): Promise<Violation[]> {
         run: (context: Document | { exclude: string[][] }, options?: object) => Promise<AxeResult>;
       };
     }).axe;
-    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-radio', '.ads-radio-button', '.ads-radio-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-popup'];
+    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-radio', '.ads-radio-button', '.ads-radio-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-popup', '.ads-menu', '.ads-spin'];
     const everything = await axe.run(document, { rules: { 'color-contrast': { enabled: false } } });
     const contrast = await axe.run(
       { exclude: library.map((selector) => [selector]) },
@@ -281,8 +283,8 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Grid', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Message'];
-    const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Notification'];
+    const READY = ['Button', 'Grid', 'Menu', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Spin', 'Message'];
+    const PLANNED = ['Typography', 'Icon', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Notification'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
       await open(page, 'components/');
@@ -413,22 +415,26 @@ test.describe('home page', () => {
     const now = page.locator('.road .card').first();
     await expect(now).toContainText('Button');
     await expect(now).toContainText('Grid');
+    await expect(now).toContainText('Menu');
     await expect(now).toContainText('Input');
     await expect(now).toContainText('Checkbox');
     await expect(now).toContainText('Radio');
     await expect(now).toContainText('Switch');
     await expect(now).toContainText('Select');
     await expect(now).toContainText('Tooltip');
+    await expect(now).toContainText('Spin');
     await expect(now).toContainText('Message');
-    // The ready components follow the order of the sidebar: Button, Grid, Input, Checkbox, Radio, Switch, Select, Tooltip, Message.
+    // The ready components follow the order of the sidebar: Button, Grid, Menu, Input, Checkbox, Radio, Switch, Select, Tooltip, Spin, Message.
     await expect(now.locator('.chips').nth(1)).toContainText('gutter');
-    await expect(now.locator('.chips').nth(2)).toContainText('variant');
-    await expect(now.locator('.chips').nth(3)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(4)).toContainText('orientation');
-    await expect(now.locator('.chips').nth(5)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(6)).toContainText('showSearch');
-    await expect(now.locator('.chips').nth(7)).toContainText('placement');
-    await expect(now.locator('.chips').nth(8)).toContainText('stack');
+    await expect(now.locator('.chips').nth(2)).toContainText('selectedKeys');
+    await expect(now.locator('.chips').nth(3)).toContainText('variant');
+    await expect(now.locator('.chips').nth(4)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(5)).toContainText('orientation');
+    await expect(now.locator('.chips').nth(6)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(7)).toContainText('showSearch');
+    await expect(now.locator('.chips').nth(8)).toContainText('placement');
+    await expect(now.locator('.chips').nth(9)).toContainText('spinning');
+    await expect(now.locator('.chips').nth(10)).toContainText('stack');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -1626,6 +1632,147 @@ test.describe('Grid page', () => {
 // The demos of a component page stand in two columns in the order of reading (1 | 2, 3 | 4, ...), a demo marked `wide` takes a whole
 // row, and on a phone there is one column. With CSS columns a block jumped to the top of the other column when it did not fit, and
 // the order depended on the heights.
+test.describe('Spin page', () => {
+  /** The example section with the given title. */
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+  const pre = (demo: ReturnType<typeof demoOf>) => demo.locator('.demo-pre');
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    // A loop over every example with several browser commands each: WebKit needs about three times the default time.
+    test.slow();
+    await open(page, 'components/spin/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(spinDemos.length);
+
+    for (let i = 0; i < spinDemos.length; i++) {
+      const demo = examples.nth(i);
+      // The preview contains library Spins; the fullscreen one draws nothing until its button is pressed.
+      if (spinDemos[i].slug === 'fullscreen') await expect(demo.locator('.demo-pre button.ads-btn').first()).toBeVisible();
+      else await expect(demo.locator('.demo-pre .ads-spin').first()).toBeVisible();
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/spin/${String(i + 1).padStart(2, '0')}-${spinDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('every caption stands above the component it names, inside its own unit', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const misplaced = await page.locator('.demo-pre .field').evaluateAll((fields) =>
+      fields.filter((field) => field.querySelector(':scope > .caption') && !field.firstElementChild?.classList.contains('caption')).length
+    );
+    expect(misplaced).toBe(0);
+  });
+
+  test('no loose text or element stands beside the units of an example', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const loose = await page.locator('.demo-pre').evaluateAll((all) =>
+      all.flatMap((preview) =>
+        [...preview.children].filter((child) => !child.classList.contains('stack') && !child.classList.contains('ads-spin')).map((child) => child.className)
+      )
+    );
+    expect(loose).toEqual([]);
+  });
+
+  test('basic demo: the switch turns a standalone Spin on and off, and nothing is left when it is off', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const demo = demoOf(page, 'Basic');
+    const toggle = demo.getByRole('switch', { name: 'Spinning' });
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await expect(pre(demo).getByRole('status', { name: 'Loading the data' })).toBeVisible();
+    await toggle.click();
+    await expect(pre(demo).getByRole('status')).toHaveCount(0);
+    await expect(demo).toContainText('spinning is false');
+    await toggle.click();
+    await expect(pre(demo).getByRole('status', { name: 'Loading the data' })).toBeVisible();
+  });
+
+  test('embedded demo: the mouse is blocked and the keyboard is not, and switching off frees the mouse', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const demo = demoOf(page, 'Embedded mode');
+    const press = demo.getByRole('button', { name: 'Press me' });
+    const pressed = () => demo.locator('.demo-pre span', { hasText: 'The button was pressed' }).textContent();
+    await expect(demo.locator('.ads-spin-container')).toHaveCSS('opacity', '0.5');
+    const box = (await press.boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    expect(await pressed()).toContain('pressed 0 times');
+    await press.focus();
+    await page.keyboard.press('Enter');
+    expect(await pressed()).toContain('pressed 1 times');
+    await demo.getByRole('switch', { name: 'Spinning' }).click();
+    await expect(demo.locator('.ads-spin-container')).toHaveCSS('opacity', '1');
+    await press.click();
+    expect(await pressed()).toContain('pressed 2 times');
+  });
+
+  test('delay demo: a fast load never dims the panel, a slow one does after the delay', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const demo = demoOf(page, 'Delay');
+    const panel = demo.locator('.ads-spin-container');
+    await demo.getByRole('button', { name: 'Load fast (200 ms)' }).click();
+    // The load ends at 200 ms, before the 500 ms delay: the panel is never dimmed and the status line says it is done.
+    await expect(demo.getByRole('status').filter({ hasText: 'Loaded in 200 ms' })).toBeVisible();
+    await page.waitForTimeout(600);
+    await expect(panel).toHaveCSS('opacity', '1');
+    await expect(demo.locator('.ads-spin-section')).toHaveCount(0);
+    await demo.getByRole('button', { name: 'Load slow (2 s)' }).click();
+    await expect(panel).toHaveCSS('opacity', '0.5');
+    await expect(demo.locator('.ads-spin-section')).toHaveCount(1);
+    await expect(demo.getByRole('status').filter({ hasText: 'Loaded in 2000 ms' })).toBeVisible({ timeout: 6000 });
+    await expect(panel).toHaveCSS('opacity', '1');
+  });
+
+  test('progress demo: the slider moves its own ring only, and the other rings keep their values', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const demo = demoOf(page, 'Progress');
+    const rings = pre(demo).getByRole('progressbar');
+    await expect(rings).toHaveCount(3);
+    await expect(rings.nth(0)).toHaveAttribute('aria-valuenow', '35');
+    await expect(rings.nth(1)).not.toHaveAttribute('aria-valuenow');
+    await expect(rings.nth(2)).toHaveAttribute('aria-valuenow', '70');
+    await demo.locator('input[type="range"]').fill('80');
+    await expect(rings.nth(0)).toHaveAttribute('aria-valuenow', '80');
+    await expect(rings.nth(1)).not.toHaveAttribute('aria-valuenow');
+    await expect(rings.nth(2)).toHaveAttribute('aria-valuenow', '70');
+    await expect(pre(demo).getByRole('progressbar', { name: 'Uploading' })).toBeVisible();
+  });
+
+  test('fullscreen demo: the backdrop covers the viewport, blocks the page and goes away by itself', async ({ page }) => {
+    test.slow();
+    await open(page, 'components/spin/');
+    const demo = demoOf(page, 'Fullscreen');
+    await demo.getByRole('button', { name: 'Show fullscreen' }).click();
+    const backdrop = page.locator('.ads-spin-fullscreen');
+    await expect(backdrop).toBeVisible();
+    const viewport = page.viewportSize()!;
+    const box = (await backdrop.boundingBox())!;
+    expect(box).toMatchObject({ x: 0, y: 0, width: viewport.width, height: viewport.height });
+    // The description is the content of the status element (a status has no name from content), and the content is what is announced.
+    await expect(page.getByRole('status').filter({ hasText: 'Loading the page' })).toBeVisible();
+    await expect(backdrop).toHaveCount(0, { timeout: 8000 });
+    await expect(demo).toContainText('spinning is false');
+  });
+
+  test('semantic demo: classNames and styles reach the parts, and a custom property changes the color', async ({ page }) => {
+    await open(page, 'components/spin/');
+    const demo = demoOf(page, 'Classes and styles');
+    await expect(demo.locator('.ads-spin-indicator.demo-indicator')).toHaveCount(1);
+    await expect(demo.locator('.ads-spin-description.demo-description')).toHaveCount(1);
+    const green = demo.locator('.ads-spin').nth(1);
+    await expect(green).toHaveCSS('color', 'rgb(82, 196, 26)');
+    await expect(demo.locator('.ads-spin-container.demo-container')).toHaveCount(1);
+  });
+
+  test.describe('on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('no example makes the page scroll sideways', async ({ page }) => {
+      await open(page, 'components/spin/');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+    });
+  });
+});
+
 test.describe('demos of a component page: reading order', () => {
   const componentPaths = allPages.map((entry) => entry.path).filter((path) => path.startsWith('/components/') && path !== '/components/');
   const boxesOf = (page: Page) =>
@@ -1644,7 +1791,9 @@ test.describe('demos of a component page: reading order', () => {
         const boxes = await boxesOf(page);
         expect(boxes.length).toBeGreaterThan(1);
         const left = Math.min(...boxes.map((box) => box.x));
-        const column = Math.max(...boxes.filter((box) => !box.wide).map((box) => box.width));
+        // A column is as wide as the widest narrow demo; when every demo is wide (the Menu page), it is half of a row less the gap.
+        const narrow = boxes.filter((box) => !box.wide).map((box) => box.width);
+        const column = narrow.length > 0 ? Math.max(...narrow) : (Math.max(...boxes.map((box) => box.width)) - 16) / 2;
         let slot = 0; // 0: the next demo opens a row on the left, 1: it completes the row on the right
         let above = 0; // the bottom of the rows before the current one
         let rowTop = 0;
@@ -1767,5 +1916,151 @@ test.describe('installation tabs', () => {
     await expect(page.getByRole('tab', { name: 'bun' })).toBeFocused();
     await page.keyboard.press('ArrowRight');
     await expect(npm).toBeFocused();
+  });
+});
+
+test.describe('Menu page', () => {
+  // No animation: a rectangle is final right after a change.
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+  });
+
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    test.slow();
+    await open(page, 'components/menu/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(menuDemos.length);
+
+    for (let i = 0; i < menuDemos.length; i++) {
+      const demo = examples.nth(i);
+      await expect(demo.locator('.demo-pre ul.ads-menu-root').first()).toBeAttached();
+
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/menu/${String(i + 1).padStart(2, '0')}-${menuDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('selection demo: the three groups are independent (a click in one leaves the others as they were)', async ({ page }) => {
+    await open(page, 'components/menu/');
+    const demo = demoOf(page, 'Selection').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const status = demo.getByRole('status');
+    await expect(status.nth(0)).toContainText('selectedKeys: a');
+    await expect(status.nth(1)).toContainText('selectedKeys: a, c');
+    await demo.getByRole('menu', { name: 'Single selection' }).getByRole('menuitemradio', { name: 'Beta' }).click();
+    await expect(status.nth(0)).toContainText('selectedKeys: b');
+    await expect(status.nth(1)).toContainText('selectedKeys: a, c');
+    await demo.getByRole('menu', { name: 'Multiple selection' }).getByRole('menuitemcheckbox', { name: 'Alpha' }).click();
+    await expect(status.nth(1)).toContainText('selectedKeys: c');
+    await expect(status.nth(1)).toContainText('ondeselect: a');
+    await expect(status.nth(0)).toContainText('selectedKeys: b');
+    await demo.getByRole('menu', { name: 'Actions' }).getByRole('menuitem', { name: 'Gamma' }).click();
+    await expect(status.nth(2)).toContainText('onclick: c (path c)');
+    await expect(status.nth(0)).toContainText('selectedKeys: b');
+    await expect(status.nth(1)).toContainText('selectedKeys: c');
+  });
+
+  test('vertical demo: the pointer opens a popup, and a click opens the popup of the click menu', async ({ page }) => {
+    await open(page, 'components/menu/');
+    const demo = demoOf(page, 'Vertical menu').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    await demo.getByRole('menu', { name: 'Vertical menu' }).getByRole('menuitem', { name: 'Navigation Two' }).hover();
+    await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list')).toBeVisible();
+    await expect(demo.getByRole('status').first()).toContainText('onopenchange: ["two"]');
+    await page.mouse.move(5, 5);
+    await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list')).toHaveCount(0);
+    const clicking = demo.getByRole('menu', { name: 'Click to open' });
+    await clicking.getByRole('menuitem', { name: 'Navigation Two' }).hover();
+    await page.waitForTimeout(700);
+    await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list')).toHaveCount(0);
+    await clicking.getByRole('menuitem', { name: 'Navigation Two' }).click();
+    await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list')).toBeVisible();
+    await expect(demo.getByRole('status').nth(1)).toContainText('title click: two');
+  });
+
+  test('collapsed demo: the button narrows the menu to icons and brings it back', async ({ page }) => {
+    await open(page, 'components/menu/');
+    const demo = demoOf(page, 'Collapsed inline menu').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const menu = demo.getByRole('menu', { name: 'Collapsible menu' });
+    await expect.poll(async () => (await menu.boundingBox())?.width).toBeGreaterThan(200);
+    await demo.getByRole('button', { name: 'Collapse' }).click();
+    await expect.poll(async () => Math.round((await menu.boundingBox())?.width ?? 0)).toBe(80);
+    await demo.getByRole('button', { name: 'Expand' }).click();
+    await expect.poll(async () => (await menu.boundingBox())?.width).toBeGreaterThan(200);
+  });
+
+  // A popup that opens beside a vertical menu leaves the window when the menu is too wide for a phone (the popup is only flipped to the
+  // side with more room, never moved inside the window: specs/popup.md, R2). The examples keep their vertical menus narrower on a phone.
+  for (const width of [390, 360]) {
+    test(`on a phone of ${width} px the popup of a submenu of every vertical menu stays inside the screen`, async ({ page }) => {
+      test.slow();
+      await page.setViewportSize({ width, height: 844 });
+      await open(page, 'components/menu/');
+      const menus = page.locator('section.demo ul.ads-menu-root.ads-menu-vertical');
+      const count = await menus.count();
+      expect(count).toBeGreaterThanOrEqual(5);
+      let opened = 0;
+      for (let i = 0; i < count; i++) {
+        const title = menus.nth(i).locator(':scope > li > .ads-menu-submenu-title:not([aria-disabled="true"])').first();
+        if ((await title.count()) === 0) continue;
+        await title.scrollIntoViewIfNeeded();
+        await title.hover();
+        const popup = page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list').first();
+        // A menu that opens on a click (triggerSubMenuAction="click") does not react to the pointer on the title.
+        await page.waitForTimeout(200);
+        if (!(await popup.isVisible())) await title.click();
+        await expect(popup, `vertical menu ${i + 1} opens a popup`).toBeVisible();
+        const box = (await popup.boundingBox())!;
+        expect(box.x, `vertical menu ${i + 1}: the popup starts inside the screen`).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width, `vertical menu ${i + 1}: the popup ends inside the screen`).toBeLessThanOrEqual(width);
+        opened += 1;
+        await page.keyboard.press('Escape');
+        await page.mouse.move(2, 2);
+        await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list')).toHaveCount(0);
+      }
+      expect(opened).toBeGreaterThanOrEqual(4);
+    });
+  }
+
+  test('top navigation demo: a narrow container moves the items that do not fit into the "…" item', async ({ page }) => {
+    await open(page, 'components/menu/');
+    const demo = demoOf(page, 'Top navigation').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const narrow = demo.getByRole('menubar', { name: 'Narrow navigation' });
+    const more = narrow.getByRole('menuitem', { name: 'More sections' });
+    await expect(more).toBeVisible();
+    await more.hover();
+    await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list')).toBeVisible();
+    await expect(page.locator('.ads-popup:not([hidden]) ul.ads-menu-popup-list').getByRole('menuitemradio', { name: 'Navigation Six' })).toBeVisible();
+  });
+
+  test('keyboard demo: one Tab stop, the arrows move, Escape returns', async ({ page }) => {
+    await open(page, 'components/menu/');
+    const demo = demoOf(page, 'Keyboard').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const bar = demo.getByRole('menubar', { name: 'Application menu' });
+    await expect(bar.locator('[tabindex="0"]')).toHaveCount(1);
+    await bar.getByRole('menuitem', { name: 'File' }).focus();
+    await page.keyboard.press('ArrowDown');
+    await expect(page.locator('.ads-popup:not([hidden])').getByRole('menuitemradio', { name: 'New' })).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(bar.getByRole('menuitem', { name: 'File' })).toBeFocused();
+  });
+
+  test('markup demo: items written as components appear in the order of the markup, and an {#if} section comes and goes', async ({ page }) => {
+    await open(page, 'components/menu/');
+    const demo = demoOf(page, 'Items written as markup').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const dynamic = demo.getByRole('menu', { name: 'Dynamic markup' });
+    await expect(dynamic.locator('[data-ads-key]')).toHaveCount(5);
+    await demo.getByRole('checkbox', { name: 'Show the beta section' }).uncheck();
+    await expect(dynamic.locator('[data-ads-key]')).toHaveCount(2);
+    await demo.getByRole('checkbox', { name: 'Show the beta section' }).check();
+    await expect(dynamic.locator('[data-ads-key]')).toHaveCount(5);
   });
 });
