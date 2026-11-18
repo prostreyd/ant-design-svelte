@@ -10,8 +10,11 @@ export interface OverlayLayer {
   escape: () => boolean;
   /** Whether Tab is kept inside `root`. */
   trap: () => boolean;
-  /** Ask the layer to close. The layer decides: a controlled one may refuse. */
-  dismiss: (reason: OverlayDismissReason) => void;
+  /**
+   * Ask the layer to close. The layer decides: a controlled one may refuse. It gets the key that asked, **not yet cancelled**, so
+   * that the layer can tell a refusal (its handler called `preventDefault()`) from the cancelling that the stack does after it.
+   */
+  dismiss: (reason: OverlayDismissReason, event: KeyboardEvent) => void;
 }
 
 const stack: OverlayLayer[] = [];
@@ -29,8 +32,12 @@ function onKeyDown(event: KeyboardEvent): void {
   const top = stack[stack.length - 1] as OverlayLayer;
   if (event.key === 'Escape') {
     if (!top.escape()) return;
-    event.preventDefault();
-    top.dismiss('escape');
+    try {
+      top.dismiss('escape', event);
+    } finally {
+      // The key did its job, whether the layer closed or refused: it must not also clear a search field or close what is below.
+      event.preventDefault();
+    }
   } else if (event.key === 'Tab' && top.trap()) {
     const root = top.root();
     if (root) wrapTab(root, event);

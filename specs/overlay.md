@@ -84,7 +84,8 @@ layer without a mask (a Drawer with no mask) takes only what it needs.
   `restoreFocus: false` turns it off. A focusable element is one that is visible, enabled, not `inert` and not in a
   `hidden` or `inert` ancestor, with a non-negative `tabindex`.
 - **O4** (`stack.ts`). The open layers are a stack, one `keydown` listener for all of them. **Escape** goes to the
-  topmost layer: its `escape()` says whether it closes, and then the key is cancelled and `dismiss('escape')` is called; a
+  topmost layer: its `escape()` says whether it closes, and then `dismiss('escape', event)` is called with the key **not yet cancelled** (so a layer can refuse by calling
+  `event.preventDefault()` in its handler, which is how the Modal vetoes a close), and the key is cancelled after the call, whether the layer closed or refused; a
   key that was already handled (`defaultPrevented`, which is how a popup says it used Escape) or that ends an IME composition
   is ignored. The listener is on `window`, so it runs after the document listener of the popups. **Tab** is handled by the
   topmost layer only, so a second Modal over the first does not have two traps fighting.

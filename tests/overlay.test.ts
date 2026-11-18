@@ -92,8 +92,9 @@ describe('openOverlay (O5)', () => {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }));
     expect(dismiss).not.toHaveBeenCalled();
     allowed = true;
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }));
-    expect(dismiss).toHaveBeenCalledExactlyOnceWith('escape');
+    const key = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+    window.dispatchEvent(key);
+    expect(dismiss).toHaveBeenCalledExactlyOnceWith('escape', key);
   });
 
   it('closes on Escape with no handler without failing, and always by default', () => {

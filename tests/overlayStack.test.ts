@@ -53,9 +53,54 @@ describe('the stack (O4)', () => {
     const lower = open();
     const upper = open();
     const event = press('Escape');
-    expect(upper.layer.dismiss).toHaveBeenCalledExactlyOnceWith('escape');
+    expect(upper.layer.dismiss).toHaveBeenCalledExactlyOnceWith('escape', event);
     expect(lower.layer.dismiss).not.toHaveBeenCalled();
     expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('the layer gets the key not yet cancelled, so it can refuse by cancelling it itself; the stack cancels the key after the call either way', () => {
+    let seen: boolean | null = null;
+    const first = open({
+      dismiss: vi.fn((_reason, event: KeyboardEvent) => {
+        seen = event.defaultPrevented;
+      })
+    });
+    const event = press('Escape');
+    expect(seen).toBe(false);
+    expect(event.defaultPrevented).toBe(true);
+    first.close();
+
+    // A layer that refuses calls preventDefault in its handler: the key is cancelled and the call still happens once.
+    const refusing = open({
+      dismiss: vi.fn((_reason, key: KeyboardEvent) => {
+        key.preventDefault();
+        seen = key.defaultPrevented;
+      })
+    });
+    const second = press('Escape');
+    expect(seen).toBe(true);
+    expect(refusing.layer.dismiss).toHaveBeenCalledTimes(1);
+    expect(second.defaultPrevented).toBe(true);
+  });
+
+  it('the key is cancelled even when the layer throws while it dismisses', () => {
+    open({
+      dismiss: () => {
+        throw new Error('boom');
+      }
+    });
+    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    // A listener on the window that throws is reported, not thrown to the dispatcher: the key is cancelled all the same.
+    const errors: unknown[] = [];
+    const catcher = (e: ErrorEvent) => {
+      errors.push(e.error);
+      e.preventDefault();
+    };
+    window.addEventListener('error', catcher);
+    document.body.dispatchEvent(event);
+    window.removeEventListener('error', catcher);
+    expect(event.defaultPrevented).toBe(true);
+    expect(errors).toHaveLength(1);
   });
 
   it('the layer below takes Escape back when the one over it has closed', () => {
