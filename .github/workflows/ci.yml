@@ -1,11 +1,12 @@
 name: CI
 
 on:
-  # Every pushed branch, not only main: the full run is the safety net of the smart local checks (`npm run test:affected`),
-  # so it has to be green on the branch before the branch is merged or released (CLAUDE.md 8a). A tag does not start it.
+  # Every pushed branch, not only main: the full run is the safety net of the smart local checks (`npm run test:affected`).
+  # A tag does not start it by itself: publish.yml calls it (`workflow_call`) and publishes only when every job is green.
   push:
     branches: ['**']
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read
@@ -14,15 +15,18 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Three jobs that run at the same time: the fast checks, the e2e tests of the library and the tests of the documentation site.
+# The e2e tests (each in three engines) are most of the time, and one job for all of them reached the limit of 40 minutes
+# on 2026-11-17 (the library 17 minutes, the site 19 and more). Each job now takes about 20 to 25 minutes, and a new
+# component adds to one of the two e2e jobs, not to the sum of them.
+#
+# Pinned, not `ubuntu-latest`: on 2026-11-17 that label moved to Ubuntu 26.04, where the WebKit of Playwright 1.65 does not
+# start (`libicudata.so.74: cannot open shared object file`, every WebKit test fails). 24.04 is the image the jobs were green on.
+# Move it together with a Playwright release that knows the newer Ubuntu.
 jobs:
-  test:
-    # Pinned, not `ubuntu-latest`: on 2026-11-17 that label moved to Ubuntu 26.04, where the WebKit of Playwright 1.65 does not
-    # start (`libicudata.so.74: cannot open shared object file`, every WebKit test fails). 24.04 is the image the job was green on.
-    # Move it together with a Playwright release that knows the newer Ubuntu.
+  check:
     runs-on: ubuntu-24.04
-    # The job takes about 20 minutes (the e2e tests of the library and of the site in three engines); a slow runner adds
-    # 40% to that, so the limit leaves room for it.
-    timeout-minutes: 40
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -47,40 +51,81 @@ jobs:
       - name: Build the package
         run: npm run package
 
+  e2e-library:
+    runs-on: ubuntu-24.04
+    # The official image of Playwright: the three browsers and all their system packages are already in it, so a job downloads
+    # nothing and runs no `apt` at the start. (On 2026-11-18 the `apt` of `playwright install --with-deps` timed out on a slow
+    # Ubuntu mirror in every e2e job, `main` included, before a test ran.) The tag is the version of Playwright in
+    # package-lock.json; tests/ciPlaywright.test.ts fails when they differ, so change both together.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+    # About 20 minutes; a slow runner adds 40% to that, so the limit leaves room for it.
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: End-to-end tests of the library
+        run: npm run test:e2e
+        env:
+          # In a container job `$HOME` is /github/home, owned by another user, while the steps run as root, and Firefox refuses to
+          # start then ("Firefox is unable to launch if the $HOME folder isn't owned by the current user"). The workaround that
+          # Playwright documents for GitHub Actions is HOME=/root.
+          HOME: /root
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results-library
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  e2e-site:
+    runs-on: ubuntu-24.04
+    # The official image of Playwright: the three browsers and all their system packages are already in it, so a job downloads
+    # nothing and runs no `apt` at the start. (On 2026-11-18 the `apt` of `playwright install --with-deps` timed out on a slow
+    # Ubuntu mirror in every e2e job, `main` included, before a test ran.) The tag is the version of Playwright in
+    # package-lock.json; tests/ciPlaywright.test.ts fails when they differ, so change both together.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+    # About 25 minutes with the build; the limit leaves room for a slow runner.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
       # The documentation site is built and tested under the base path it is deployed to.
       - name: Build the documentation site
         run: npm run build
         env:
           BASE_PATH: /ant-design-svelte
 
-      # The tests run in Chromium, Firefox and WebKit. The download is cached by the version of Playwright, so most
-      # runs only install the system packages.
-      - name: Cache the browsers of Playwright
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Install the browsers for e2e tests
-        run: npx playwright install --with-deps chromium firefox webkit
-        timeout-minutes: 8
-
-      - name: End-to-end tests of the library
-        run: npm run test:e2e
-
       - name: Check and test the documentation site
         run: npm run test:docs
         env:
           BASE_PATH: /ant-design-svelte
+          # See the HOME of the library job above: Firefox does not start in a container without it.
+          HOME: /root
 
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-test-results
-          path: |
-            test-results/
-            docs/test-results/
+          name: playwright-test-results-site
+          path: docs/test-results/
           if-no-files-found: ignore
           retention-days: 7

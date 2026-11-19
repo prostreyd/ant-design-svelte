@@ -36,8 +36,12 @@
     Radio: ['value', 'options', 'optionType', 'buttonStyle', 'size', 'orientation', 'block', 'classNames'],
     Switch: ['checked', 'onchange', 'size', 'loading', 'disabled', 'classNames', 'styles'],
     Select: ['value', 'mode', 'options', 'showSearch', 'allowClear', 'maxTagCount', 'classNames'],
+    Menu: ['items', 'mode', 'theme', 'selectedKeys', 'openKeys', 'inlineCollapsed', 'multiple', 'classNames'],
     Form: ['name', 'rules', 'layout', 'labelCol', 'validateTrigger', 'hasFeedback', 'dependencies', 'scrollToFirstError'],
-    Tooltip: ['title', 'placement', 'trigger', 'arrow', 'color', 'open', 'classNames']
+    Tooltip: ['title', 'placement', 'trigger', 'arrow', 'color', 'open', 'classNames'],
+    Message: ['open', 'type', 'duration', 'key', 'closable', 'stack', 'classNames'],
+    Modal: ['open', 'title', 'footer', 'closeOnOk', 'mask', 'centered', 'width', 'focusable', 'modal.confirm'],
+    Spin: ['spinning', 'delay', 'size', 'description', 'percent', 'fullscreen', 'classNames']
   };
 </script>
 

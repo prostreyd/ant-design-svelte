@@ -51,6 +51,190 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   - Page of `Form` on the documentation site with 20 examples and a section at the top, "Typed values and your own model", that shows how a type is passed to `createForm` and how to keep the values in your own `$state` object (as in Vue), and the API tables in English, Russian and Chinese. Design tokens
     `--ads-form-*`, with darker values for the help, extra, warning and icon colours in `tokens-accessible.css`.
 
+## [0.12.1] - 2026-11-19
+
+### Fixed
+
+- `Modal`: the dialog no longer jumps sideways when it closes. The page was unlocked at the first frame of the closing animation, the scrollbar came back
+  and the page was laid out again, so a dialog in the middle of the window moved half the width of the scrollbar to the side while it was still leaving. The page
+  stays locked until the animation ends.
+- `Modal`, `Tooltip`, `Select` and `Menu`: a panel that was closed while it was still opening (in its first 0.2 to 0.3 s) disappeared at once, with no closing animation, because the
+  cancelled opening animation was taken for the end of the closing one. The closing animation plays now.
+
+### Changed
+
+- `Modal` and the static dialogs zoom in and out around their own center by default. They used to fly from the place of the last click and back to it, which on a
+  page with a button at the side looked like a dialog that goes into the corner and shrinks. The new option `zoomFromClick` brings the old behavior back (as in Ant Design).
+
+## [0.12.0] - 2026-11-18
+
+### Added
+
+- `Modal`: a dialog over the page that the user has to deal with before going on. Write it in the markup (`<Modal bind:open title>`; the
+  body is the content, the footer has Cancel and OK) or call a ready-made one from code. While it is open the page does not scroll and
+  does not jump sideways, the page behind it is out of reach of the keyboard, the pointer and assistive technology, focus goes in and
+  comes back to what had it, Tab stays inside and Escape closes it. The close button, Cancel, Escape and a press on the mask call
+  `oncancel(event)` and then close, unless the handler calls `event.preventDefault()`. OK never closes by itself, because the app checks or
+  saves first (`confirmLoading` shows it); the new `closeOnOk` makes it close after `onok`, waiting for a Promise that `onok` returns (a
+  rejection keeps it open). Props: `title`, `footer` (a text, `null`, or a snippet that gets the buttons), `okText`, `cancelText`, `okType`,
+  `okButtonProps`, `cancelButtonProps`, `confirmLoading`, `closable`, `closeIcon`, `mask` (`{ enabled, closable }`), `keyboard`, `centered`, `width`,
+  `zIndex`, `container`, `destroyOnHidden`, `forceRender`, `focusable` (`trap`, `focusTriggerAfterClose`, `autoFocusButton`), `scrollLock`, `modalRender`,
+  `class`, `style`, `wrapClassName`, `classNames` and `styles` (ten parts), `onafteropenchange` and `onafterclose`. The dialog zooms in from the
+  place of the last click; the motion is off under `prefers-reduced-motion`. A Modal opened over another one adds no second dimming layer: the page is
+  as dark as with one Modal, and the upper dialog stands on the mask of the lower one. Design tokens `--ads-modal-*` (light, dark and accessible).
+- Static dialogs: `modal.confirm`, `modal.info`, `modal.success`, `modal.warning` and `modal.error` open a dialog with an icon, a title, a text and
+  buttons, with no markup and no state, and `modal.destroyAll()` closes them all. A call returns a handle: `destroy()`, `update(patch)` and a
+  promise, so `await modal.confirm(...)` is `true` for OK and `false` for Cancel, Escape and `destroy`. `onok` and `oncancel` may return a Promise
+  (the button loads; a resolve closes, a rejection keeps it open). A static dialog is an alert dialog (`role="alertdialog"`, described by its text), has no
+  close button, is not closed by a press on the mask, and focus starts on OK. `<ModalHost />` draws the static dialogs where it stands, so they see
+  the context of that place; with none the library makes a layer in the body.
+- The page of the `Modal` on the documentation site, with twenty examples and the tables of props, options, methods and tokens in English,
+  Russian and Chinese. Checked with a real screen reader (Orca with Firefox): the document starts inside an open dialog, the page behind is not
+  read, Tab stays inside. Not checked: NVDA, JAWS, VoiceOver, a phone screen reader, a real touch device. A Modal opened from inside a popup
+  (the not-found area of a `Select`, say) is not supported: the press in the Modal is outside the popup and closes it; use `container`.
+
+### Changed
+
+- The layer of `Message` is kept reachable while a `Modal` is open (it carries `data-ads-overlay-keep`), so a message that is already on the page,
+  or one that an OK button opens, is still read by a screen reader. Nothing else changes for `Message`.
+- Internal, no change for users: the parts that every layer needs are now shared. Moving a panel out of its place in the page
+  (`portal`) and waiting for a leave animation (`anim`) were taken out of `Popup`; `Popup`, `Tooltip` and `Select` behave as
+  before. New shared part for the Modal and the Drawer (`overlay`): the page does not scroll while a layer is open and does
+  not jump sideways, the page behind the layer is out of reach of the keyboard, the pointer and assistive technology, focus
+  stays inside the layer and comes back, and Escape closes the topmost layer. None of this is exported from the package yet.
+- Internal, no change for users: the icons of `Message`, `Select`, `Input` and `Menu` (the chevron, the tick, the cross, the clear disc, the eye, the
+  search almond, the "…", the four status discs and the spinner) are drawn by one shared part, `internal/icons`, instead of four copies of the same file.
+  Every icon is drawn exactly as before (the same markup, the same pixels in Chromium, Firefox and WebKit, the same class names), and the three spinners
+  share one animation. The Modal uses the same part.
+
+### Documentation
+
+- `Menu`: a popup that opens beside a vertical menu is flipped to the side with more room but not moved inside the window, so on a
+  screen narrower than the menu and its popup it can be cut off (the public demos of Ant Design differ here: React leaves it off
+  the screen or opens it above, Vue pushes it over its menu, Angular does not flip). The page, the README and the specification now say
+  so and advise `mode="inline"` there, and the examples with vertical menus are narrower on a phone, so their popups stay inside the
+  screen; a test of the site checks it at 390 and 360 px.
+
+### Tests
+
+- The screen reader test of the `Radio` no longer depends on the name of the landmark ("main content") that Orca says first when the focus
+  comes into the main region: on GitHub it said it in a first attempt and not in the retry of the same commit. A small module removes a
+  leading landmark (and the "tab." of each key press) from what Orca said, and a unit test checks it with the phrase that had failed.
+
+## [0.11.0] - 2026-11-18
+
+### Added
+
+- `Menu`, with `MenuItem`, `MenuSubMenu`, `MenuItemGroup` and `MenuDivider`: a list of choices for navigation. Three types:
+  `horizontal` (a bar; items that do not fit move into a "…" item), `vertical` (submenus open in popups) and `inline`
+  (submenus expand in place, with `inlineIndent`; `inlineCollapsed` narrows it to icons with a tip on every item and popup
+  submenus). `theme` `light` or `dark`, and a submenu may have a theme of its own for its popup. The content is `items`
+  (items, submenus, groups, dividers; `label` and `icon` as text or a snippet, `extra`, `title`, `disabled`, `danger`,
+  `popupClassName`, `popupOffset`, `ontitleclick`, `popupRender`) or the markup components, in the order of the markup also
+  after `{#if}` and `{#each}`. `bind:selectedKeys` and `bind:openKeys` (no `defaultSelectedKeys` or `defaultOpenKeys`),
+  `multiple`, `selectable`, `triggerSubMenuAction`, `subMenuOpenDelay` and `subMenuCloseDelay` (seconds), `forceSubMenuRender`,
+  `expandIcon`, `overflowedIndicator`, `overflowLabel`, `tooltip`, `classNames`, `styles`, `popupRender`, and the callbacks
+  `onclick`, `onselect`, `ondeselect` and `onopenchange` (the user's changes only). Keys are strings. Accessibility follows the
+  menu and menubar patterns of the WAI-ARIA Authoring Practices: one Tab stop on an item, the arrow keys, `Home`, `End`,
+  `Enter`, `Space`, `Escape` and typing a letter; a selected item is `menuitemradio` (`menuitemcheckbox` with `multiple`) with
+  `aria-checked`, so it is spoken; icons are hidden from assistive technology; ids are unique per menu; the keyboard and touch
+  open a popup whatever `triggerSubMenuAction` says. Three colors of the Ant Design token table are below 4.5:1 (the selected
+  item, the group title, the danger item) and so are two fills of the dark menu; `tokens-accessible.css` darkens them and the
+  dark theme of the page needs no file. Forced-colors modes, `prefers-reduced-motion` and right-to-left are covered; selecting,
+  hovering and focusing never move an item. Not checked with a real screen reader or on a real touch device. The page with
+  examples, the API and the design tokens is on the documentation site, in English, Russian and Chinese.
+
+### Changed
+
+- Publishing to npm now waits for every check of the CI. A version tag starts three stages in `publish.yml`, and nothing is
+  published unless all of them are green: a quick guard (the tag matches the version in `package.json`, the tagged commit is on
+  `main`, the version is not in npm yet), then every job of `ci.yml` (lint, types, unit tests with coverage, the package, the
+  browser tests of the library and of the site in three browsers), then `npm publish`. Before, the tag ran only lint, types, unit
+  tests and the build, so a red browser test did not stop a release (the browser tests of 0.10.0 had not run when it was
+  published). A red stage leaves npm untouched; a job that failed only because the runner could not install the browsers is run
+  again with "Re-run failed jobs". Trusted Publishing is unchanged (the file is still `publish.yml`, the environment `npm`).
+  The two browser jobs of the CI now run in the official Playwright image (`mcr.microsoft.com/playwright:v1.65.0-noble`), which already
+  holds the three browsers and their system packages, so a job downloads and installs nothing at the start. Before, each run
+  installed them with `apt`, and on 2026-11-18 the Ubuntu mirror of the runners was so slow (76 packages in 8 minutes) that every
+  browser job of the day, the one of `main` included, timed out there before a test ran. `tests/ciPlaywright.test.ts` keeps the
+  tag of the image equal to the version of Playwright in `package-lock.json`. In a container job Firefox does not start unless
+  `HOME=/root` is set (the `$HOME` of the container belongs to another user), so the two steps that run Playwright set it, and
+  the same test keeps it. `ci.yml` can now also be called from another workflow (`workflow_call`). The rules for AI assistants say how a release goes
+  now: the tag is set right after the merge into `main`, and GitHub decides whether to publish.
+
+### Documentation
+
+- The rules for AI assistants say what a component checks on this machine before it is released: only its own browser tests, the
+  tests of the components that import it or whose shared code it changed (extending the popup primitive checks `Select` and
+  `Tooltip`), and the pages of these components on the site. The files that every new component adds its own lines to (tokens,
+  the exports, the test stand, the registries of the site) no longer make the machine run everything; the planner of the checks is
+  asked with the files of the component (`--files`). The full run of every component is done by the CI on GitHub. A port of a
+  test server is checked for its owner, not only for being free: a run once went to the build of another worktree.
+- The rules also describe a joint release of several finished components: one branch that gathers them, one CI run on GitHub, one
+  version (+0.1.0 once, whatever the number of the new components) and one tag.
+
+## [0.10.0] - 2026-11-18
+
+### Added
+
+- `Spin`: a loading indicator of four turning dots, with `spinning`, `delay`, `size` (`small`, `medium`, `large`; `default` is an
+  alias of `medium`), `description` (a string or a snippet), `indicator` (a snippet), `percent`, `fullscreen`, `classNames` and
+  `styles` for the parts `root`, `section`, `indicator`, `description` and `container`. Standalone it is only the indicator and renders
+  nothing while it is not spinning; with children the content is dimmed (half opacity) and ignores the mouse and the text selection,
+  and the indicator is centered over it. The API is inspired by Ant Design; the implementation is original for Svelte.
+  - `delay` starts again every time `spinning` becomes true (also at mount), turning it off hides at once and a repeated true starts no
+    second timer, so a quick load never flashes. Embedded, the content is not dimmed until the indicator appears, and a Spin that is
+    spinning at mount is dimmed from the first paint, with no fade from full opacity.
+  - `percent` draws a progress ring (`role="progressbar"`, named by the description or `aria-label`); `percent="auto"` is an
+    indeterminate ring that turns, with no timer and no changing value for a screen reader (the Ant Design one is simulated in script).
+  - `fullscreen` is a dimmed backdrop over the viewport, drawn in place (`position: fixed`), that blocks the pointer; it has no focus
+    trap and does not lock the scroll, and the page says so. It leaves at once, so it never blocks the page after the loading ends.
+  - A screen reader hears the `description` in a `role="status"` element; the covered content gets `aria-busy` (not `inert`: the
+    keyboard still reaches it). A Spin with no description or name logs one warning in development.
+  - Dots and ring are visible in forced-colors modes such as Windows High Contrast (the default indicator of Ant Design disappears there),
+    and `prefers-reduced-motion` slows the turn instead of ignoring the setting. With `tokens-accessible.css` the description keeps 4.5:1
+    and white text on the fullscreen backdrop keeps 4.5:1 over a white page.
+  - Page of `Spin` on the documentation site, with 9 examples and the API, semantic parts and token tables in English, Russian and Chinese.
+    Not checked with a real screen reader (Orca, NVDA, JAWS, VoiceOver); the page and the README say so.
+  - Not taken: `tip` and `wrapperClassName` (deprecated in Ant Design), the function form of `classNames` and `styles`,
+    `Spin.setDefaultIndicator` and `nzSimple`. A default `indicator` and `size` are reserved for ConfigProvider in v1.1.
+
+### Documentation
+
+- `npm run test:affected` no longer runs every browser test when a file in `screen-reader/` changes. Those tests use a real
+  screen reader (Orca) and run only in the workflow `Screen reader` on GitHub (on `main`, on pull requests and by hand), never on
+  this machine, so a change there has nothing to run here. Before, such a file was "unknown" to the plan and started the whole
+  run, which took about half an hour. The rules for AI assistants say it too.
+
+## [0.9.1] - 2026-11-17
+
+### Fixed
+
+- `Message`: the close button (`closable`) is easier to see. The cross was 12px with a thin line and no background, and next to the
+  disc of an `error` message, which has a cross in it too, it did not read as a button. The cross is now 16px with a thicker
+  line, the button has a faint background at rest (`--ads-message-close-bg`) and a stronger one on hover, in the light and
+  the dark theme. The box keeps its 40px height. One token is new: `--ads-message-close-bg`.
+
+## [0.9.0] - 2026-11-17
+
+### Added
+
+- **`Message`** (with `MessageHost`): a short notice at the top of the page that goes away by itself, opened by a call from
+  code, from anywhere: `message.info`, `success`, `error`, `warning`, `loading`, `open`, `destroy` and `config`. The library
+  makes the layer itself when the first message opens and removes it when the last has gone; a `<MessageHost>` in the app
+  takes the messages over and holds the settings (`top`, `duration`, `maxCount`, `container`, `closable`, `labels`,
+  `classNames`, `styles`, `stack`). A call returns a function that closes the message and is also thenable (`.then` runs
+  when the message starts to close, so `await message.info(...)` waits for the close, as in React and Vue); a call with the
+  `key` of an open message updates it in place. `content` is a string, a number or a snippet, `icon` a string, a snippet or
+  `false`, and `class`, `style`, `classNames` and `styles` address the box and its parts. The timer waits while the pointer
+  (not a touch), the focus or a hidden page holds it. New: `closable` (a close button of 24px; `Escape` closes the message
+  that has focus in it) and `stack` (React 6.4.0: the newest message first, and past a threshold the others lie behind it as
+  a pile that the pointer or focus opens). A role per type (`alert` for `error` and `warning`, `status` for the rest) and a
+  hidden type word read before the text, translated through `labels`, where Ant Design React gives `role="alert"` to all and
+  Vue and Angular give none. 23 `--ads-message-*` tokens, light, dark and accessible (`tokens-accessible.css` darkens the
+  green and the amber icon to 3:1). Not checked: whether a screen reader announces a message when it opens, NVDA, JAWS,
+  VoiceOver, a real touch device and a real Safari.
+
 ### Documentation
 
 - The rules for AI assistants say how a component takes another component. Before the specification, the assistant checks

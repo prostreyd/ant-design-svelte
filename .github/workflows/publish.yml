@@ -9,9 +9,15 @@ name: Publish to npm
 # Optional, in the repository (Settings -> Environments -> npm): "Required reviewers" adds a one-click approval
 # before anything is published.
 #
-# Release: bump the version, merge the change into main, then
+# Release: record the version in the branch, merge the change into main, then
 #   git tag v<version> && git push origin v<version>
-# The tag must match the version in package.json and the tagged commit must be on main.
+# The tag starts three stages, and nothing is published unless every one of them is green:
+#   1. guard   the tag matches the version in package.json, the tagged commit is on main, the version is not in npm yet;
+#   2. checks  every job of ci.yml (lint, types, unit tests with coverage, the package, the e2e tests of the library and of the
+#              documentation site in three browsers), called as a reusable workflow;
+#   3. publish `npm publish` (it runs lint, types, tests and the package build once more).
+# A red stage leaves npm untouched. A failed job of a flaky runner (for example the install of the browsers) is run again with
+# "Re-run failed jobs". A tag with no version in npm may be deleted and set again on the fixed commit (CLAUDE.md 8в).
 
 on:
   push:
@@ -26,7 +32,40 @@ permissions:
   contents: read
 
 jobs:
+  # Stage 1. It fails in a minute, before the 25 minutes of the checks, when the tag cannot be published at all.
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check the tag, the commit and the version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          NAME=$(node -p "require('./package.json').name")
+          if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::The tag $GITHUB_REF_NAME does not match the version $VERSION in package.json"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::The tagged commit is not on main"
+            exit 1
+          fi
+          if npm view "$NAME@$VERSION" version > /dev/null 2>&1; then
+            echo "::error::$NAME@$VERSION is already in npm"
+            exit 1
+          fi
+
+  # Stage 2. The same jobs that run on every branch; `needs` waits for all of them.
+  checks:
+    needs: guard
+    uses: ./.github/workflows/ci.yml
+
+  # Stage 3. Only after the guard and every check are green.
   publish:
+    needs: [guard, checks]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: npm
@@ -49,18 +88,6 @@ jobs:
         run: npm install -g npm@11
 
       - run: npm ci
-
-      - name: Check the tag
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::The tag $GITHUB_REF_NAME does not match the version $VERSION in package.json"
-            exit 1
-          fi
-          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
-            echo "::error::The tagged commit is not on main"
-            exit 1
-          fi
 
       # `npm publish` runs prepublishOnly first: lint, type check, tests and the package build.
       # A pre-release goes under the tag named in its version (0.1.0-alpha.2 -> alpha). While the latest tag

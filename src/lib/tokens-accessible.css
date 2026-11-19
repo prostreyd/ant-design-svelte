@@ -6,7 +6,8 @@
  * off track of a Switch is 1.84:1 against a white page and the border of a Checkbox or an Input 1.41:1 (3:1 is needed).
  * Import this file AFTER tokens.css to get darker values for the `-solid`, `-text` and link tokens, for the
  * Switch, for the Checkbox border, for the Input (border, placeholder, count, icons, warning), for the Select
- * (the group label and the empty-result text of its list) and for the Form (help, extra, warning, icons):
+ * (the group label and the empty-result text of its list), for the Form (help, extra, warning, icons), for the Message (the
+ * success and warning icons) and for the Spin (the description and the fullscreen mask):
  *
  *   import 'svelte-ant-design/tokens.css';
  *   import 'svelte-ant-design/tokens-accessible.css';
@@ -74,6 +75,42 @@
    */
   --ads-select-group-label-color: #6b6b6b;
   --ads-select-empty-color: #6b6b6b;
+
+  /*
+   * Spin: the description is text, 5.2:1 against a white page like the other primary text (4.5:1 is needed); the
+   * fullscreen mask is darker, so white text on it is 5.7:1 over a white page (3.4:1 with the default mask).
+   */
+  --ads-spin-description-color: #1668dc;
+  --ads-spin-mask-bg: rgba(0, 0, 0, 0.6);
+
+  /*
+   * Message: the type icons are held to 3:1 against the white box. The green of Ant Design is 2.27:1 and the amber
+   * 1.90:1; the red (3.27:1) and the blue (4.10:1) already reach it.
+   */
+  --ads-message-icon-success: #389e0d;
+  --ads-message-icon-warning: #c27c00;
+
+  /* Modal: the icons of a static dialog are held to 3:1 against the white card, as the icons of the Message (the green is 2.27:1, the amber 1.90:1). */
+  --ads-modal-confirm-icon-success: #389e0d;
+  --ads-modal-confirm-icon-warning: #c27c00;
+
+  /*
+   * Menu: the selected item `#1668dc` on `#e6f4ff` is 4.63:1 (3.66:1 by default) and on white 5.19:1 (the horizontal bar, 4.10:1 by
+   * default); the group title and the extra text `rgba(0, 0, 0, 0.65)` are 6.98:1 (3.35:1); the danger text `#cf1322` is 5.57:1
+   * on white, 5.10:1 on its selected fill and 4.88:1 on the hover fill (3.27:1, 2.99:1, 2.86:1); the dark menu's selected fill
+   * `#1668dc` is 5.19:1 with white text (4.10:1) and its danger-selected fill `#d9363e` 4.62:1 (3.27:1).
+   */
+  --ads-menu-item-selected-color: #1668dc;
+  --ads-menu-submenu-selected-color: #1668dc;
+  --ads-menu-horizontal-hover-color: #1668dc;
+  --ads-menu-horizontal-selected-color: #1668dc;
+  --ads-menu-group-title-color: rgba(0, 0, 0, 0.65);
+  --ads-menu-danger-color: #cf1322;
+  --ads-menu-danger-hover-color: #cf1322;
+  --ads-menu-danger-selected-color: #cf1322;
+  --ads-menu-dark-item-selected-bg: #1668dc;
+  --ads-menu-dark-danger-selected-bg: #d9363e;
+  --ads-menu-dark-danger-active-bg: #d9363e;
 
   /*
    * Form: the neutral help and the extra hint are 5.7:1 against a white page (4.5:1 is needed), the warning text 7.1:1,

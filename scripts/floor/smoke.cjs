@@ -5,7 +5,7 @@
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
 // It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab, the
-// Tooltip lab, the Radio lab, the grid lab and the Form lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// Tooltip lab, the Radio lab, the grid lab, the Message lab, the Spin lab, the Menu lab, the overlay lab, the Modal lab and the Form lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -600,6 +600,114 @@ async function gridPage(context) {
   await page.close();
 }
 
+async function spinPage(context) {
+  const page = await newPage(context, base + '/#spin');
+  await page.waitForFunction(() => Boolean(window.__spinLab));
+  const mount = (props, content, options) =>
+    page.evaluate((args) => window.__spinLab.set(args), Object.assign({ props: props, content: content || 'none' }, options || {}));
+  const rect = (selector) => rectOf(page, selector);
+  const near = (a, b, tolerance) => Math.abs(a - b) <= (tolerance === undefined ? 1 : tolerance);
+  const cx = (r) => r.x + r.width / 2;
+  const cy = (r) => r.y + r.height / 2;
+
+  await check('spin: the dot box is 14, 20 and 32 px, the root is exactly that without a description', async () => {
+    const sizes = [];
+    for (const size of ['small', 'medium', 'large']) {
+      await mount({ size: size, 'aria-label': 'Loading' });
+      const r = await rect('.ads-spin');
+      sizes.push(Math.round(r.width) + 'x' + Math.round(r.height));
+    }
+    return [sizes.join(' ') === '14x14 20x20 32x32', sizes.join(' ')];
+  });
+
+  await check('spin: the indicator is centered over the description, 12 px apart', async () => {
+    await mount({ description: 'Loading' });
+    const root = await rect('.ads-spin');
+    const part = await rect('.ads-spin-indicator');
+    const text = await rect('.ads-spin-description');
+    const gap = text.y - (part.y + part.height);
+    return [near(cx(part), cx(root)) && near(cx(text), cx(root)) && near(gap, 12, 0.6), 'gap ' + gap];
+  });
+
+  await check('spin: the dots turn and pulse (a running animation whose clock moves)', async () => {
+    await mount({ 'aria-label': 'Loading' });
+    const sample = () =>
+      page.evaluate(() => {
+        const found = document.querySelector('.ads-spin-dots').getAnimations()[0];
+        return found ? { state: found.playState, time: Number(found.currentTime) } : null;
+      });
+    const first = await sample();
+    await page.waitForTimeout(250);
+    const second = await sample();
+    return [Boolean(first && second && second.state === 'running' && second.time > first.time), JSON.stringify([first, second])];
+  });
+
+  await check('spin: embedded: the indicator is centered in the content, the content is dimmed and takes no pointer', async () => {
+    await mount({ 'aria-label': 'Loading' }, 'button');
+    await settle(page);
+    const covered = await rect('.ads-spin-container');
+    const part = await rect('.ads-spin-indicator');
+    const style = await page.evaluate(() => {
+      const s = getComputedStyle(document.querySelector('.ads-spin-container'));
+      return { opacity: s.opacity, events: s.pointerEvents };
+    });
+    const button = await rect(idOf('inner-button'));
+    await page.mouse.click(cx(button), cy(button));
+    const clicks = await page.evaluate(() => window.__spinLab.clicks());
+    const centered = near(cx(part), cx(covered)) && near(cy(part), cy(covered));
+    return [centered && style.opacity === '0.5' && style.events === 'none' && clicks === 0, JSON.stringify(style) + ' clicks ' + clicks];
+  });
+
+  await check('spin: the content does not move or resize when spinning toggles', async () => {
+    await mount({ spinning: false, description: 'Loading' }, 'text');
+    const before = JSON.stringify([await rect('.ads-spin-container'), await rect(idOf('after'))]);
+    await page.evaluate(() => window.__spinLab.update({ spinning: true }));
+    await settle(page);
+    const during = JSON.stringify([await rect('.ads-spin-container'), await rect(idOf('after'))]);
+    return [before === during, before === during ? '' : before + ' -> ' + during];
+  });
+
+  await check('spin: the delay holds the indicator back for the whole time (the clock of the page)', async () => {
+    await mount({ delay: 400, description: 'Loading' }, 'text');
+    await page.waitForSelector('[role="status"]', { timeout: 5000 });
+    const waited = await page.evaluate(() => window.__spinLab.appearedAt - window.__spinLab.mountedAt);
+    return [waited >= 390 && waited < 3000, 'waited ' + Math.round(waited) + ' ms'];
+  });
+
+  await check('spin: fullscreen covers the viewport, centers the indicator and takes the clicks', async () => {
+    await mount({ fullscreen: true, description: 'Loading' });
+    const box = await rect('.ads-spin-fullscreen');
+    const section = await rect('.ads-spin-section');
+    const outside = await rect(idOf('outside'));
+    const hit = await page.evaluate(
+      (point) => Boolean(document.elementFromPoint(point[0], point[1]).closest('.ads-spin-fullscreen')),
+      [cx(outside), cy(outside)]
+    );
+    const covers = box.x === 0 && box.y === 0 && box.width === VIEWPORT.width && box.height === VIEWPORT.height;
+    return [covers && near(cx(section), VIEWPORT.width / 2, 1.5) && near(cy(section), VIEWPORT.height / 2, 1.5) && hit, JSON.stringify(box)];
+  });
+
+  await check('spin: the progress ring fills the dot box and starts at 12 o\'clock', async () => {
+    await mount({ percent: 25, size: 'large', 'aria-label': 'Upload' });
+    const svg = await rect('svg.ads-spin-ring');
+    const arc = await page.evaluate(() => {
+      const circle = document.querySelector('.ads-spin-ring-arc');
+      return { offset: circle.getAttribute('stroke-dashoffset'), transform: circle.getAttribute('transform') };
+    });
+    return [near(svg.width, 32, 0.6) && arc.offset === '75' && arc.transform === 'rotate(-90 50 50)', JSON.stringify(arc)];
+  });
+
+  await check('spin: right to left: the first dot is at the right edge and the indicator stays centered', async () => {
+    await mount({ description: 'Loading' }, 'none', { dir: 'rtl' });
+    const root = await rect('.ads-spin');
+    const part = await rect('.ads-spin-indicator');
+    const first = await page.evaluate(() => document.querySelector('.ads-spin-dots > span').offsetLeft);
+    return [near(cx(part), cx(root)) && first > part.width / 2 - 1, 'first dot at ' + first];
+  });
+
+  await page.close();
+}
+
 async function selectPage(context) {
   const page = await newPage(context, base + '/#select');
   await page.waitForSelector(idOf('single'));
@@ -761,6 +869,354 @@ async function formPage(context) {
   await page.close();
 }
 
+async function messagePage(context) {
+  const page = await newPage(context, base + '/#message');
+  await page.waitForSelector(idOf('before'));
+  await settle(page);
+  const call = (method, args) => page.evaluate(([name, list]) => { window.__messageLab.message[name].apply(null, list); }, [method, args]);
+  const boxes = () => page.evaluate(() => Array.from(document.querySelectorAll('.ads-message')).length);
+
+  await check('message: a message opens 8px from the top, centred, 40px high, with its icon, and a click next to it reaches the page', async () => {
+    await call('success', ['Saved', 0]);
+    await settle(page);
+    const box = await rectOf(page, '.ads-message');
+    const icon = await rectOf(page, '.ads-message-icon svg');
+    await page.click(idOf('under'));
+    const reached = await page.evaluate(() => window.__messageLab.underClicks());
+    await call('destroy', []);
+    await settle(page);
+    const placed = Math.abs(box.y - 8) < 1 && Math.abs(box.height - 40) < 1.5 && Math.abs(box.x + box.width / 2 - VIEWPORT.width / 2) < 1.5;
+    return [placed && icon.width === 16 && reached === 1, `y ${box.y}, height ${box.height}, centre ${Math.round(box.x + box.width / 2)}, icon ${icon.width}, page clicks ${reached}`];
+  });
+
+  await check('message: it goes after its time, and nothing of the layer is left in the page', async () => {
+    await call('info', ['Short', 1]);
+    await settle(page);
+    const opened = (await boxes()) === 1;
+    await page.waitForTimeout(1800);
+    const left = await page.evaluate(() => document.querySelectorAll('.ads-message-list').length);
+    return [opened && (await boxes()) === 0 && left === 0, `opened ${opened}, boxes ${await boxes()}, layers left ${left}`];
+  });
+
+  await check('message: an update by key keeps the height and the place of the box', async () => {
+    await call('loading', [{ content: 'Loading', key: 'job', duration: 0 }]);
+    await settle(page);
+    const before = await rectOf(page, '.ads-message');
+    await call('success', [{ content: 'Done, and a longer text', key: 'job', duration: 0 }]);
+    await settle(page);
+    const after = await rectOf(page, '.ads-message');
+    await call('destroy', []);
+    await settle(page);
+    return [Math.abs(before.height - after.height) < 0.01 && Math.abs(before.y - after.y) < 0.01, `height ${before.height} -> ${after.height}, y ${before.y} -> ${after.y}`];
+  });
+
+  await check('message: the close button is 24px, closes the message with a click and with Enter, and shows a focus ring for the keyboard', async () => {
+    await call('info', [{ content: 'x', duration: 0, closable: true }]);
+    await settle(page);
+    const button = await rectOf(page, '.ads-message-close');
+    const high = await rectOf(page, '.ads-message');
+    await page.click('.ads-message-close');
+    await settle(page);
+    const clicked = (await boxes()) === 0;
+    await call('info', [{ content: 'y', duration: 0, closable: true }]);
+    await settle(page);
+    await page.focus(idOf('after'));
+    await page.keyboard.press('Tab');
+    const ring = await page.evaluate(() => {
+      const active = document.activeElement;
+      return active && active.classList.contains('ads-message-close') ? getComputedStyle(active).outlineStyle : 'not focused';
+    });
+    await page.keyboard.press('Enter');
+    await settle(page);
+    const entered = (await boxes()) === 0;
+    return [button.width === 24 && Math.abs(high.height - 40) < 1.5 && clicked && entered && ring !== 'none' && ring !== 'not focused', `button ${button.width}, box ${high.height}, click ${clicked}, Enter ${entered}, ring ${ring}`];
+  });
+
+  await check('message: a pile of four keeps the newest on top and the older ones inert (the attribute) with no Tab stop; hovering opens it 56px apart', async () => {
+    // The pointer is still where the last click left it, on the box: a pile with the pointer in it is open.
+    await page.mouse.move(900, 700);
+    await call('config', [{ stack: true }]);
+    for (let index = 1; index <= 4; index++) await call('info', [{ content: 'm' + index, duration: 0, closable: true }]);
+    await settle(page);
+    const state = await page.evaluate(() => {
+      const items = Array.from(document.querySelectorAll('.ads-message-item'));
+      return {
+        first: items[0].textContent.replace(/\s+/g, ' ').trim(),
+        buried: items.slice(1).every((item) => item.hasAttribute('inert') && item.getAttribute('aria-hidden') === 'true' && item.querySelector('button').getAttribute('tabindex') === '-1'),
+        piled: Boolean(document.querySelector('.ads-message-piled'))
+      };
+    });
+    const top = await rectOf(page, '.ads-message');
+    await page.mouse.move(top.x + top.width / 2, top.y + top.height / 2);
+    await settle(page);
+    const ys = await page.evaluate(() => Array.from(document.querySelectorAll('.ads-message')).map((box) => Math.round(box.getBoundingClientRect().y)));
+    await page.mouse.move(900, 700);
+    await settle(page);
+    const piledAgain = await page.evaluate(() => Boolean(document.querySelector('.ads-message-piled')));
+    await call('destroy', []);
+    await call('config', [{ stack: undefined }]);
+    await settle(page);
+    const spread = ys.length === 4 && ys.every((y, index) => Math.abs(y - (8 + index * 56)) <= 2);
+    return [state.piled && state.buried && /m4$/.test(state.first) && spread && piledAgain, `piled ${state.piled}, buried ${state.buried}, first ${state.first}, rows ${ys.join(',')}, piled again ${piledAgain}`];
+  });
+
+  await page.close();
+}
+
+async function menuPage(context) {
+  const page = await newPage(context, base + '/#menu');
+  await page.waitForSelector('ul#menu');
+  await settle(page);
+  const item = (key) => `[data-ads-key="${key}"]`;
+  const LIST = `${PANEL} ul.ads-menu-popup-list`;
+  const lab = (patch) => page.evaluate((p) => window.__menuLab.set(p), patch).then(() => settle(page));
+  const near = (a, b, tolerance) => Math.abs(a - b) <= tolerance;
+  const activeKey = () => page.evaluate(() => (document.activeElement && document.activeElement.getAttribute('data-ads-key')) || String(document.activeElement && document.activeElement.id));
+
+  await check('menu: an item is 40px high, and choosing one selects it and moves nothing', async () => {
+    await lab({ mode: 'vertical', boxWidth: 300, selectedKeys: ['home'] });
+    const home = await rectOf(page, item('home'));
+    const before = await rectOf(page, item('plain'));
+    await page.click(item('plain'));
+    await settle(page);
+    const after = await rectOf(page, item('plain'));
+    const checked = await attributeOf(page, item('plain'), 'aria-checked');
+    const same = before.x === after.x && before.y === after.y && before.width === after.width && before.height === after.height;
+    return [near(home.height, 40, 0.5) && checked === 'true' && same, `height ${home.height}, aria-checked ${checked}, moved ${!same}`];
+  });
+
+  await check('menu: the pointer on a title opens a popup on its right, inside the viewport, and leaving closes it', async () => {
+    const title = await rectOf(page, item('products'));
+    await page.mouse.move(title.x + title.width / 2, title.y + title.height / 2);
+    await page.waitForTimeout(600);
+    const popup = await rectOf(page, LIST);
+    if (!popup) return 'the popup did not open on hover';
+    const right = popup.x >= title.right - 1;
+    const aligned = near(popup.y, title.y, 2);
+    const inside = popup.right <= VIEWPORT.width && popup.bottom <= VIEWPORT.height;
+    await page.mouse.move(900, 700);
+    await page.waitForTimeout(700);
+    const closed = (await rectOf(page, LIST)) === null;
+    return [right && aligned && inside && closed, `title ${Math.round(title.x)}-${Math.round(title.right)}, popup x ${Math.round(popup.x)} y ${Math.round(popup.y)} (title y ${Math.round(title.y)}), closed ${closed}`];
+  });
+
+  await check('menu: Tab enters the menu on an item and :focus-visible draws the ring; the arrows move; ArrowRight opens a popup and focuses its first item', async () => {
+    await page.focus('#before');
+    await page.keyboard.press('Shift+Tab');
+    const entered = await activeKey();
+    const ring = await page.evaluate(() => {
+      const style = getComputedStyle(document.activeElement);
+      return style.outlineStyle + ' ' + style.outlineWidth;
+    });
+    await page.keyboard.press('ArrowDown');
+    const next = await activeKey();
+    await page.focus(item('products'));
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(700);
+    const inPopup = await activeKey();
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+    const back = await activeKey();
+    return [entered === 'plain' && ring.indexOf('solid') === 0 && next === 'home' && inPopup === 'p1' && back === 'products', `entered ${entered}, ring ${ring}, arrow ${next}, popup ${inPopup}, escape ${back}`];
+  });
+
+  await check('menu: a closed inline submenu cannot take focus, and an open one can', async () => {
+    await lab({ mode: 'inline', boxWidth: 300, openKeys: [] });
+    await page.waitForTimeout(500);
+    const closed = await page.evaluate(() => {
+      var element = document.querySelector('[data-ads-key="p1"]');
+      element.focus();
+      return document.activeElement === element;
+    });
+    await page.click(item('products'));
+    await page.waitForTimeout(700);
+    const opened = await page.evaluate(() => {
+      var element = document.querySelector('[data-ads-key="p1"]');
+      element.focus();
+      return document.activeElement === element;
+    });
+    return [!closed && opened, `closed submenu took focus: ${closed}, open submenu took focus: ${opened}`];
+  });
+
+  await check('menu: a collapsed menu is 80px wide, and an item shows its label as a tip', async () => {
+    await lab({ mode: 'inline', boxWidth: 256, openKeys: [], collapsed: true });
+    await page.waitForTimeout(900);
+    const width = (await rectOf(page, 'ul#menu')).width;
+    const home = await rectOf(page, item('home'));
+    await page.mouse.move(home.x + home.width / 2, home.y + home.height / 2);
+    await page.waitForTimeout(900);
+    const tip = await page.evaluate((panel) => {
+      var element = document.querySelector(panel + ' .ads-menu-tip');
+      return element ? element.textContent.trim() : null;
+    }, PANEL);
+    await page.mouse.move(900, 700);
+    return [near(width, 80, 1) && tip === 'Home', `width ${width}, tip ${tip}`];
+  });
+
+  await check('menu: a bar that is too narrow shows the "…" item and hides the entries that do not fit', async () => {
+    await lab({ mode: 'horizontal', boxWidth: 300, collapsed: false });
+    await page.waitForTimeout(400);
+    const state = await page.evaluate(() => {
+      var more = document.querySelector('ul#menu > li[data-ads-more]');
+      var hidden = document.querySelectorAll('ul#menu > li[data-ads-top][data-ads-hidden]').length;
+      return { more: more && !more.hasAttribute('data-ads-hidden'), hidden: hidden, fits: more ? more.getBoundingClientRect().right <= document.querySelector('ul#menu').getBoundingClientRect().right + 1 : false };
+    });
+    return [state.more && state.hidden > 0 && state.fits, `more shown ${state.more}, hidden entries ${state.hidden}, inside the bar ${state.fits}`];
+  });
+
+  await page.close();
+}
+
+async function overlayPage(context) {
+  const page = await newPage(context, base + '/#overlay');
+  await page.waitForSelector(idOf('open-a'));
+  await settle(page);
+  const active = () => page.evaluate(() => (document.activeElement && document.activeElement.getAttribute('data-testid')) || '');
+  const marker = () => rectOf(page, idOf('marker'));
+
+  await check('overlay: a layer locks the scroll, keeps the page where it was, puts the page out of reach and takes focus', async () => {
+    const bar = await page.evaluate(() => window.innerWidth - document.documentElement.clientWidth);
+    const before = await marker();
+    await page.click(idOf('open-a'));
+    await page.waitForSelector(idOf('box-a'));
+    await settle(page);
+    const during = await marker();
+    const state = await page.evaluate(() => {
+      const known = 'inert' in HTMLElement.prototype;
+      // The page is what stands beside the layer in the body: where the engine knows `inert` it carries it, and where it does not
+      // (the floor) it carries `aria-hidden`, and the Tab trap keeps the keyboard in.
+      var outside = document.querySelector('[data-testid="page"]');
+      var hidden = false;
+      for (var node = outside; node && node !== document.body; node = node.parentElement) {
+        if (node.hasAttribute('inert') && (known || node.getAttribute('aria-hidden') === 'true')) hidden = true;
+      }
+      return { known: known, hidden: hidden, body: document.body.style.overflow, html: document.documentElement.style.overflow };
+    });
+    const moved = Math.abs(during.x - before.x) + Math.abs(during.width - before.width);
+    return [moved <= 1 && state.body === 'hidden' && state.html === 'hidden' && state.hidden && (await active()) === 'box-a', `scrollbar ${bar}px, moved ${moved}, inert known ${state.known}, page hidden ${state.hidden}, overflow ${state.body}/${state.html}, focus ${await active()}`];
+  });
+
+  await check('overlay: Tab on the last element goes to the first and Shift+Tab on the first goes to the last', async () => {
+    await page.focus(idOf('last-a'));
+    await page.keyboard.press('Tab');
+    const first = await active();
+    await page.keyboard.press('Shift+Tab');
+    const last = await active();
+    return [first === 'first-a' && last === 'last-a', `Tab -> ${first}, Shift+Tab -> ${last}`];
+  });
+
+  await check('overlay: Escape closes the list of a Select first and the layer second, and the page is given back with focus on its button', async () => {
+    await page.click('[role="combobox"]');
+    await settle(page);
+    const listOpen = await page.evaluate(() => Boolean(document.querySelector('.ads-popup:not([hidden]) [role="listbox"]')));
+    await page.keyboard.press('Escape');
+    await settle(page);
+    const listGone = await page.evaluate(() => !document.querySelector('.ads-popup:not([hidden]) [role="listbox"]'));
+    const stillOpen = await page.evaluate(() => Boolean(document.querySelector('[data-testid="box-a"]')));
+    await page.keyboard.press('Escape');
+    await settle(page);
+    const state = await page.evaluate(() => ({
+      gone: !document.querySelector('[data-testid="box-a"]'),
+      reachable: !document.querySelector('[data-testid="page"]').closest('[inert]'),
+      body: document.body.style.overflow,
+      html: document.documentElement.style.overflow
+    }));
+    const focus = await active();
+    return [listOpen && listGone && stillOpen && state.gone && state.reachable && state.body === '' && state.html === '' && focus === 'open-a', `list open ${listOpen}, list gone ${listGone}, layer stayed ${stillOpen}, layer gone ${state.gone}, page reachable ${state.reachable}, overflow "${state.body}"/"${state.html}", focus ${focus}`];
+  });
+
+  await page.close();
+}
+
+async function modalPage(context) {
+  const page = await newPage(context, base + '/#modal');
+  await page.waitForSelector(idOf('open'));
+  await settle(page);
+  const lab = (patch) => page.evaluate((p) => window.__modalLab.set(p), patch);
+  const active = () => page.evaluate(() => (document.activeElement && (document.activeElement.getAttribute('aria-label') || document.activeElement.textContent.trim().slice(0, 12))) || '');
+  const marker = () => rectOf(page, idOf('marker'));
+
+  await check('modal: 520 px wide, 100 px from the top, in the middle, the page stays where it was, is out of reach, and focus goes to the close button', async () => {
+    const before = await marker();
+    await lab({ open: true });
+    await page.waitForSelector('.ads-modal');
+    await settle(page);
+    const box = await rectOf(page, '.ads-modal');
+    const during = await marker();
+    const state = await page.evaluate(() => {
+      const known = 'inert' in HTMLElement.prototype;
+      var outside = document.querySelector('[data-testid="page"]');
+      var hidden = false;
+      for (var node = outside; node && node !== document.body; node = node.parentElement) {
+        if (node.hasAttribute('inert') && (known || node.getAttribute('aria-hidden') === 'true')) hidden = true;
+      }
+      return { hidden: hidden, body: document.body.style.overflow, modalRole: document.querySelector('.ads-modal').getAttribute('role'), modal: document.querySelector('.ads-modal').getAttribute('aria-modal') };
+    });
+    const middle = Math.abs(box.x + box.width / 2 - (await page.evaluate(() => document.documentElement.clientWidth)) / 2);
+    const moved = Math.abs(during.x - before.x) + Math.abs(during.width - before.width);
+    const focus = await active();
+    return [Math.abs(box.width - 520) <= 1 && Math.abs(box.y - 100) <= 1 && middle <= 1.5 && moved <= 1 && state.hidden && state.body === 'hidden' && state.modalRole === 'dialog' && state.modal === 'true' && focus === 'Close', `width ${box.width}, top ${box.y}, off-centre ${middle}, page moved ${moved}, page hidden ${state.hidden}, overflow ${state.body}, focus ${focus}`];
+  });
+
+  await check('modal: the card, the title, the footer buttons and the close button are the sizes of the design', async () => {
+    const title = await rectOf(page, '.ads-modal-title');
+    const cancel = await rectOf(page, '[data-ads-modal-cancel]');
+    const ok = await rectOf(page, '[data-ads-modal-ok]');
+    const close = await rectOf(page, '.ads-modal-close');
+    const box = await rectOf(page, '.ads-modal');
+    // The gap is the `gap` of the footer, between the margin boxes: the WebKit 15.4 of Linux gives a `button` a margin of 2px of its own, which is
+    // not ours to measure.
+    const margins = await page.evaluate(() => ({ cancel: parseFloat(getComputedStyle(document.querySelector('[data-ads-modal-cancel]')).marginRight) || 0, ok: parseFloat(getComputedStyle(document.querySelector('[data-ads-modal-ok]')).marginLeft) || 0 }));
+    const gap = ok.x - margins.ok - (cancel.x + cancel.width + margins.cancel);
+    return [Math.abs(title.y - (box.y + 20)) <= 1 && Math.abs(title.height - 24) <= 1 && Math.abs(ok.height - 32) <= 1 && Math.abs(gap - 8) <= 1 && Math.abs(close.width - 32) <= 1 && Math.abs(close.x - (box.x + box.width - 44)) <= 1, `title ${title.y - box.y}/${title.height}, ok height ${ok.height}, gap ${gap} (button margins ${margins.cancel} and ${margins.ok}), close ${close.width} at ${box.x + box.width - close.x}`];
+  });
+
+  await check('modal: Tab on the last element goes to the first, Shift+Tab on the first to the last, and Escape closes it and gives focus back', async () => {
+    await page.focus('[data-ads-modal-ok]');
+    await page.keyboard.press('Tab');
+    const first = await active();
+    await page.keyboard.press('Shift+Tab');
+    const last = await active();
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(700);
+    const hidden = await page.evaluate(() => { var layer = document.querySelector('.ads-modal-root'); return !layer || layer.hasAttribute('hidden') || getComputedStyle(layer).display === 'none'; });
+    const free = await page.evaluate(() => document.body.style.overflow === '' && !document.querySelector('[data-testid="page"]').closest('[inert]'));
+    return [first === 'Close' && last === 'OK' && hidden && free, `Tab -> ${first}, Shift+Tab -> ${last}, hidden ${hidden}, page free ${free}`];
+  });
+
+  await check('modal: a mask press closes it, but not one that started inside the dialog', async () => {
+    await lab({ open: true });
+    await page.waitForSelector('.ads-modal');
+    await settle(page);
+    const cancels = () => page.evaluate(() => window.__modalLab.log().filter(function (entry) { return entry === 'cancel'; }).length);
+    const before = await cancels();
+    const field = await rectOf(page, idOf('field'));
+    await page.mouse.move(field.x + 5, field.y + 5);
+    await page.mouse.down();
+    await page.mouse.move(30, 30);
+    await page.mouse.up();
+    const stayed = (await cancels()) === before;
+    await page.mouse.click(30, 30);
+    await page.waitForTimeout(700);
+    const closed = (await cancels()) === before + 1;
+    return [stayed && closed, `stayed after a drag ${stayed}, closed by a press ${closed}`];
+  });
+
+  await check('modal: a confirm is an alert dialog 416 px wide with focus on OK, and await gives true for OK', async () => {
+    await page.evaluate(() => { window.__result = undefined; window.__modalLab.modal.confirm({ title: 'Sure?', content: 'Really.' }).then(function (v) { window.__result = v; }); });
+    await page.waitForSelector('[role="alertdialog"]');
+    await settle(page);
+    const box = await rectOf(page, '[role="alertdialog"]');
+    const focus = await active();
+    await page.click('[role="alertdialog"] [data-ads-modal-ok]');
+    await page.waitForTimeout(700);
+    const result = await page.evaluate(() => window.__result);
+    return [Math.abs(box.width - 416) <= 1 && focus === 'OK' && result === true, `width ${box.width}, focus ${focus}, result ${result}`];
+  });
+
+  await page.close();
+}
+
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await playwright[engine].launch();
@@ -778,6 +1234,11 @@ async function formPage(context) {
     await tooltipPage(context);
     await radioPage(context);
     await gridPage(context);
+    await messagePage(context);
+    await spinPage(context);
+    await menuPage(context);
+    await overlayPage(context);
+    await modalPage(context);
     await formPage(context);
   } catch (error) {
     record('run', false, `threw: ${String(error && error.message ? error.message : error).split('\n')[0]}`);

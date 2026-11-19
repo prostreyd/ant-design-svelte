@@ -1,6 +1,6 @@
 // Public API of the library. Components are re-exported from here.
 
-export const VERSION = '0.8.0';
+export const VERSION = '0.12.1';
 
 export { default as Button } from './Button/Button.svelte';
 export { default as Switch } from './Switch/Switch.svelte';
@@ -13,6 +13,10 @@ export { default as Select } from './Select/Select.svelte';
 export { default as SelectOption } from './Select/SelectOption.svelte';
 export { default as SelectOptGroup } from './Select/SelectOptGroup.svelte';
 export { default as Tooltip } from './Tooltip/Tooltip.svelte';
+export { default as Modal } from './Modal/Modal.svelte';
+export { default as ModalHost } from './Modal/ModalHost.svelte';
+export { modal } from './Modal/modal.js';
+export { default as Spin } from './Spin/Spin.svelte';
 export { default as Row } from './Grid/Row.svelte';
 export { default as Col } from './Grid/Col.svelte';
 export { Breakpoints } from './Grid/Breakpoints.js';
@@ -66,7 +70,14 @@ export type {
   FormValidatorRule,
   FormVariant
 } from './Form/types.js';
+export { default as Menu } from './Menu/Menu.svelte';
+export { default as MenuItem } from './Menu/MenuItem.svelte';
+export { default as MenuSubMenu } from './Menu/MenuSubMenu.svelte';
+export { default as MenuItemGroup } from './Menu/MenuItemGroup.svelte';
+export { default as MenuDivider } from './Menu/MenuDivider.svelte';
 export { default as Input } from './Input/Input.svelte';
+export { message } from './Message/message.js';
+export { default as MessageHost } from './Message/MessageHost.svelte';
 export { default as InputOTP } from './Input/InputOTP.svelte';
 export { default as InputPassword } from './Input/InputPassword.svelte';
 export { default as InputSearch } from './Input/InputSearch.svelte';
@@ -140,6 +151,7 @@ export type {
   RadioStyles,
   RadioValue
 } from './Radio/types.js';
+export type { SpinClassNames, SpinSemanticName, SpinSize, SpinStyles } from './Spin/types.js';
 export type {
   SwitchClassNames,
   SwitchSemanticName,
@@ -154,6 +166,26 @@ export type {
   ButtonSize,
   ButtonType
 } from './Button/types.js';
+export { MESSAGE_TYPES } from './Message/types.js';
+export type {
+  MessageApi,
+  MessageClassNames,
+  MessageConfig,
+  MessageConfigClassNames,
+  MessageConfigStyles,
+  MessageContainer,
+  MessageContent,
+  MessageHandle,
+  MessageIcon,
+  MessageLabels,
+  MessageListSemanticName,
+  MessageOptions,
+  MessageSemanticName,
+  MessageStack,
+  MessageStyles,
+  MessageType,
+  MessageTypedOptions
+} from './Message/types.js';
 export { TOOLTIP_PRESET_COLORS } from './Tooltip/types.js';
 export type {
   TooltipArrow,
@@ -165,3 +197,49 @@ export type {
   TooltipStyles,
   TooltipTrigger
 } from './Tooltip/types.js';
+export type {
+  MenuClassNames,
+  MenuClickInfo,
+  MenuContent,
+  MenuDividerProps,
+  MenuDividerType,
+  MenuExpandIconInfo,
+  MenuGroupType,
+  MenuItemEntry,
+  MenuItemGroupProps,
+  MenuItemProps,
+  MenuItemType,
+  MenuItems,
+  MenuMode,
+  MenuPopupInfo,
+  MenuProps,
+  MenuSelectInfo,
+  MenuSemanticName,
+  MenuStyles,
+  MenuSubMenuProps,
+  MenuSubMenuSemanticName,
+  MenuSubMenuType,
+  MenuTheme,
+  MenuTitleClickInfo,
+  MenuTooltipProps,
+  MenuTriggerAction
+} from './Menu/types.js';
+export { MODAL_KINDS, MODAL_PARTS } from './Modal/types.js';
+export type {
+  ModalApi,
+  ModalButtonProps,
+  ModalClassNames,
+  ModalClosable,
+  ModalContainer,
+  ModalFocusable,
+  ModalFooter,
+  ModalFooterContext,
+  ModalFuncOptions,
+  ModalHandle,
+  ModalKind,
+  ModalMask,
+  ModalPart,
+  ModalProps,
+  ModalStyles,
+  ModalText
+} from './Modal/types.js';

@@ -18,7 +18,7 @@ Ant Design.
 
 ## Status
 
-Version `0.8.0`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Form` (with `FormItem`), `Grid` (`Row`, `Col` and `Breakpoints`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Radio` (with `RadioButton` and `RadioGroup`), `Select` (with `SelectOption` and `SelectOptGroup`), `Switch`, `Tooltip`. More components are planned.
+Version `0.12.1`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Form` (with `FormItem`), `Grid` (`Row`, `Col` and `Breakpoints`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Menu` (with `MenuItem`, `MenuSubMenu`, `MenuItemGroup` and `MenuDivider`), `Radio` (with `RadioButton` and `RadioGroup`), `Select` (with `SelectOption` and `SelectOptGroup`), `Spin`, `Switch`, `Tooltip`, `Message` (the `message` calls and `MessageHost`), `Modal` (the `Modal` component, the `modal` calls and `ModalHost`). More components are planned.
 
 ## Browser support
 
@@ -62,19 +62,27 @@ See the [Button](https://prostreyd.github.io/ant-design-svelte/components/button
 [Form](https://prostreyd.github.io/ant-design-svelte/components/form/),
 [Grid](https://prostreyd.github.io/ant-design-svelte/components/grid/),
 [Input](https://prostreyd.github.io/ant-design-svelte/components/input/),
+[Menu](https://prostreyd.github.io/ant-design-svelte/components/menu/),
 [Radio](https://prostreyd.github.io/ant-design-svelte/components/radio/),
 [Select](https://prostreyd.github.io/ant-design-svelte/components/select/),
-[Switch](https://prostreyd.github.io/ant-design-svelte/components/switch/) and
-[Tooltip](https://prostreyd.github.io/ant-design-svelte/components/tooltip/) pages of the documentation site for
+[Spin](https://prostreyd.github.io/ant-design-svelte/components/spin/),
+[Switch](https://prostreyd.github.io/ant-design-svelte/components/switch/),
+[Tooltip](https://prostreyd.github.io/ant-design-svelte/components/tooltip/),
+[Message](https://prostreyd.github.io/ant-design-svelte/components/message/) and
+[Modal](https://prostreyd.github.io/ant-design-svelte/components/modal/) pages of the documentation site for
 examples and the API tables, or [`src/lib/Button/README.md`](./src/lib/Button/README.md),
 [`src/lib/Checkbox/README.md`](./src/lib/Checkbox/README.md),
 [`src/lib/Form/README.md`](./src/lib/Form/README.md),
 [`src/lib/Grid/README.md`](./src/lib/Grid/README.md),
 [`src/lib/Input/README.md`](./src/lib/Input/README.md),
+[`src/lib/Menu/README.md`](./src/lib/Menu/README.md),
 [`src/lib/Radio/README.md`](./src/lib/Radio/README.md),
 [`src/lib/Select/README.md`](./src/lib/Select/README.md),
-[`src/lib/Switch/README.md`](./src/lib/Switch/README.md) and
-[`src/lib/Tooltip/README.md`](./src/lib/Tooltip/README.md) in the repository.
+[`src/lib/Spin/README.md`](./src/lib/Spin/README.md),
+[`src/lib/Switch/README.md`](./src/lib/Switch/README.md),
+[`src/lib/Tooltip/README.md`](./src/lib/Tooltip/README.md),
+[`src/lib/Message/README.md`](./src/lib/Message/README.md) and
+[`src/lib/Modal/README.md`](./src/lib/Modal/README.md) in the repository.
 
 ### Colors and contrast
 
@@ -88,7 +96,7 @@ import 'svelte-ant-design/tokens.css';
 import 'svelte-ant-design/tokens-accessible.css';
 ```
 
-It darkens the fills, the link and text colors, the switch tracks, the checkbox border and the input border, placeholder and count; every text pair is then at least 4.5:1.
+It darkens the fills, the link and text colors, the switch tracks, the checkbox border and the input border, placeholder and count, the selected item, the group title and the danger item of the menu, the green and amber icons of the `Message` and of the static dialogs of the `Modal`, the description of a spin and the fullscreen mask of a spin; every text pair is then at least 4.5:1.
 The dark theme needs no extra file. The contrast tests run with the accessible file.
 
 ### Dark theme

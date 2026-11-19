@@ -36,8 +36,12 @@ export const componentPages: PageDef[] = [
   { path: '/components/form/', section: 'components', title: 'fm.title', description: 'seo.form' },
   { path: '/components/grid/', section: 'components', title: 'gr.title', description: 'seo.grid' },
   { path: '/components/input/', section: 'components', title: 'in.title', description: 'seo.input' },
+  { path: '/components/menu/', section: 'components', title: 'mn.title', description: 'seo.menu' },
+  { path: '/components/message/', section: 'components', title: 'msg.title', description: 'seo.message' },
+  { path: '/components/modal/', section: 'components', title: 'mod.title', description: 'seo.modal' },
   { path: '/components/radio/', section: 'components', title: 'rd.title', description: 'seo.radio' },
   { path: '/components/select/', section: 'components', title: 'sel.title', description: 'seo.select' },
+  { path: '/components/spin/', section: 'components', title: 'spn.title', description: 'seo.spin' },
   { path: '/components/switch/', section: 'components', title: 'sw.title', description: 'seo.switch' },
   { path: '/components/tooltip/', section: 'components', title: 'tt.title', description: 'seo.tooltip' }
 ];
@@ -78,7 +82,7 @@ export const componentGroups: ComponentGroup[] = [
   {
     title: 'g.nav',
     items: [
-      { name: 'Menu', note: 'n.menu', phase: 'later' },
+      { name: 'Menu', note: 'n.menu', phase: 'now', path: '/components/menu/' },
       { name: 'Dropdown', note: 'n.dropdown', phase: 'later' }
     ]
   },
@@ -104,9 +108,10 @@ export const componentGroups: ComponentGroup[] = [
   {
     title: 'g.feedback',
     items: [
-      { name: 'Modal', note: 'n.modal', phase: 'later' },
+      { name: 'Spin', note: 'n.spin', phase: 'now', path: '/components/spin/' },
+      { name: 'Modal', note: 'n.modal', phase: 'now', path: '/components/modal/' },
       { name: 'Drawer', note: 'n.drawer', phase: 'later' },
-      { name: 'Message', note: 'n.message', phase: 'later' },
+      { name: 'Message', note: 'n.message', phase: 'now', path: '/components/message/' },
       { name: 'Notification', note: 'n.notification', phase: 'later' }
     ]
   }

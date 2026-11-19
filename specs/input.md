@@ -532,3 +532,4 @@ Rule 6b of the rules for AI assistants: what this component uses besides its own
 |---|---|---|
 | Button | component | `InputSearch` draws the same button the user sees for `enterButton`, so it is the public `Button` (criterion 1: the user sees the same element and can set it with the same props). |
 | helpers | helper | `env`, `options`, `semantic` from `src/lib/internal/`. |
+| `internal/icons` | primitive | The clear disc, the eye, the search almond and the spinner are drawn by the shared `Icon` through the adapter `InputIcon` (since 2026-11-18, `specs/icons.md`); the class names (`ads-input-icon`) are unchanged. |

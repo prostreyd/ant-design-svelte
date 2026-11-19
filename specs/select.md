@@ -708,3 +708,4 @@ Rule 6b of the rules for AI assistants: what this component uses besides its own
 |---|---|---|
 | `internal/popup` | primitive | Places and shows the list panel: only the mechanism is needed, not a public component (criterion 2). |
 | helpers | helper | `clickable`, `env`, `options`, `semantic` from `src/lib/internal/`. |
+| `internal/icons` | primitive | The chevron, the search almond, the clear disc, the tick, the cross and the spinner are drawn by the shared `Icon` through the adapter `SelectIcon` (since 2026-11-18, `specs/icons.md`); the class names (`ads-select-icon`) are unchanged. |
