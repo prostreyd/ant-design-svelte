@@ -36,6 +36,7 @@
     Radio: ['value', 'options', 'optionType', 'buttonStyle', 'size', 'orientation', 'block', 'classNames'],
     Switch: ['checked', 'onchange', 'size', 'loading', 'disabled', 'classNames', 'styles'],
     Select: ['value', 'mode', 'options', 'showSearch', 'allowClear', 'maxTagCount', 'classNames'],
+    Form: ['name', 'rules', 'layout', 'labelCol', 'validateTrigger', 'hasFeedback', 'dependencies', 'scrollToFirstError'],
     Tooltip: ['title', 'placement', 'trigger', 'arrow', 'color', 'open', 'classNames']
   };
 </script>

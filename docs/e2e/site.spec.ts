@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { expect, test, type Page } from '@playwright/test';
 import { demos } from '../src/docs/data/button.ts';
 import { demos as checkboxDemos } from '../src/docs/data/checkbox.ts';
+import { demos as formDemos } from '../src/docs/data/form.ts';
 import { demos as gridDemos } from '../src/docs/data/grid.ts';
 import { demos as inputDemos } from '../src/docs/data/input.ts';
 import { demos as radioDemos } from '../src/docs/data/radio.ts';
@@ -51,7 +52,7 @@ async function accessibilityViolations(page: Page): Promise<Violation[]> {
         run: (context: Document | { exclude: string[][] }, options?: object) => Promise<AxeResult>;
       };
     }).axe;
-    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-radio', '.ads-radio-button', '.ads-radio-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-popup'];
+    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-radio', '.ads-radio-button', '.ads-radio-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-popup', '.ads-form'];
     const everything = await axe.run(document, { rules: { 'color-contrast': { enabled: false } } });
     const contrast = await axe.run(
       { exclude: library.map((selector) => [selector]) },
@@ -280,8 +281,8 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Grid', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip'];
-    const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Modal', 'Drawer', 'Message', 'Notification'];
+    const READY = ['Button', 'Grid', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Form', 'Tooltip'];
+    const PLANNED = ['Typography', 'Icon', 'Menu', 'Dropdown', 'DatePicker', 'Table', 'Modal', 'Drawer', 'Message', 'Notification'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
       await open(page, 'components/');
@@ -417,15 +418,17 @@ test.describe('home page', () => {
     await expect(now).toContainText('Radio');
     await expect(now).toContainText('Switch');
     await expect(now).toContainText('Select');
+    await expect(now).toContainText('Form');
     await expect(now).toContainText('Tooltip');
-    // The ready components follow the order of the sidebar: Button, Grid, Input, Checkbox, Radio, Switch, Select, Tooltip.
+    // The ready components follow the order of the sidebar: Button, Grid, Input, Checkbox, Radio, Switch, Select, Form, Tooltip.
     await expect(now.locator('.chips').nth(1)).toContainText('gutter');
     await expect(now.locator('.chips').nth(2)).toContainText('variant');
     await expect(now.locator('.chips').nth(3)).toContainText('classNames');
     await expect(now.locator('.chips').nth(4)).toContainText('orientation');
     await expect(now.locator('.chips').nth(5)).toContainText('classNames');
     await expect(now.locator('.chips').nth(6)).toContainText('showSearch');
-    await expect(now.locator('.chips').nth(7)).toContainText('placement');
+    await expect(now.locator('.chips').nth(7)).toContainText('dependencies');
+    await expect(now.locator('.chips').nth(8)).toContainText('placement');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -1702,5 +1705,235 @@ test.describe('installation tabs', () => {
     await expect(page.getByRole('tab', { name: 'bun' })).toBeFocused();
     await page.keyboard.press('ArrowRight');
     await expect(npm).toBeFocused();
+  });
+});
+
+test.describe('Form page', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await open(page, 'components/form/');
+  });
+
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+  /** The live example, without the collapsed source code and the live region of the copy button. */
+  const liveOf = (page: Page, title: string) => demoOf(page, title).locator('.demo-pre');
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    test.slow();
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(formDemos.length);
+    for (let i = 0; i < formDemos.length; i++) {
+      const demo = examples.nth(i);
+      await expect(demo.locator('.demo-pre .ads-form').first()).toBeAttached();
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/form/${String(i + 1).padStart(2, '0')}-${formDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('the form stands in a column of its own: the demo container does not lay its items out in a row', async ({ page }) => {
+    const form = liveOf(page, 'Basic form').locator('.ads-form');
+    expect(await form.evaluate((element) => getComputedStyle(element).display)).toBe('block');
+    const labels = await form.locator('label').evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().top));
+    expect(labels[1]).toBeGreaterThan(labels[0] + 20);
+  });
+
+  test('every example takes a whole row, with its form on a sheet that has room on both sides', async ({ page }) => {
+    const demos = page.locator('section.demo');
+    const count = await demos.count();
+    expect(count).toBe(formDemos.length);
+    for (let i = 0; i < count; i++) {
+      const demo = demos.nth(i);
+      await expect(demo, `example ${i + 1} is not wide`).toHaveClass(/\bwide\b/);
+      const preview = demo.locator('.demo-pre');
+      const sheet = preview.locator('.sheet');
+      await expect(sheet).toHaveCount(1);
+      await expect(sheet.locator('.ads-form')).toHaveCount(1);
+      await expect(sheet).toHaveCSS('border-top-left-radius', '12px');
+      const [outer, inner] = await Promise.all([preview.boundingBox(), sheet.boundingBox()]);
+      expect(inner!.x, `example ${i + 1}: no room on the left`).toBeGreaterThan(outer!.x + 15);
+      expect(inner!.x + inner!.width, `example ${i + 1}: no room on the right`).toBeLessThan(outer!.x + outer!.width - 15);
+    }
+  });
+
+  test('a result is shown only after something has happened: nothing stands under the form before the first submit', async ({ page }) => {
+    const demo = liveOf(page, 'Basic form');
+    await expect(demo.getByRole('status')).toHaveCount(0);
+    await demo.getByRole('button', { name: 'Submit' }).click();
+    await expect(demo.getByRole('status')).toContainText('Failed: the form has errors.');
+  });
+
+  test('basic: an empty submit shows both messages and focuses the first invalid field; a good submit reports the values', async ({ page }) => {
+    const demo = liveOf(page, 'Basic form');
+    await demo.getByRole('button', { name: 'Submit' }).click();
+    await expect(demo.getByText('Please input your username!')).toBeVisible();
+    await expect(demo.getByText('Please input your password!')).toBeVisible();
+    await expect(demo.getByRole('textbox', { name: 'Username', exact: true })).toBeFocused();
+    await expect(demo.getByRole('status')).toHaveText('Failed: the form has errors.');
+    await demo.getByRole('textbox', { name: 'Username', exact: true }).fill('ann');
+    await demo.locator('#basic_password').fill('secret');
+    await demo.getByRole('button', { name: 'Submit' }).click();
+    await expect(demo.getByRole('status')).toHaveText('Success: {"username":"ann","password":"secret","remember":true}');
+  });
+
+  test('dependencies: the confirmation is checked again when the first password changes', async ({ page }) => {
+    const demo = liveOf(page, 'Dependencies');
+    const password = demo.locator('#register_password');
+    const confirm = demo.locator('#register_confirm');
+    await password.fill('secret');
+    await confirm.fill('different');
+    await expect(demo.getByText('The two passwords do not match!')).toBeVisible();
+    await password.fill('different');
+    await expect(demo.getByText('The two passwords do not match!')).toHaveCount(0);
+  });
+
+  test('instance: the buttons set, validate and reset the form, and the output follows', async ({ page }) => {
+    const demo = liveOf(page, 'The form instance');
+    await demo.getByRole('button', { name: 'Fill' }).click();
+    await expect(demo.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('Ann');
+    await demo.getByRole('button', { name: 'Reset' }).click();
+    await expect(demo.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('');
+    await demo.getByRole('button', { name: 'Validate' }).click();
+    await expect(demo.getByRole('status')).toHaveText('validateFields rejected: name');
+    // the message under the field (the JSON below the buttons shows the same text)
+    await expect(demo.locator('.ads-form-item-help-item')).toHaveText('Please input a name');
+    await demo.getByRole('button', { name: 'Clear messages' }).click();
+    await expect(demo.locator('.ads-form-item-help-item')).toHaveCount(0);
+  });
+
+  test('dynamic: a field is added and the last one removed', async ({ page }) => {
+    const demo = liveOf(page, 'Dynamic fields');
+    await expect(demo.getByRole('textbox')).toHaveCount(2);
+    await demo.getByRole('button', { name: 'Add a field' }).click();
+    await expect(demo.getByRole('textbox')).toHaveCount(3);
+    await demo.getByRole('textbox').nth(2).fill('Bo');
+    await expect(demo.locator('pre')).toContainText('"Bo"');
+    await demo.getByRole('button', { name: 'Remove the last' }).click();
+    await expect(demo.getByRole('textbox')).toHaveCount(2);
+    await expect(demo.locator('pre')).not.toContainText('"Bo"');
+  });
+
+  test('layout: the choice changes the form of its own example only', async ({ page }) => {
+    const demo = liveOf(page, 'Layout');
+    const form = demo.locator('.ads-form');
+    await expect(form).toHaveClass(/ads-form-horizontal/);
+    await demo.locator('label', { hasText: 'vertical' }).click();
+    await expect(form).toHaveClass(/ads-form-vertical/);
+    await demo.locator('label', { hasText: 'inline' }).click();
+    await expect(form).toHaveClass(/ads-form-inline/);
+    await expect(liveOf(page, 'Basic form').locator('.ads-form')).toHaveClass(/ads-form-horizontal/);
+  });
+
+  test('every example keeps its own state: a click in one example changes no other', async ({ page }) => {
+    const snapshot = () =>
+      page.locator('section.demo').evaluateAll((demos) =>
+        demos.map((demo) =>
+          [...demo.querySelectorAll('input[type="radio"]:checked, input[type="checkbox"]:checked, [role="switch"][aria-checked="true"]')].map(
+            (element) => element.getAttribute('aria-label') ?? element.closest('label')?.textContent?.trim() ?? ''
+          )
+        )
+      );
+    const before = await snapshot();
+    for (const [title, option] of [['Layout', 'vertical'], ['Required mark', 'false'], ['Validate trigger and debounce', 'blur'], ['Disabled, size and variant', 'large'], ['Submit and the first error', 'false']] as const) {
+      await liveOf(page, title).locator('label', { hasText: option }).first().click();
+    }
+    const after = await snapshot();
+    const changed = after.map((state, i) => JSON.stringify(state) !== JSON.stringify(before[i]));
+    const expected = formDemos.map((demo) => ['layout', 'required-mark', 'validate-trigger', 'size-variant', 'submit'].includes(demo.slug));
+    expect(changed).toEqual(expected);
+  });
+
+  test('required mark: the choice shows, hides and rewrites the marks of its example', async ({ page }) => {
+    const demo = liveOf(page, 'Required mark');
+    await expect(demo.locator('.ads-form-item-mark')).toHaveCount(1);
+    await demo.locator('label', { hasText: 'false' }).first().click();
+    await expect(demo.locator('.ads-form-item-mark')).toHaveCount(0);
+    await demo.locator('label', { hasText: "'optional'" }).click();
+    await expect(demo.getByText('(optional)')).toHaveCount(2);
+    await demo.locator('label', { hasText: 'snippet' }).click();
+    await expect(demo.getByText('Name (must)')).toBeVisible();
+  });
+
+  test('feedback: the choice changes the icon of the last item', async ({ page }) => {
+    const demo = liveOf(page, 'Status icon');
+    await demo.locator('label', { hasText: 'error' }).first().click();
+    await expect(demo.locator('.ads-form-item').nth(2).locator('.ads-form-feedback-error')).toBeVisible();
+  });
+
+  test('submit: the default focuses the first invalid field, true only scrolls, false moves nothing', async ({ page }) => {
+    const demo = liveOf(page, 'Submit and the first error');
+    await demo.getByRole('button', { name: 'Submit' }).click();
+    await expect(demo.getByRole('status')).toHaveText(/Focus is on: submit_field3/);
+    await demo.locator('label', { hasText: 'false' }).first().click();
+    await demo.getByRole('button', { name: 'Submit' }).click();
+    await expect(demo.getByRole('status')).toHaveText('Focus did not move.');
+  });
+
+  test('the top of the page says how a type is passed and that the values can live in your own model, with links to the examples', async ({ page }) => {
+    const section = page.locator('h2#values');
+    await expect(section).toHaveText('Typed values and your own model');
+    const blocks = page.locator('h2#values ~ .codebox');
+    await expect(blocks.nth(0)).toContainText('createForm<Signup>()');
+    await expect(blocks.nth(1)).toContainText('model={values}');
+    await expect(blocks.nth(1)).toContainText('as in Vue');
+    // the section comes before the examples, and its links lead to the two examples
+    expect(await page.evaluate(() => document.querySelector('#values')!.compareDocumentPosition(document.querySelector('#examples')!) & Node.DOCUMENT_POSITION_FOLLOWING)).toBeTruthy();
+    for (const [id, title] of [['typed', 'A typed form'], ['model', 'Your own model']]) {
+      const link = page.locator(`a[href="#demo-${id}"]`).filter({ hasText: title });
+      await expect(link).toBeVisible();
+      await link.click();
+      await expect(page.locator(`h3#demo-${id}`)).toBeInViewport();
+    }
+  });
+
+  test('the section about types and the model is translated, with its code', async ({ page }) => {
+    for (const [path, heading] of [['ru/components/form/', 'Типы значений и своя модель'], ['zh/components/form/', '值的类型与自有模型']]) {
+      await open(page, path);
+      await expect(page.locator('h2#values')).toHaveText(heading);
+      await expect(page.locator('h2#values ~ .codebox').first()).toContainText('createForm<Signup>()');
+    }
+  });
+
+  test('typed: the callbacks get the typed values, and a change from code is not a change by the user', async ({ page }) => {
+    const demo = liveOf(page, 'A typed form');
+    await demo.getByRole('button', { name: 'Submit' }).click();
+    await expect(demo.getByText('Please input a username')).toBeVisible();
+    await demo.getByRole('textbox', { name: 'Username', exact: true }).fill('ann');
+    await expect(demo.getByText('Please input a username')).toHaveCount(0);
+    await demo.getByRole('button', { name: 'Submit' }).click();
+    await expect(demo.getByRole('status')).toHaveText('Welcome, ANN');
+    await demo.getByRole('button', { name: 'Subscribe from code' }).click();
+    await expect(demo.getByRole('switch')).toBeChecked();
+    await expect(demo.getByText('true', { exact: true })).toBeVisible();
+    // the value came from code, so onvalueschange has not heard of it: only the typing above did
+    await expect(demo.getByText(/^username changed; newsletter is false$/)).toBeVisible();
+    await demo.getByRole('switch').click();
+    await expect(demo.getByText('newsletter changed; newsletter is false')).toBeVisible();
+  });
+
+  test('model: a bound control and an assignment in code are changes by the user, the instance methods are not', async ({ page }) => {
+    const demo = liveOf(page, 'Your own model');
+    const name = demo.getByRole('textbox', { name: 'Username', exact: true });
+    await name.fill('a');
+    await expect(demo.getByText('At least 3 characters')).toBeVisible();
+    await expect(demo.locator('pre')).toContainText('"username": "a"');
+    await name.fill('');
+    await expect(demo.getByText('Please input a username')).toBeVisible();
+    await demo.getByRole('button', { name: "values.username = 'ab'" }).click();
+    await expect(name).toHaveValue('ab');
+    await expect(demo.locator('pre')).toContainText('"username": "ab"');
+    await expect(demo.getByText('At least 3 characters')).toBeVisible();
+    await demo.getByRole('button', { name: "setFieldValue('username', 'ann')" }).click();
+    await expect(name).toHaveValue('ann');
+    await expect(demo.locator('.ads-form-item-help-item')).toHaveCount(0);
+    await demo.getByRole('textbox', { name: 'Email', exact: true }).fill('nope');
+    await expect(demo.getByText('Not an email address')).toBeVisible();
+    await demo.getByRole('button', { name: 'resetFields()' }).click();
+    await expect(name).toHaveValue('');
+    await expect(demo.locator('.ads-form-item-help-item')).toHaveCount(0);
+    await name.fill('ann');
+    await demo.getByRole('button', { name: 'Submit' }).click();
+    await expect(demo.getByRole('status')).toHaveText('Success: {"username":"ann","email":"","subscribe":false}');
   });
 });
