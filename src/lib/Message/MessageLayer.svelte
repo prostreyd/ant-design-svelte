@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
   import { classList, styleText } from '../internal/semantic.js';
-  import { playFlip, readTops } from '../internal/anim/motion.js';
+  import { createPile } from '../internal/pile/pile.svelte.js';
   import { portal, resolveContainer } from '../internal/portal/portal.svelte.js';
   import MessageItem from './MessageItem.svelte';
   import { getSnapshot, setPaused, subscribe } from './store.js';
@@ -31,66 +30,16 @@
   const collapsed = $derived(stacked && openCount > settings.stack.threshold);
   const rows = $derived(stacked ? [...records].reverse() : records);
 
-  let hovered = $state(false);
-  let focused = $state(false);
-  // The pile opens while the pointer or the focus is in it.
-  const piled = $derived(collapsed && !hovered && !focused);
-
-  // While a pile is open every timer in it stands still (focus always; the pointer unless a message opted out).
-  $effect(() => {
-    const open = collapsed && (hovered || focused);
-    const list = records;
-    const byFocus = focused;
-    for (const record of list) setPaused(record.id, 'pile', open && (byFocus || record.pauseOnHover));
-    return () => {
-      for (const record of list) setPaused(record.id, 'pile', false);
-    };
-  });
-
-  let content = $state<HTMLElement | null>(null);
-
-  // The list goes away with its last message, and an element that is removed sends no `pointerleave` and no `focusout`.
-  // What the pointer and the focus did to the list is forgotten with it; otherwise a `MessageHost`, which stays mounted,
-  // would open the next pile already held open by a pointer that is no longer there.
-  $effect(() => {
-    if (content === null) {
-      hovered = false;
-      focused = false;
-    }
-  });
-
-  // The rows of a pile that opens or closes change place at once; they slide from where they were (FLIP). The first
-  // effect runs before the page changes and reads the places, the second after it and moves the rows back.
-  let shown = false;
-  let first: Map<string, number> | null = null;
-  $effect.pre(() => {
-    const next = piled;
-    void rows;
-    if (next !== shown && content) first = readTops(content);
-  });
-  $effect(() => {
-    const next = piled;
-    void rows;
-    untrack(() => {
-      if (next !== shown && content && first) playFlip(content, first);
-      first = null;
-      shown = next;
-    });
-  });
+  // The pile (specs/overlay.md, `pile/`): the pointer or the focus opens it, the timers wait while it is open, the rows
+  // slide when it opens or closes. The look of it is the CSS below and in `MessageItem.svelte`.
+  const pile = createPile({ collapsed: () => collapsed, records: () => records, rows: () => rows, setPaused });
+  const piled = $derived(pile.piled);
 
   const top = $derived(typeof settings.top === 'number' ? `${settings.top}px` : settings.top);
 
   // The layer lives in the container (the body by default), not where the host sits in the tree: a parent with a
   // transform or a filter would otherwise be the box that `position: fixed` is measured against (`internal/portal`).
   const target = () => resolveContainer(settings.container);
-
-  const pointer = (on: boolean) => (event: PointerEvent) => {
-    if (event.pointerType !== 'touch') hovered = on;
-  };
-
-  function onfocusout(event: FocusEvent): void {
-    if (!content?.contains(event.relatedTarget as Node | null)) focused = false;
-  }
 </script>
 
 {#if active && rows.length > 0}
@@ -100,7 +49,6 @@
     data-ads-overlay-keep=""
     {@attach portal(target)}
   >
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class={classList(
         'ads-message-list-content',
@@ -109,11 +57,7 @@
         settings.classNames.listContent
       )}
       style={styleText(settings.styles.listContent)}
-      bind:this={content}
-      onpointerenter={pointer(true)}
-      onpointerleave={pointer(false)}
-      onfocusin={() => (focused = true)}
-      {onfocusout}
+      {@attach pile.attach}
     >
       {#each rows as record, index (record.id)}
         <MessageItem {record} {index} {settings} {piled} {stacked} />

@@ -2,6 +2,7 @@
   import { onMount, untrack } from 'svelte';
   import { classList, styleText } from '../internal/semantic.js';
   import { playEnter, playLeave } from '../internal/anim/motion.js';
+  import { inertWhen } from '../internal/pile/pile.svelte.js';
   import MessageIcon from './MessageIcon.svelte';
   import { closeById, finalize, setPaused, type MessageRecord, type MessageSettings } from './store.js';
 
@@ -66,11 +67,8 @@
     if (item && !item.contains(document.activeElement)) setPaused(id, 'focus', false);
   });
 
-  // The attribute, not the property: a browser without `inert` ignores a property it does not know. There only the
-  // close button is kept out of the Tab order (its `tabindex`); links and buttons that a snippet put inside stay in it.
-  function inert(node: HTMLElement): void {
-    node.toggleAttribute('inert', buried);
-  }
+  // `inert` is the attribute (`internal/pile`): a browser without it keeps only the close button out of the Tab order (its
+  // `tabindex`); links and buttons that a snippet put inside stay in it.
 
   const hover = (on: boolean) => (event: PointerEvent) => {
     if (event.pointerType === 'touch') return;
@@ -103,7 +101,7 @@
   <div
     class="ads-message-item"
     class:ads-message-leaving={record.state === 'closing'}
-    {@attach inert}
+    {@attach inertWhen(() => buried)}
     aria-hidden={buried ? 'true' : undefined}
     bind:this={item}
     onpointerenter={hover(true)}

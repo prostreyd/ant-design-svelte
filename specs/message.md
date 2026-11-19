@@ -367,6 +367,10 @@ built, so the analysis is done after the fact, against `origin/main` at `1e1ee4f
   What stays in `store.ts`: the fields of a message record, its settings and their defaults (`resolveSettings`), the validation warnings, and
   the thenable handle. The exported functions of `store.ts` keep their names and signatures; `onclose` of a message still takes no argument (the
   reason is in the core and can be passed on later, additively). Behavior unchanged: the tests of Message are not edited.
+- **Primitive `pile`** (`src/lib/internal/pile/pile.svelte.ts`, since 2026-11-19, `specs/overlay.md`, PL1 to PL7). What `MessageLayer.svelte` did for a
+  collapsed pile (the pointer or the focus opens it, the timers wait while it is open, the rows slide, the pointer and the focus are forgotten with the
+  list) is `createPile`, one call for the list; `inertWhen` is the `inert` of a buried row. What stays in Message: the CSS of the pile (the offsets, the
+  scale steps and `data-depth` of `MessageItem.svelte`), the threshold and `stack`. Behavior unchanged: the tests of Message are not edited.
 - **Shared without copies:** `internal/semantic.ts` (`classList`, `styleText`), `internal/options.ts` (`resolveOption`),
   `internal/env.ts` (`isProduction`), and the tokens `--ads-motion-*`, `--ads-radius-*`, `--ads-font-*` and the focus ring.
 - **Decision (motion): was A** (2026-11-17, `motion.ts` stays in `Message/` until the second consumer), **now B**: the maintainer
