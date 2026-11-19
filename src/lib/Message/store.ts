@@ -10,6 +10,7 @@
  * page is rendered would leak into the next. Every call on the server is a no-op that returns an inert handle.
  */
 import { isProduction } from '../internal/env.js';
+import { createPausableTimer, type PausableTimer } from '../internal/timer/pausableTimer.js';
 import type {
   MessageConfig,
   MessageConfigClassNames,
@@ -85,12 +86,9 @@ export interface Snapshot {
 interface Entry {
   record: MessageRecord;
   onclose: (() => void) | undefined;
-  durationMs: number;
-  remaining: number;
-  startedAt: number;
-  timer: ReturnType<typeof setTimeout> | undefined;
+  /** Closes the message when its duration is up; it stands still for the reasons in `PauseReason`. */
+  timer: PausableTimer<PauseReason>;
   exitTimer: ReturnType<typeof setTimeout> | undefined;
-  paused: Set<PauseReason>;
   closed: Promise<void>;
   resolveClosed: () => void;
 }
@@ -185,40 +183,13 @@ export function subscribe(listener: () => void): () => void {
 
 // ---- timers ----------------------------------------------------------------------------------------------------------
 
-function clearTimer(entry: Entry): void {
-  if (entry.timer !== undefined) clearTimeout(entry.timer);
-  entry.timer = undefined;
-}
-
-function arm(entry: Entry): void {
-  clearTimer(entry);
-  if (entry.durationMs === 0 || entry.paused.size > 0 || entry.record.state !== 'open') return;
-  entry.startedAt = Date.now();
-  entry.timer = setTimeout(() => closeEntry(entry), entry.remaining);
-}
-
-function setReason(entry: Entry, reason: PauseReason, on: boolean): void {
-  const was = entry.paused.size > 0;
-  if (on) entry.paused.add(reason);
-  else entry.paused.delete(reason);
-  const now = entry.paused.size > 0;
-  if (!was && now && entry.timer !== undefined) {
-    // Remember how much of the time is left: the timer resumes with it, it does not start again.
-    entry.remaining = Math.max(0, entry.remaining - (Date.now() - entry.startedAt));
-    clearTimer(entry);
-  } else if (was && !now) {
-    arm(entry);
-  }
-}
-
 /** Holds or releases the timer of a message for a reason (the pointer is over it, focus is in it, ...). */
 export function setPaused(id: number, reason: PauseReason, on: boolean): void {
-  const entry = entries.find((candidate) => candidate.record.id === id);
-  if (entry) setReason(entry, reason, on);
+  entries.find((candidate) => candidate.record.id === id)?.timer.setPaused(reason, on);
 }
 
 function onVisibility(): void {
-  for (const entry of entries) setReason(entry, 'hidden', document.hidden);
+  for (const entry of entries) entry.timer.setPaused('hidden', document.hidden);
 }
 
 function watchVisibility(on: boolean): void {
@@ -232,7 +203,7 @@ function watchVisibility(on: boolean): void {
 
 function closeEntry(entry: Entry): void {
   if (entry.record.state !== 'open') return;
-  clearTimer(entry);
+  entry.timer.cancel();
   entry.record = { ...entry.record, state: 'closing' };
   // Nothing may keep a closing message on the page for good: if no host reports the end of its exit, this does.
   entry.exitTimer = setTimeout(() => finalize(entry.record.id), EXIT_FALLBACK);
@@ -322,9 +293,7 @@ export function openMessage(options: MessageOptions, type: MessageType): Message
   if (existing) {
     existing.record = record;
     existing.onclose = options.onclose;
-    existing.durationMs = duration * 1000;
-    existing.remaining = existing.durationMs;
-    arm(existing);
+    existing.timer.restart(duration * 1000);
     notify();
     return handleFor(existing);
   }
@@ -333,21 +302,17 @@ export function openMessage(options: MessageOptions, type: MessageType): Message
   const entry: Entry = {
     record,
     onclose: options.onclose,
-    durationMs: duration * 1000,
-    remaining: duration * 1000,
-    startedAt: 0,
-    timer: undefined,
+    timer: createPausableTimer<PauseReason>(duration * 1000, () => closeEntry(entry)),
     exitTimer: undefined,
-    paused: new Set(),
     closed: new Promise<void>((resolve) => {
       resolveClosed = resolve;
     }),
     resolveClosed: () => resolveClosed()
   };
-  if (document.hidden) entry.paused.add('hidden');
+  if (document.hidden) entry.timer.setPaused('hidden', true);
   entries = [...entries, entry];
   watchVisibility(true);
-  arm(entry);
+  entry.timer.start();
   enforceMaxCount();
   notify();
   return handleFor(entry);
@@ -407,7 +372,7 @@ export function registerHost(settings: MessageConfig): HostRegistration {
 /** Forgets everything: the messages, the timers, the settings and the hosts. For tests. */
 export function resetMessages(): void {
   for (const entry of entries) {
-    clearTimer(entry);
+    entry.timer.cancel();
     clearTimeout(entry.exitTimer);
   }
   entries = [];
