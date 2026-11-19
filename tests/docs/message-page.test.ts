@@ -13,7 +13,11 @@ import { MESSAGE_TYPES } from '../../src/lib/Message/types';
 const read = (path: string) => readFileSync(join(import.meta.dirname, '..', '..', path), 'utf8');
 const typesSource = read('src/lib/Message/types.ts');
 const tokensCss = read('src/lib/tokens.css');
-const sources = ['MessageItem.svelte', 'MessageLayer.svelte', 'MessageIcon.svelte', 'motion.ts'].map((file) => read(`src/lib/Message/${file}`)).join('\n');
+const sources = [
+  ...['MessageItem.svelte', 'MessageLayer.svelte', 'MessageIcon.svelte'].map((file) => read(`src/lib/Message/${file}`)),
+  // The motion of a message moved to the shared parts (specs/overlay.md, A2).
+  read('src/lib/internal/anim/motion.ts')
+].join('\n');
 
 /** The property names of an interface of types.ts. */
 function members(name: string): string[] {

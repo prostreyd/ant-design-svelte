@@ -1,8 +1,9 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { classList, styleText } from '../internal/semantic.js';
+  import { playFlip, readTops } from '../internal/anim/motion.js';
+  import { portal, resolveContainer } from '../internal/portal/portal.svelte.js';
   import MessageItem from './MessageItem.svelte';
-  import { playFlip, readTops } from './motion.js';
   import { getSnapshot, setPaused, subscribe } from './store.js';
 
   /**
@@ -70,14 +71,8 @@
   const top = $derived(typeof settings.top === 'number' ? `${settings.top}px` : settings.top);
 
   // The layer lives in the container (the body by default), not where the host sits in the tree: a parent with a
-  // transform or a filter would otherwise be the box that `position: fixed` is measured against.
-  function place(node: HTMLElement): () => void {
-    const container = settings.container;
-    const target = (typeof container === 'function' ? container() : container) ?? document.body;
-    if (node.parentElement !== target) target.appendChild(node);
-    // Svelte removes only the nodes it knows about, and this one has been moved out of them.
-    return () => node.remove();
-  }
+  // transform or a filter would otherwise be the box that `position: fixed` is measured against (`internal/portal`).
+  const target = () => resolveContainer(settings.container);
 
   const pointer = (on: boolean) => (event: PointerEvent) => {
     if (event.pointerType !== 'touch') hovered = on;
@@ -93,7 +88,7 @@
     class={classList('ads-message-list', settings.classNames.list)}
     style={styleText(top !== undefined && `top: ${top}`, settings.styles.list)}
     data-ads-overlay-keep=""
-    {@attach place}
+    {@attach portal(target)}
   >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div

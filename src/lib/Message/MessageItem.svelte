@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { classList, styleText } from '../internal/semantic.js';
+  import { playEnter, playLeave } from '../internal/anim/motion.js';
   import MessageIcon from './MessageIcon.svelte';
-  import { playEnter, playLeave } from './motion.js';
   import { closeById, finalize, setPaused, type MessageRecord, type MessageSettings } from './store.js';
 
   /** One message: the slot it takes in the list, and the box inside it. */
@@ -16,6 +16,9 @@
     /** `stack` is on, so a new message pushes the others down. */
     stacked: boolean;
   };
+
+  // The distance a message slides is the token of the Message, not a value of the shared motion.
+  const MOTION = { offsetToken: '--ads-message-motion-offset' };
 
   let { record, index, settings, piled, stacked }: ItemProps = $props();
 
@@ -41,7 +44,7 @@
   // handing over to a `MessageHost`) has no motion of its own.
   onMount(() => {
     // `shift`: the first row of a stacked list pushes the ones behind it down, so its slot grows instead of jumping.
-    if (slot && item && Date.now() - record.createdAt < 150) playEnter(slot, item, stacked && index === 0 && slot.nextElementSibling !== null);
+    if (slot && item && Date.now() - record.createdAt < 150) playEnter(slot, item, stacked && index === 0 && slot.nextElementSibling !== null, MOTION);
   });
 
   let leaving = false;
@@ -51,7 +54,7 @@
     const id = record.id;
     const [s, i] = [slot, item];
     untrack(() => {
-      void playLeave(s, i).then(() => finalize(id));
+      void playLeave(s, i, MOTION).then(() => finalize(id));
     });
   });
 

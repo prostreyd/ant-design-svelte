@@ -1,9 +1,10 @@
 /**
- * The motion of a message: it comes in from above and fades, and leaves the same way while the ones below move up.
+ * The motion of a row in a list of layers (a message): it comes in from above and fades, and leaves the same way while the
+ * ones below move up (specs/overlay.md, A2). It was `Message/motion.ts` and moved here so that Notification can use it too.
  *
  * Written with the Web Animations API, not with CSS animations, because the height that the neighbours slide over is
  * only known once the box exists: it is measured and animated from there. A user who prefers reduced motion, and an
- * environment without `Element.animate` (a test in jsdom), gets none of it: the message appears and goes at once.
+ * environment without `Element.animate` (a test in jsdom), gets none of it: the row appears and goes at once.
  */
 
 const FALLBACK_DURATION = 200;
@@ -26,8 +27,13 @@ function durationOf(element: Element): number {
   return raw.endsWith('ms') ? value : value * 1000;
 }
 
-function offsetOf(element: Element): number {
-  const value = parseFloat(token(element, '--ads-message-motion-offset'));
+/** How far the box slides, from the custom property `offsetToken` of the component that plays the motion. */
+export interface MotionOptions {
+  offsetToken?: string;
+}
+
+function offsetOf(element: Element, offsetToken: string | undefined): number {
+  const value = offsetToken ? parseFloat(token(element, offsetToken)) : NaN;
   return Number.isFinite(value) ? value : FALLBACK_OFFSET;
 }
 
@@ -44,12 +50,12 @@ function timing(element: Element, extra: KeyframeAnimationOptions = {}): Keyfram
 }
 
 /**
- * A new message: its box fades in from above. With `shift` (a pile or a newest-on-top list, where the others are pushed
+ * A new row: its box fades in from above. With `shift` (a pile or a newest-on-top list, where the others are pushed
  * down) its slot also grows from nothing, so that the others slide instead of jumping.
  */
-export function playEnter(slot: HTMLElement, item: HTMLElement, shift: boolean): void {
+export function playEnter(slot: HTMLElement, item: HTMLElement, shift: boolean, options: MotionOptions = {}): void {
   if (!motionAllowed()) return;
-  const offset = offsetOf(item);
+  const offset = offsetOf(item, options.offsetToken);
   item.animate(
     [
       { opacity: 0, transform: `translateY(-${offset}px)` },
@@ -69,10 +75,10 @@ export function playEnter(slot: HTMLElement, item: HTMLElement, shift: boolean):
   }
 }
 
-/** A closing message: the box fades up and the slot shrinks, so the ones below slide into its place. */
-export function playLeave(slot: HTMLElement, item: HTMLElement): Promise<void> {
+/** A closing row: the box fades up and the slot shrinks, so the ones below slide into its place. */
+export function playLeave(slot: HTMLElement, item: HTMLElement, options: MotionOptions = {}): Promise<void> {
   if (!motionAllowed()) return Promise.resolve();
-  const offset = offsetOf(item);
+  const offset = offsetOf(item, options.offsetToken);
   const { height, padding } = measure(slot);
   const fill = { fill: 'forwards' } as const;
   const fade = item.animate(
@@ -89,14 +95,14 @@ export function playLeave(slot: HTMLElement, item: HTMLElement): Promise<void> {
     ],
     timing(slot, fill)
   );
-  // A cancelled animation rejects; the message has to go either way.
+  // A cancelled animation rejects; the row has to go either way.
   return Promise.all([fade.finished, shrink.finished]).then(
     () => undefined,
     () => undefined
   );
 }
 
-/** The top of each slot of a list, by message id: the "first" of a FLIP. */
+/** The top of each slot of a list, by `data-message-id`: the "first" of a FLIP. */
 export function readTops(list: HTMLElement): Map<string, number> {
   const tops = new Map<string, number>();
   for (const slot of list.querySelectorAll<HTMLElement>('[data-message-id]')) {
