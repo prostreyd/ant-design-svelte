@@ -34,7 +34,9 @@ Firefox 89 and in Safari), `color-scheme` (before Firefox 96) and `overscroll-be
 npm install svelte-ant-design
 ```
 
-Requires `svelte` `^5.0.0` as a peer dependency.
+Requires `svelte` `^5.0.0` as a peer dependency. The package has one runtime dependency,
+[`@rc-component/async-validator`](https://www.npmjs.com/package/@rc-component/async-validator) (MIT), which checks the
+rules of `Form`; the rest of the library is an original implementation.
 
 ## Usage
 
