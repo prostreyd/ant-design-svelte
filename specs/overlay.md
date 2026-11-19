@@ -6,9 +6,12 @@ Status: **decisions taken 2026-11-17, implementation in `feat/overlay-primitives
 (`Message/motion.ts`) was left out of that branch: Message was released and in `main`, and the maintainer decided (2026-11-18)
 to move it to `internal/anim/` in a branch of its own just before Notification, the second user. That branch is
 `refactor/anim-motion`: it moves the motion (A2), takes the timer that waits and the layer made for a global call out of Message
-and Modal (T, L), and changes nothing a user can see. Notification, Drawer and the next components import these parts.
+and Modal (T, L), and changes nothing a user can see. Notification, Drawer and the next components import these parts. **Extended again 2026-11-19 in `refactor/list-core`** (standing on
+`refactor/anim-motion`): the core of the global list of `Message/store.ts` becomes the sixth block, `list/`, so that Notification does
+not copy it (D7 of `specs/notification.md`, answered 2026-11-19). The branch changes nothing a user can see; the unchanged tests of
+Message are the proof.
 
-Five internal blocks under `src/lib/internal/`. They are not components, not exported from the package and have no page
+Six internal blocks under `src/lib/internal/`. They are not components, not exported from the package and have no page
 on the documentation site; each component built on them documents its own behavior on its own page.
 
 | Folder | What | Written | Used by |
@@ -17,6 +20,7 @@ on the documentation site; each component built on them documents its own behavi
 | `anim/` | The two ways a panel comes and goes: `leave.ts` waits for a CSS animation to end before the panel is hidden; `motion.ts` plays Web Animations for a list of rows. | `leave.ts` out of `Popup.svelte`; `motion.ts` is `Message/motion.ts`, moved (2026-11-19). | `leave.ts`: Popup, Modal. `motion.ts`: Message; Notification next. |
 | `overlay/` | What makes a layer modal: the page does not scroll, the page behind it cannot be reached, focus stays inside and comes back, Escape closes the topmost one. | New. | Modal, Drawer, Image preview. |
 | `timer/` | A timer that stands still for several reasons at once and resumes with the time left. | The timer of `Message/store.ts`, moved (2026-11-19). | Message; Notification next. |
+| `list/` | The global list that a call from code fills (`message.success(...)`): the records, the keys and the update by key, the close with its reason, the limit, the timers, the hosts, the settings of three layers, the server no-op. | The core of `Message/store.ts`, moved (2026-11-19). What stays in Message: the shape of its record, its settings and their defaults, the form of its handle. | Message; Notification next. |
 | `layer/` | The layer the library makes on the body for a call from code (`message.success(...)`, `modal.confirm(...)`) while no host is mounted. | `Message/layer.ts` and `Modal/layer.ts` were the same file; now one part and two short files that say what to mount. | Message, Modal; Notification next. |
 
 The comparison with the three Ant Design libraries is not repeated here: it belongs to the specification of each component
@@ -88,6 +92,45 @@ the component is an argument.
   a host that unmounts hands what it showed back in the middle of its own teardown, and Svelte forbids creating effects there.
 - **L4.** On a server (no `document`) `ensure()` does nothing and starts no watching.
 
+### List (`list/`)
+
+`createListStore({ keyPrefix, mergedKeys, resolve })` in `listStore.ts`; one call makes one independent list (Message makes its own, Notification
+makes its own). It is a closure over its own state, with no class (Firefox 85, the floor, has no private class fields), it imports no component
+and it knows no Svelte. What the component gives it: the prefix of a generated key, the names of the settings that are objects (they are merged one
+level deep), and `resolve(host, config)` that turns the settings of the active host and the global ones into the component's settings (the defaults
+and the validation are the component's, so each keeps its own default duration and its own words). A record is `{ id, key, revision, state,
+createdAt }` plus whatever the component adds; the core never reads the rest.
+
+- **LS1. Open and update by key.** `open({ key, duration, onclose, build })` adds a record (`state: 'open'`, `revision: 0`, `createdAt` now, a key made of
+  the prefix and the id when none is given) and starts its timer for `duration` seconds (`0` never). `build` receives those fields and returns the
+  record. The same key as an **open** record updates it in place: the same id and `createdAt`, `revision` counts up, `onclose` is replaced, the timer
+  restarts in full and the pauses that hold stay. The same key after the record has begun to close opens a new one.
+  It returns `{ close, closed }`; **on a server it returns `undefined`** and stores nothing (module state on a server is shared by every request).
+- **LS2. Close, with a reason.** A record closes once: its timer is cancelled, `state` becomes `'closing'`, the listeners are told, `closed` resolves and
+  `onclose(reason)` is called, in this order, with the reason `'timeout'` (its timer ran out), `'user'` (`closeById`: the close button and Escape of a
+  box), `'replaced'` (the limit) or `'destroy'` (closed by code: `destroy`, and the `close` of the handle a call returned). A record that is already closing or removed is not closed again. `finalize(id)` removes a
+  record that is closing and ignores one that is open or unknown; a record that nobody finalizes is removed after 800 ms (the fallback: a host that
+  never reports the end of its exit motion must not keep it for good).
+- **LS3. The limit.** With `maxCount` in the settings, a new record above the limit closes the **oldest open ones** (`'replaced'`); closing records do not
+  count. It is looked at when a record is added, when `setConfig` changes the settings and when a host registers or updates its settings. The count is
+  over the whole list: a component that has places keeps the place inside its own record, and the core does not know it (D2 of `specs/notification.md`).
+- **LS4. Pause.** `setPaused(id, reason, on)` holds or releases the timer of that record for `'hover'`, `'focus'`, `'pile'` or `'hidden'` (the timer of
+  `timer/` does the rest, T2); an unknown id is ignored. The reason `'hidden'` is the page's: while any record is open the core listens to
+  `visibilitychange` and sets the reason on every timer; a record opened while the page is hidden starts held; the listener is removed when the list is
+  empty and by `reset`.
+- **LS5. Settings.** `getSnapshot().settings` is `resolve(hostSettings, config)`: the settings of the host that is active (the one registered last) over
+  the global ones set by `setConfig`. `setConfig(options)` merges into the global ones: a value of `undefined` removes that setting, the names in
+  `mergedKeys` are merged one level deep with what was there, the others replace. It looks at the limit and tells the listeners.
+- **LS6. Hosts.** `registerHost(settings)` returns `{ id, update(settings), dispose() }`. The host registered last is the active one (`activeHost` of the
+  snapshot is its id, or `undefined` with none). `update` and `dispose` change what the snapshot says; `dispose` twice does nothing and does not touch
+  another host.
+- **LS7. Snapshot and listeners.** `getSnapshot()` is `{ records, settings, activeHost }` and is **the same object until something changes**; every
+  change calls each listener once, and a listener that stops itself does not make the next one miss the call. `subscribe(listener)` returns the function that stops it.
+- **LS8. Destroy and reset.** `destroy(key?)` closes the open record with that key, or every open one (`'destroy'`). `reset()` forgets everything without
+  calling `onclose`: the records, the timers, the settings and the hosts.
+- **LS9. Helpers.** `validDuration` (a finite number, 0 or more), `validCount` (a finite number, 1 or more) and `mergeParts` are exported for the
+  components' `resolve`, so that the checks are not written twice.
+
 ### Overlay (`overlay/`)
 
 One call, `openOverlay(options)`, returns the function that closes it. The pieces are also exported on their own, so that a
@@ -151,11 +194,21 @@ layer without a mask (a Drawer with no mask) takes only what it needs.
    libraries were compared in `specs/notification.md`: all of them share one core between their message and their notification,
    and the motion, the timer and the layer are in it). No second copy for Notification (rule 6b). The core of the list itself
    (`Message/store.ts`: records, keys, handles, hosts) is a **separate** later branch, so this one stays a move that changes no
-   behavior and that the unchanged tests of Message and Modal show.
+   behavior and that the unchanged tests of Message and Modal show. (That branch is `refactor/list-core`, decision 10.)
 8. **The page-hidden pause stays in the owner for now.** The timer knows reasons, not the page: `Message/store.ts` listens for
-   `visibilitychange` and sets the reason `hidden` on every timer. It moves with the core of the list.
+   `visibilitychange` and sets the reason `hidden` on every timer. It moves with the core of the list (done in `list/`, LS4).
 9. **`createLayer` takes the component as an argument.** An internal part imports no component (rule 6b); the part that mounts and
    unmounts is shared, what is mounted is not.
+
+10. **The core of the list is its own branch and its own block** (the maintainer, 2026-11-19, D7 of `specs/notification.md`, option A: after the answers
+    on the contract). It stands on `refactor/anim-motion`; like that one it changes nothing a user can see, and goes to `main` without a release.
+11. **The core has no group (no "place") and is not generic over it.** `maxCount` is total (D2 of Notification), so nothing in the core needs the
+    place; Notification keeps its `placement` in its own record and groups the records when it draws them. **The reason of the close is in the core**
+    (D4: `onclose(reason)`), but Message does not pass it on yet: its `onclose` stays `() => void`, and it can take the reason later as an additive
+    change, without a break. **The handle is not in the core**: Message returns a thenable function, Notification a plain close function (D3), so
+    the core returns `{ close, closed }` and each component makes its own handle.
+12. **A closure per list, not module state.** The core of Message was module state; it is now one call of `createListStore` in `Message/store.ts`,
+    so the exported functions of that file keep their names and signatures, and nothing that imports them changes.
 
 ## Tests (each item is at least one test)
 
@@ -176,6 +229,12 @@ and must pass unchanged, which is how "no change of behavior" is shown.
 - L1 to L4 (`tests/layer.test.ts`, probe `tests/fixtures/LayerProbe.svelte`): mounted on the body with its props; none while not
   needed; one layer however often; removed and made again; `remove` stops watching; the microtask; one look for several
   changes; nothing on a server.
+- LS1 to LS9 (`tests/listStore.test.ts`, a toy record and two lists that must not see each other): open, the generated key, the update by key (id and
+  `createdAt` kept, `revision` up, the timer in full, the held reasons stay, no limit check), the same key after the close; `closed` and the handle;
+  nothing on a server; the four reasons and their order of effects, once only; `finalize` and the 800 ms fallback; the limit counts open records, oldest
+  first, on add, on `setConfig` and on a host; a pause keeps the time left; `hidden` on every timer, a record opened while hidden, the listener removed;
+  the merge of settings (undefined removes, the merged names, the host over the global); hosts (last is active, update, dispose twice); the same snapshot
+  object until a change; listeners; `destroy` with and without a key; `reset` calls no `onclose`; the helpers.
 - O1: lock and unlock restore the inline values (set and empty); `html` is locked and restored with the body; two locks, one
   restore; the scrollbar width goes to the padding; none when there is none; an element container; unlock in any order.
 - O2: siblings of every ancestor, not the layer; `inert` or `aria-hidden` by feature; a previously inert element is left alone;
@@ -195,7 +254,8 @@ and must pass unchanged, which is how "no change of behavior" is shown.
   directions; focus comes back to the button that opened the layer; Escape in a Popup inside the layer closes the Popup first;
   a second layer over the first takes Tab and Escape, and the first one takes them back when the second closes.
 - Popup keeps its own tests (R10, R11) and e2e unchanged after the portal and the leave were taken out. Message and Modal keep their
-  tests unchanged in `refactor/anim-motion` as well (the one edit is the list of source files that the Message page test reads: the
+  tests unchanged in `refactor/anim-motion` as well, and Message again in `refactor/list-core` (`tests/MessageStore.test.ts`, `tests/Message.test.ts`,
+  `tests/MessageMotion.test.ts`, `tests/ModalMessage.test.ts` and the site tests are not edited) (the one edit is the list of source files that the Message page test reads: the
   motion is now in `internal/anim/`); that is how "no change of behavior" is shown for the move of the motion, the timer and the layer.
 - Mutation testing: the runner mutates only `src/lib/<Component>/*.svelte`. The new parts are `.ts` (not mutated; 100% of lines and
   branches covered, and every file has tests that call it), and `Popup.svelte` is not a target of the runner. No component
@@ -216,5 +276,5 @@ and must pass unchanged, which is how "no change of behavior" is shown.
 ## Dependencies
 
 Rule 6b: these are shared parts, they import no component. Popup (`popup/Popup.svelte`) takes `portal` and `anim`; the Modal takes
-`portal`, `anim`, `overlay` and `layer`; Message takes `portal`, `anim` (the motion), `timer` and `layer`. Notification takes the
-same four as Message.
+`portal`, `anim`, `overlay` and `layer`; Message takes `portal`, `anim` (the motion), `timer`, `layer` and `list`. Notification takes the
+same five as Message. `list/` imports `timer/` and `env.ts`, nothing else.
