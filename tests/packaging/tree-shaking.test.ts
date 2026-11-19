@@ -15,7 +15,7 @@
 import { spawnSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { build } from 'vite';
@@ -25,6 +25,7 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 const rootPackage = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
   name: string;
   sideEffects?: unknown;
+  dependencies?: Record<string, string>;
 };
 
 interface Bundle {
@@ -115,6 +116,7 @@ async function bundle(entry: string, source: string): Promise<Bundle> {
 const bundled = (result: Bundle, fragment: string) => result.modules.some((id) => id.includes(fragment));
 
 let button: Bundle;
+let form: Bundle;
 let version: Bundle;
 let probe: Bundle;
 let tokens: Bundle;
@@ -151,11 +153,18 @@ beforeAll(async () => {
   cpSync(join(packageDir, 'dist'), join(installed, 'dist'), { recursive: true });
   cpSync(join(packageDir, 'package.json'), join(installed, 'package.json'));
   symlinkSync(join(root, 'node_modules/svelte'), join(appDir, 'node_modules', 'svelte'), 'junction');
+  // The runtime dependencies of the package, which a package manager installs next to it.
+  for (const dependency of Object.keys(rootPackage.dependencies ?? {})) {
+    const target = join(appDir, 'node_modules', dependency);
+    mkdirSync(dirname(target), { recursive: true });
+    symlinkSync(join(root, 'node_modules', dependency), target, 'junction');
+  }
 
   const name = rootPackage.name;
   const mountIt = (component: string) =>
     `import { ${component} } from '${name}'; import { mount } from 'svelte'; mount(${component}, { target: document.body, props: {} });`;
   button = await bundle('button', mountIt('Button'));
+  form = await bundle('form', mountIt('Form'));
   probe = await bundle('probe', mountIt('Probe'));
   version = await bundle('version', `import { VERSION } from '${name}'; document.body.textContent = VERSION;`);
   tokens = await bundle('tokens', `import '${name}/tokens.css';`);
@@ -186,6 +195,13 @@ describe('tree shaking of the packaged library (Vite production build)', () => {
     expect(bundled(button, '/dist/Probe/'), 'unused component module').toBe(false);
     expect(button.js, 'unused component markup').not.toContain('ads-probe-marker');
     expect(button.css, 'unused component styles').not.toContain('ads-probe-marker');
+  });
+
+  it('the validation library is bundled with the Form only: Button and VERSION do not pull it in', () => {
+    expect(bundled(form, '/node_modules/@rc-component/async-validator/'), 'Form bundles its dependency').toBe(true);
+    expect(bundled(button, '/node_modules/@rc-component/async-validator/'), 'Button').toBe(false);
+    expect(bundled(version, '/node_modules/@rc-component/async-validator/'), 'VERSION').toBe(false);
+    expect(bundled(button, '/dist/Form/'), 'Form module in the Button bundle').toBe(false);
   });
 
   it('constant only: importing VERSION bundles no component code, no styles, and no Svelte runtime', () => {

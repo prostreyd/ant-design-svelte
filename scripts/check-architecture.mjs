@@ -33,6 +33,8 @@ export const INTERNAL = 'internal';
  * @type {{ from: string, to: string, why: string }[]}
  */
 export const DEPENDENCIES = [
+  { from: 'Form', to: 'Grid', why: 'FormItem is a Row with a label Col and a control Col; labelCol and wrapperCol are Col props' },
+  { from: 'Form', to: 'Tooltip', why: 'the tooltip of a label is the Tooltip the user sees elsewhere, set with the same props' },
   { from: 'Input', to: 'Button', why: 'InputSearch draws the same button the user sees for `enterButton`' }
 ];
 

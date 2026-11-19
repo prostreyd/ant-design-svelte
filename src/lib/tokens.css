@@ -92,6 +92,25 @@
   --ads-motion-ease-out-back: cubic-bezier(0.12, 0.4, 0.29, 1.46);
   --ads-motion-ease-in-out-circ: cubic-bezier(0.78, 0.14, 0.15, 0.86);
 
+  /*
+   * Form: the spacing and the text sizes follow the public demo of Ant Design (React 6.7, measured on 2026-11-17: an item
+   * is 24px apart from the next, the label is 14px). The neutral help and the extra hint are the tertiary text color
+   * (3.4:1 against a white page, below the 4.5:1 of WCAG AA for text), the warning text 1.9:1 and the success and warning
+   * icons 2.3:1 and 1.9:1 (3:1 is needed for an icon): `tokens-accessible.css` darkens them. The dark theme keeps the ratios.
+   */
+  --ads-form-item-margin-bottom: 24px;
+  --ads-form-label-color: var(--ads-color-text);
+  --ads-form-label-font-size: var(--ads-font-size);
+  --ads-form-required-mark-color: var(--ads-color-danger-text);
+  --ads-form-help-color: var(--ads-color-text-tertiary);
+  --ads-form-extra-color: var(--ads-color-text-tertiary);
+  --ads-form-error-text: var(--ads-color-danger-text);
+  --ads-form-warning-text: #faad14;
+  --ads-form-success-icon: #52c41a;
+  --ads-form-warning-icon: #faad14;
+  --ads-form-error-icon: #ff4d4f;
+  --ads-form-tooltip-icon-color: var(--ads-color-text-tertiary);
+
   /* Popup layers (internal popup primitive): the order of the Ant Design token table. */
   --ads-popover-z-index: 1030;
   --ads-dropdown-z-index: 1050;
@@ -473,6 +492,12 @@
   --ads-select-tag-color-disabled: rgba(255, 255, 255, 0.3);
   --ads-select-group-label-color: rgba(255, 255, 255, 0.55);
   --ads-select-empty-color: rgba(255, 255, 255, 0.55);
+
+  /* Form: the dark theme keeps the ratios of WCAG AA (4.5:1 for text, 3:1 for icons) against the dark page. */
+  --ads-form-warning-text: #faad14;
+  --ads-form-success-icon: #49aa19;
+  --ads-form-warning-icon: #faad14;
+  --ads-form-error-icon: #ff7875;
 
   --ads-tooltip-bg: #424242;
   --ads-tooltip-color: #ffffff;

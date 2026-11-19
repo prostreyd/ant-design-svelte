@@ -27,6 +27,45 @@ export type {
   RowAlign,
   RowJustify
 } from './Grid/types.js';
+export { default as Form } from './Form/Form.svelte';
+export { default as FormItem } from './Form/FormItem.svelte';
+export { createForm } from './Form/store.svelte.js';
+export { getFormInstance } from './Form/context.js';
+export type {
+  FormClassNames,
+  FormColProps,
+  FormDeepPartial,
+  FormFeedbackIcons,
+  FormField,
+  FormFieldData,
+  FormFieldError,
+  FormFinishFailedInfo,
+  FormInstance,
+  FormItemLayout,
+  FormItemProps,
+  FormLabelAlign,
+  FormLayout,
+  FormNamePath,
+  FormNamePathPart,
+  FormProps,
+  FormRequiredMark,
+  FormRules,
+  FormRule,
+  FormRuleConfig,
+  FormRuleType,
+  FormScrollOptions,
+  FormSemanticName,
+  FormSize,
+  FormStyles,
+  FormTooltipConfig,
+  FormValidateConfig,
+  FormValidateMessages,
+  FormValidateStatus,
+  FormValidateTrigger,
+  FormValidatorResult,
+  FormValidatorRule,
+  FormVariant
+} from './Form/types.js';
 export { default as Input } from './Input/Input.svelte';
 export { default as InputOTP } from './Input/InputOTP.svelte';
 export { default as InputPassword } from './Input/InputPassword.svelte';

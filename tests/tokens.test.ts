@@ -260,8 +260,8 @@ describe('accessible tokens (tokens-accessible.css)', () => {
     for (const token of accessible.keys()) expect(light.has(token), token).toBe(true);
   });
 
-  it('changes the -solid, -text, link, switch, checkbox, radio, input and select tokens, and nothing else', () => {
-    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color))$/;
+  it('changes the -solid, -text, link, switch, checkbox, radio, input, select and form tokens, and nothing else', () => {
+    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color)|form-(help-color|extra-color|warning-text|success-icon|warning-icon|tooltip-icon-color))$/;
     for (const token of accessible.keys()) expect(token, token).toMatch(allowed);
   });
 

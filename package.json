@@ -68,6 +68,9 @@
   "peerDependencies": {
     "svelte": "^5.0.0"
   },
+  "dependencies": {
+    "@rc-component/async-validator": "^6.0.0"
+  },
   "devDependencies": {
     "@playwright/test": "^1.65.0",
     "@sveltejs/package": "^3.0.2",

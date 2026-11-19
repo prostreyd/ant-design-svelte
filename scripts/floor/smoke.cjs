@@ -5,7 +5,7 @@
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
 // It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab, the
-// Tooltip lab, the Radio lab and the grid lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// Tooltip lab, the Radio lab, the grid lab and the Form lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -672,6 +672,95 @@ async function selectPage(context) {
   await page.close();
 }
 
+async function formPage(context) {
+  const page = await newPage(context, base + '/#form');
+  await page.waitForSelector(idOf('lab-basic'));
+  const yOf = (testid) => rectOf(page, idOf(testid)).then((rect) => rect && rect.y);
+
+  await check('form: one line of message changes neither the height of the item nor the position of the next one', async () => {
+    const before = { item: await rectOf(page, idOf('item-check')), last: await yOf('item-last') };
+    await page.click(idOf('validate-check'));
+    await page.waitForSelector(idOf('item-check') + ' .ads-form-item-help-item');
+    await settle(page);
+    const after = { item: await rectOf(page, idOf('item-check')), last: await yOf('item-last') };
+    return [Math.abs(after.last - before.last) < 0.6 && Math.abs(after.item.height - before.item.height) < 0.6, `next item ${before.last} -> ${after.last}, item height ${before.item.height} -> ${after.item.height}`];
+  });
+
+  await check('form: the message is under the control, in its column', async () => {
+    const input = await rectOf(page, idOf('input-check'), '.ads-input');
+    const message = await rectOf(page, idOf('item-check') + ' .ads-form-item-help-item');
+    return [message.y >= input.bottom - 1 && Math.abs(message.x - input.x) < 1.5, `input ${Math.round(input.x)},${Math.round(input.bottom)} message ${Math.round(message.x)},${Math.round(message.y)}`];
+  });
+
+  await check('form: the label is left of the control from 576 px and above it up to 575 px', async () => {
+    await page.setViewportSize({ width: 1000, height: 800 });
+    const wideLabel = await rectOf(page, idOf('item-user') + ' label');
+    const wideInput = await rectOf(page, idOf('input-user'), '.ads-input');
+    await page.setViewportSize({ width: 575, height: 800 });
+    const narrowLabel = await rectOf(page, idOf('item-user') + ' label');
+    const narrowInput = await rectOf(page, idOf('input-user'), '.ads-input');
+    await page.setViewportSize(VIEWPORT);
+    const wide = wideLabel.right <= wideInput.x + 1;
+    const narrow = narrowLabel.bottom <= narrowInput.y + 1 && Math.abs(narrowLabel.x - narrowInput.x) < 1.5;
+    return [wide && narrow, `wide: label right ${Math.round(wideLabel.right)} input x ${Math.round(wideInput.x)}; narrow: label bottom ${Math.round(narrowLabel.bottom)} input y ${Math.round(narrowInput.y)}`];
+  });
+
+  await check('form: inline layout puts the items in one line, vertical puts the label above the control', async () => {
+    const a = await rectOf(page, idOf('i-item-a'));
+    const b = await rectOf(page, idOf('i-item-b'));
+    const label = await rectOf(page, idOf('v-item-a') + ' label');
+    const input = await rectOf(page, idOf('v-input-a'), '.ads-input');
+    return [Math.abs(a.y - b.y) < 1.5 && b.x >= a.right && label.bottom <= input.y, `inline ${Math.round(a.y)}/${Math.round(b.y)}, vertical label bottom ${Math.round(label.bottom)} input y ${Math.round(input.y)}`];
+  });
+
+  await check('form: the label is on the right of the control in a right-to-left form', async () => {
+    const label = await rectOf(page, idOf('r-item-a') + ' label');
+    const input = await rectOf(page, idOf('r-input-a'), '.ads-input');
+    return [label.x >= input.right - 1, `label x ${Math.round(label.x)} input right ${Math.round(input.right)}`];
+  });
+
+  await check('form: a failed submit focuses the first invalid control and brings it into view', async () => {
+    await page.evaluate((sel) => document.querySelector(sel).scrollIntoView({ block: 'center' }), idOf('tall-submit'));
+    await settle(page);
+    await page.click(idOf('tall-submit'));
+    await page.waitForSelector(idOf('tall-item-38') + ' .ads-form-item-help-item');
+    await settle(page);
+    const focused = await page.evaluate(() => (document.activeElement && document.activeElement.getAttribute('data-testid')) || '');
+    const rect = await rectOf(page, idOf('tall-input-38'));
+    return [focused === 'tall-input-38' && rect.y >= 0 && rect.bottom <= VIEWPORT.height, `focused ${focused}, box ${Math.round(rect.y)}-${Math.round(rect.bottom)}`];
+  });
+
+  await check('form: the status icons are drawn inside their field, one shape per status', async () => {
+    await page.evaluate((sel) => document.querySelector(sel).scrollIntoView({ block: 'center' }), idOf('lab-feedback'));
+    await settle(page);
+    const found = await page.evaluate(() =>
+      ['success', 'warning', 'error', 'validating'].map((status) => {
+        const icon = document.querySelector('[data-testid="f-item-' + status + '"] .ads-form-feedback');
+        const field = document.querySelector('[data-testid="f-input-' + status + '"]').closest('.ads-input');
+        if (!icon) return null;
+        const a = icon.getBoundingClientRect();
+        const b = field.getBoundingClientRect();
+        return { inside: a.left >= b.left && a.right <= b.right && a.top >= b.top && a.bottom <= b.bottom, shape: icon.querySelector('svg').innerHTML };
+      })
+    );
+    const shapes = found.filter(Boolean).map((icon) => icon.shape);
+    return [found.every((icon) => icon && icon.inside) && new Set(shapes).size === 4, found.map((icon) => (icon ? (icon.inside ? 'in' : 'out') : 'none')).join(' ')];
+  });
+
+  await check('form: the help icon of a label opens its tooltip on keyboard focus and shows the text', async () => {
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.focus(idOf('input-user'));
+    await page.keyboard.press('Tab');
+    await page.waitForSelector('[role="tooltip"]');
+    await settle(page);
+    const text = await page.evaluate(() => document.querySelector('[role="tooltip"]').textContent.trim());
+    await page.keyboard.press('Escape');
+    return [text.indexOf('Pick a strong password') !== -1, text];
+  });
+
+  await page.close();
+}
+
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await playwright[engine].launch();
@@ -689,6 +778,7 @@ async function selectPage(context) {
     await tooltipPage(context);
     await radioPage(context);
     await gridPage(context);
+    await formPage(context);
   } catch (error) {
     record('run', false, `threw: ${String(error && error.message ? error.message : error).split('\n')[0]}`);
   }
