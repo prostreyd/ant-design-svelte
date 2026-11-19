@@ -47,28 +47,54 @@ describe('the Playwright image of the CI', () => {
   });
 });
 
-// The two e2e jobs run once for every engine, at the same time, so a run takes the time of one engine and not of three
-// (2026-11-19: 16 and 26 minutes one after the other, about a third of that apart).
+// The two e2e jobs run once for every engine, at the same time, so a run takes the time of one part and not of all of them
+// (2026-11-19: 16 and 26 minutes one after the other, about a third of that apart). The tests of the site are cut in two parts for
+// Firefox and WebKit (`--shard`), because they are the slowest (7.8, 9.3 and 14.3 minutes of tests for the three engines).
 describe('the e2e jobs of the CI go by engine', () => {
   const steps = ci.replace(/^\s*#.*$/gm, '');
-  const matrix = [...steps.matchAll(/^\s+engine:\s*\[([^\]]*)\]\s*$/gm)].map((match) => match[1].split(',').map((name) => name.trim()));
   const configured = (file: string) => [...readFileSync(join(root, file), 'utf8').matchAll(/name:\s*'(\w+)'/g)].map((match) => match[1]);
+  // The library job: `engine: [chromium, firefox, webkit]`. The site job: `include:` with one `{ engine, shard }` line per part.
+  const library = [...steps.matchAll(/^\s+engine:\s*\[([^\]]*)\]\s*$/gm)].map((match) => match[1].split(',').map((name) => name.trim()));
+  const site = [...steps.matchAll(/^\s+-\s*\{\s*engine:\s*(\w+),\s*shard:\s*(\d+)\/(\d+)\s*\}\s*$/gm)].map((match) => ({ engine: match[1], part: Number(match[2]), parts: Number(match[3]) }));
+  const siteEngines = [...new Set(site.map((entry) => entry.engine))];
 
-  it('the library job and the site job each have a matrix of the engines', () => {
-    expect(matrix).toHaveLength(2);
+  it('the library job has a matrix of the engines, and the site job a list of parts', () => {
+    expect(library).toHaveLength(1);
+    expect(site.length).toBeGreaterThan(0);
   });
 
-  it('the matrix lists every project of the Playwright config of its job, so no engine is left out of the CI', () => {
-    expect(matrix[0]).toEqual(configured('playwright.config.ts'));
-    expect(matrix[1]).toEqual(configured('docs/playwright.config.ts'));
+  it('the matrices list every project of the Playwright config of their job, so no engine is left out of the CI', () => {
+    expect(library[0]).toEqual(configured('playwright.config.ts'));
+    expect(siteEngines).toEqual(configured('docs/playwright.config.ts'));
   });
 
-  it('each job gives its engine to Playwright, and a failed job keeps its report under its own name', () => {
+  it('the parts of each engine of the site are complete: 1 to n of n, each once (a missing part leaves tests out of the run)', () => {
+    for (const engine of siteEngines) {
+      const mine = site.filter((entry) => entry.engine === engine);
+      const parts = mine[0].parts;
+      expect(
+        mine.every((entry) => entry.parts === parts),
+        `${engine}: one number of parts`
+      ).toBe(true);
+      expect(mine.map((entry) => entry.part).sort(), `${engine}: the parts`).toEqual(Array.from({ length: parts }, (_, index) => index + 1));
+    }
+  });
+
+  it('Firefox and WebKit of the site are cut in parts, the quickest engine is not', () => {
+    const partsOf = (engine: string) => site.find((entry) => entry.engine === engine)?.parts;
+    expect(partsOf('firefox')).toBeGreaterThan(1);
+    expect(partsOf('webkit')).toBeGreaterThan(1);
+  });
+
+  it('each job gives its engine to Playwright (the site also its part), and a failed job keeps its report under its own name', () => {
     expect(steps.match(/--project=\$\{\{ matrix\.engine \}\}/g) ?? []).toHaveLength(2);
-    expect(steps.match(/name: playwright-test-results-(library|site)-\$\{\{ matrix\.engine \}\}/g) ?? []).toHaveLength(2);
+    expect(steps.match(/--shard=\$\{\{ matrix\.shard \}\}/g) ?? []).toHaveLength(1);
+    expect(steps.match(/name: playwright-test-results-library-\$\{\{ matrix\.engine \}\}\s*$/gm) ?? []).toHaveLength(1);
+    // Two parts of one engine must not write the same artifact: the number of the job is in the name.
+    expect(steps.match(/name: playwright-test-results-site-\$\{\{ matrix\.engine \}\}-\$\{\{ strategy\.job-index \}\}\s*$/gm) ?? []).toHaveLength(1);
   });
 
-  it('an engine that fails does not stop the other engines', () => {
+  it('an engine or a part that fails does not stop the others', () => {
     expect(steps.match(/fail-fast:\s*false/g) ?? []).toHaveLength(2);
   });
 });

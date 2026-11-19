@@ -1,5 +1,7 @@
-# Tests with a real screen reader (Orca with Firefox, through Guidepup) on a GitHub runner. A workflow of its own, so
-# that the CI of the library does not wait for it and a speech that is late does not stop a release by itself.
+# Tests with a real screen reader (Orca with Firefox, through Guidepup) on a GitHub runner. A workflow of its own, so that the CI of
+# the library does not wait for it and does not carry its nine minutes on every branch. Since 2026-11-20 it is part of the gate of a
+# release: publish.yml publishes only when it was green for the commit of the tag (the run that this workflow made on main, or, when
+# there is none for that commit, a run that publish.yml makes itself through `workflow_call` below).
 name: Screen reader
 
 # It runs when what the speech depends on changes (the library, the e2e fixtures, the tests of the screen reader, the build and
@@ -35,6 +37,8 @@ on:
     # Every Monday at 03:00 UTC (a scheduled run is made on the default branch).
     - cron: '0 3 * * 1'
   workflow_dispatch:
+  # Called by publish.yml for a release whose commit has no run of its own (see the gate there).
+  workflow_call:
 
 permissions:
   contents: read

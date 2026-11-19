@@ -6,8 +6,13 @@ name: Documentation site
 # One-time setup in the repository: Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
 # Until that is done the deploy job fails; run the workflow again afterwards ("Run workflow").
 
+# It starts when the CI of a commit on main has finished green (the owner, 2026-11-20: the site shows what passed the tests, and it
+# is not made again for a commit that was cancelled by a newer push or whose tests failed). By hand ("Run workflow") it builds the
+# latest commit of main at any time. A release does not wait for it and it does not wait for a release.
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -21,10 +26,15 @@ concurrency:
 
 jobs:
   build:
+    # A run that follows a CI run needs that run to be green; a manual run always builds.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # The commit that the CI tested, not the latest commit of main (a newer push may have come while the CI ran).
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - uses: actions/setup-node@v4
         with:

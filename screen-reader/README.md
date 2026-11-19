@@ -10,7 +10,7 @@ bus. The log is what Orca sends to speech, not what a person hears.
 
 ## Run
 
-In the CI workflow `.github/workflows/screen-reader.yml`, apart from the CI of the library. It starts on a push to `main` and on a pull request that changes what the speech depends on (`src/lib`, `e2e/fixtures`, this folder, the build of the fixtures or the packages), once a week on Monday (Orca, Firefox, the Ubuntu image and the packages of the screen reader change without a commit of ours), and by hand. A push that only touches documentation, specifications or rules does not start it, and a release does not wait for it. Locally, in Docker (nothing is installed on the machine):
+In the CI workflow `.github/workflows/screen-reader.yml`, apart from the CI of the library. It starts on a push to `main` and on a pull request that changes what the speech depends on (`src/lib`, `e2e/fixtures`, this folder, the build of the fixtures or the packages), once a week on Monday (Orca, Firefox, the Ubuntu image and the packages of the screen reader change without a commit of ours), and by hand. A push that only touches documentation, specifications or rules does not start it. A release waits for it (since 2026-11-20): `publish.yml` publishes only when this workflow was green for the commit of the tag, either the run it made on `main`, or, when the commit has none, a run that `publish.yml` makes itself. Locally, in Docker (nothing is installed on the machine):
 
 ```sh
 docker build -t guidepup-pilot -f screen-reader/Dockerfile screen-reader

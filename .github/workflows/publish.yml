@@ -11,13 +11,20 @@ name: Publish to npm
 #
 # Release: record the version in the branch, merge the change into main, then
 #   git tag v<version> && git push origin v<version>
-# The tag starts three stages, and nothing is published unless every one of them is green:
+# The tag starts these stages, and nothing is published unless every one of them is green:
 #   1. guard   the tag matches the version in package.json, the tagged commit is on main, the version is not in npm yet;
-#   2. checks  every job of ci.yml (lint, types, unit tests with coverage, the package, the e2e tests of the library and of the
-#              documentation site in three browsers), called as a reusable workflow;
+#   2. gate    the tests passed for this exact commit: `CI` (lint, types, unit tests with coverage, the package, the e2e tests of the
+#              library and of the documentation site in three browsers) and `Screen reader` (Orca). The runs that GitHub already
+#              made for the commit when it was pushed to main are waited for and not made again (scripts/release-gate.mjs);
+#   2b. ci, screen-reader   a workflow that has no run for this commit (a run that a newer push cancelled, one that Orca was not
+#              started for because the push touched no file it depends on) is run here, as a reusable workflow, so a commit that
+#              was not tested is never published; a red run stops the release at the gate;
 #   3. publish `npm publish` (it runs lint, types, tests and the package build once more).
 # A red stage leaves npm untouched. A failed job of a flaky runner (for example the install of the browsers) is run again with
-# "Re-run failed jobs". A tag with no version in npm may be deleted and set again on the fixed commit (CLAUDE.md 8в).
+# "Re-run failed jobs" (of the run that failed: the CI run of main or this one), then this job again. A tag with no version in npm
+# may be deleted and set again on the fixed commit (CLAUDE.md 8в).
+#
+# The documentation site is not here: it is built and published by pages.yml after a green CI on main (the owner, 2026-11-20).
 
 on:
   push:
@@ -58,14 +65,45 @@ jobs:
             exit 1
           fi
 
-  # Stage 2. The same jobs that run on every branch; `needs` waits for all of them.
-  checks:
+  # Stage 2. Waits for the tests of this commit and says, for each workflow, `success` (it was green), or `missing` (no run: it is made
+  # below). A red run fails this job. The wait is up to 45 minutes, a long one only while a run of main is still going.
+  gate:
     needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    permissions:
+      contents: read
+      actions: read # to read the runs of the commit
+    outputs:
+      ci: ${{ steps.gate.outputs.ci }}
+      orca: ${{ steps.gate.outputs.orca }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - id: gate
+        run: node scripts/release-gate.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  # Stage 2b. Only for a workflow that has no run for this commit: the same jobs that run on every branch.
+  ci:
+    needs: gate
+    if: needs.gate.outputs.ci == 'missing'
     uses: ./.github/workflows/ci.yml
 
-  # Stage 3. Only after the guard and every check are green.
+  screen-reader:
+    needs: gate
+    if: needs.gate.outputs.orca == 'missing'
+    uses: ./.github/workflows/screen-reader.yml
+
+  # Stage 3. Only after the guard, the gate and the workflows that were run here are green (a skipped one had a green run of its own).
   publish:
-    needs: [guard, checks]
+    needs: [guard, gate, ci, screen-reader]
+    if: ${{ !cancelled() && needs.guard.result == 'success' && needs.gate.result == 'success' && contains(fromJSON('["success","skipped"]'), needs.ci.result) && contains(fromJSON('["success","skipped"]'), needs.screen-reader.result) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: npm

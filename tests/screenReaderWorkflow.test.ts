@@ -1,7 +1,8 @@
 // The workflow `Screen reader` (.github/workflows/screen-reader.yml) runs Orca, a real screen reader, about nine minutes a run. It
 // starts when what the speech depends on changes, and once a week by itself: Orca, Firefox, the Ubuntu image and the packages of
 // the screen reader change without a commit of ours. These tests keep the paths in step with what the build of the fixtures reads,
-// keep the weekly run, and keep the workflow out of the gate of a release (a speech that is late does not stop a publish by itself).
+// keep the weekly run, and keep the workflow in the gate of a release (the owner, 2026-11-20: a release is published only after
+// the screen reader passed for its commit).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -89,8 +90,14 @@ describe('the weekly run of the Screen reader workflow', () => {
   });
 });
 
-describe('the Screen reader workflow is not a gate of a release', () => {
-  it('the publish workflow does not wait for it', () => {
-    expect(read('.github/workflows/publish.yml')).not.toMatch(/screen-reader|Screen reader/i);
+describe('the Screen reader workflow is part of the gate of a release', () => {
+  it('it can be called by the publish workflow', () => {
+    expect(triggers).toMatch(/^ {2}workflow_call:/m);
+  });
+
+  it('the publish workflow waits for it through the gate and runs it itself when the commit has no run', () => {
+    const publish = read('.github/workflows/publish.yml').replace(/^\s*#.*$/gm, '');
+    expect(publish).toMatch(/uses:\s*\.\/\.github\/workflows\/screen-reader\.yml/);
+    expect(read('scripts/release-gate.mjs')).toMatch(/file:\s*'screen-reader\.yml'/);
   });
 });
