@@ -858,6 +858,36 @@ describe('stack', () => {
     expect(document.querySelector('.ads-message-piled')).not.toBeNull();
   });
 
+  it('the pile does not stay open when the list went away under the pointer (a removed element sends no pointerleave)', async () => {
+    // The fault of a public issue of the React package: a row closed under the pointer left "the pointer is over the list" set.
+    // With a `MessageHost` the layer stays mounted when the list is empty, so what it remembers outlives the list.
+    render(MessageHostHarness, { props: { stack: true } });
+    await tick();
+    await open(4);
+    pointer(document.querySelector('.ads-message-list-content')!, 'pointerenter');
+    await tick();
+    expect(document.querySelector('.ads-message-piled')).toBeNull();
+    message.destroy();
+    await settle(1000);
+    expect(document.querySelector('.ads-message-list-content')).toBeNull();
+    await open(4);
+    expect(document.querySelector('.ads-message-piled')).not.toBeNull();
+  });
+
+  it('the pile does not stay open when the list went away with focus in it', async () => {
+    render(MessageHostHarness, { props: { stack: true } });
+    await tick();
+    await open(4, { closable: true });
+    document.querySelector<HTMLButtonElement>('.ads-message-item:not([inert]) button')!.focus();
+    await tick();
+    expect(document.querySelector('.ads-message-piled')).toBeNull();
+    message.destroy();
+    await settle(1000);
+    expect(document.querySelector('.ads-message-list-content')).toBeNull();
+    await open(4);
+    expect(document.querySelector('.ads-message-piled')).not.toBeNull();
+  });
+
   it('every timer in an open pile stands still, and goes on when it closes', async () => {
     message.config({ stack: true });
     for (const name of ['a', 'b', 'c', 'd']) message.info({ content: name, duration: 2 });

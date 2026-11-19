@@ -9,6 +9,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Fixed
+
+- `Message` with a `MessageHost` and `stack`: when every message went while the pointer (or focus) was over the list, the next pile opened already held open
+  by a pointer that was no longer there, and its timers stood still. The list is removed without a `pointerleave`, so the layer now forgets the pointer and the focus
+  with it.
+
 ## [0.12.1] - 2026-11-19
 
 ### Fixed

@@ -49,6 +49,16 @@
 
   let content = $state<HTMLElement | null>(null);
 
+  // The list goes away with its last message, and an element that is removed sends no `pointerleave` and no `focusout`.
+  // What the pointer and the focus did to the list is forgotten with it; otherwise a `MessageHost`, which stays mounted,
+  // would open the next pile already held open by a pointer that is no longer there.
+  $effect(() => {
+    if (content === null) {
+      hovered = false;
+      focused = false;
+    }
+  });
+
   // The rows of a pile that opens or closes change place at once; they slide from where they were (FLIP). The first
   // effect runs before the page changes and reads the places, the second after it and moves the rows back.
   let shown = false;
