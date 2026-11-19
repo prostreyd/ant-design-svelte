@@ -9,6 +9,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- `Notification`: a box with a title, a text and, if you want, buttons, at a corner or at the top or bottom edge of the window. It is opened by a call from code
+  (`notification.success({ title, description })`, also `open`, `info`, `warning`, `error`, `destroy` and `config`) and drawn by a layer that the library makes, or by a
+  `<NotificationHost>` that you place in the tree. Six places, the newest nearest the window edge; a title, a description and `actions`; `placement`, `duration`, `key`
+  (update in place), `icon`, `closable` and `closeIcon`, `showProgress` (a strip that runs down with the time left), `pauseOnHover` and `role`; `class`, `style`,
+  `classNames`, `styles` and `props`; `onclick` and `onclose` with the reason (`timeout`, `user`, `replaced`, `destroy`); `maxCount` over all places. The notifications of
+  a place lie behind the newest one as a pile past three (on by default, as in Ant Design React; the pointer or focus opens it and holds every timer). The timer also waits for
+  focus and a hidden page, the close button is 24px, the type is read out before the title, and `error` and `warning` are alerts. New tokens `--ads-notification-*` and a page on
+  the documentation site.
+
 ### Fixed
 
 - `Message` with a `MessageHost` and `stack`: when every message went while the pointer (or focus) was over the list, the next pile opened already held open
@@ -16,6 +27,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   with it.
 - `Message`: a message that is closing (it stays on the page for the 0.2 s of its exit) caught the pointer, so a click on it did not reach what was under it
   and called its `onclick`. A closing message takes no pointer now.
+
+### Documentation
+
+- `Message`: the example of `container` on the documentation page is now a native modal `<dialog>`, the case the setting is for. It was a region of the page with a
+  `transform` and a mounted `MessageHost`; because the setting is global, the messages of the other examples ended up in that region. Now a layer in the `body` is
+  covered by the dialog and a layer in the dialog stands above it, and the setting is given back when the dialog closes. The README says what `container` is for.
 
 ## [0.12.1] - 2026-11-19
 
