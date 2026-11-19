@@ -404,6 +404,60 @@
   --ads-message-stack-scale-step: 0.06;
 
   /*
+   * Notification: the values measured on the Ant Design demo (React 6.7.1, 2026-11-19, light theme; specs/notification.md): a box
+   * 384 px wide with `20px 24px` padding, a 24 px icon with a 12 px gap, a 16 px title over a 14 px description, a 22 px close button,
+   * a 2 px strip, boxes 16 px apart and 24 px from the window edge, the layer above every popup (2050, the public token). The box is
+   * not tinted by its type: only the icon is colored. The type colors are the status colors of Ant Design and are decorative (the
+   * title and a hidden type word carry the meaning), but the icon is still held to 3:1 (WCAG 1.4.11): the green and the amber are
+   * below it on a white page, and `tokens-accessible.css` darkens them. The same file darkens the close button, which is `0.45` on
+   * the demo and reaches only about 3.4:1.
+   */
+  --ads-notification-z-index: 2050;
+  --ads-notification-width: 384px;
+  --ads-notification-top: 24px;
+  --ads-notification-bottom: 24px;
+  --ads-notification-margin: 24px;
+  --ads-notification-gap: 16px;
+  --ads-notification-bg: #ffffff;
+  --ads-notification-color: rgba(0, 0, 0, 0.88);
+  --ads-notification-padding-block: 20px;
+  --ads-notification-padding-inline: 24px;
+  --ads-notification-padding: var(--ads-notification-padding-block) var(--ads-notification-padding-inline);
+  --ads-notification-line-height: 22px;
+  --ads-notification-radius: 8px;
+  --ads-notification-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  --ads-notification-title-size: 16px;
+  --ads-notification-title-line-height: 24px;
+  --ads-notification-description-gap: 8px;
+  --ads-notification-actions-gap: 12px;
+  --ads-notification-icon-size: 24px;
+  --ads-notification-icon-gap: 12px;
+  --ads-notification-icon-info: #1677ff;
+  --ads-notification-icon-success: #52c41a;
+  --ads-notification-icon-error: #ff4d4f;
+  --ads-notification-icon-warning: #faad14;
+  /* 24 px, the smallest target of WCAG 2.5.8 (the demo has 22): it is centred on the first line of the title, as the demo's is. */
+  --ads-notification-close-size: 24px;
+  --ads-notification-close-icon-size: 14px;
+  --ads-notification-close-room: 26px;
+  /* The air at both ends of a close button that holds more than the cross (a word); the cross itself stays a 24 px square. */
+  --ads-notification-close-padding: 4px;
+  --ads-notification-close-color: rgba(0, 0, 0, 0.45);
+  --ads-notification-close-color-hover: rgba(0, 0, 0, 0.88);
+  --ads-notification-close-bg: transparent;
+  --ads-notification-close-bg-hover: rgba(0, 0, 0, 0.06);
+  --ads-notification-progress-bg: linear-gradient(90deg, #69b1ff, #1677ff);
+  --ads-notification-progress-track: rgba(0, 0, 0, 0.04);
+  --ads-notification-progress-height: 2px;
+  --ads-notification-progress-inset: 8px;
+  --ads-notification-progress-radius: 8px;
+  --ads-notification-motion-offset: 64px;
+  --ads-notification-stack-offset: 8px;
+  --ads-notification-stack-scale-step: 0.06;
+
+  /*
    * Menu: the values of the "Design Token" table of the Ant Design React page (checked 2026-11-16; specs/menu.md). Three of its
    * defaults do not reach WCAG AA for text: the selected item (3.66:1), the group title (3.35:1) and the danger item (3.27:1 on
    * white), and the dark menu's selected and danger-selected fills (4.10:1 and 3.27:1 with white text). `tokens-accessible.css`
@@ -688,6 +742,21 @@
   --ads-message-close-color-hover: rgba(255, 255, 255, 0.88);
   --ads-message-close-bg: rgba(255, 255, 255, 0.08);
   --ads-message-close-bg-hover: rgba(255, 255, 255, 0.18);
+
+  /* Notification in the dark theme: the same elevated panel as Message, the dark status colors, a close button that stays above 4.5:1. */
+  --ads-notification-bg: #1f1f1f;
+  --ads-notification-color: rgba(255, 255, 255, 0.85);
+  --ads-notification-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.32), 0 3px 6px -4px rgba(0, 0, 0, 0.48),
+    0 9px 28px 8px rgba(0, 0, 0, 0.2);
+  --ads-notification-icon-info: #3c9ae8;
+  --ads-notification-icon-success: #49aa19;
+  --ads-notification-icon-error: #dc4446;
+  --ads-notification-icon-warning: #d89614;
+  --ads-notification-close-color: rgba(255, 255, 255, 0.65);
+  --ads-notification-close-color-hover: rgba(255, 255, 255, 0.88);
+  --ads-notification-close-bg-hover: rgba(255, 255, 255, 0.12);
+  --ads-notification-progress-track: rgba(255, 255, 255, 0.08);
 
   /*
    * Menu on a dark page: the light menu takes the dark surface. The dark menu (`theme="dark"`) keeps its own colors, with a

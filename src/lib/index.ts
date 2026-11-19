@@ -39,6 +39,8 @@ export { default as MenuDivider } from './Menu/MenuDivider.svelte';
 export { default as Input } from './Input/Input.svelte';
 export { message } from './Message/message.js';
 export { default as MessageHost } from './Message/MessageHost.svelte';
+export { notification } from './Notification/notification.js';
+export { default as NotificationHost } from './Notification/NotificationHost.svelte';
 export { default as InputOTP } from './Input/InputOTP.svelte';
 export { default as InputPassword } from './Input/InputPassword.svelte';
 export { default as InputSearch } from './Input/InputSearch.svelte';
@@ -204,3 +206,25 @@ export type {
   ModalStyles,
   ModalText
 } from './Modal/types.js';
+export { NOTIFICATION_PLACEMENTS, NOTIFICATION_TYPES } from './Notification/types.js';
+export type {
+  NotificationApi,
+  NotificationClassNames,
+  NotificationCloseReason,
+  NotificationConfig,
+  NotificationConfigClassNames,
+  NotificationConfigStyles,
+  NotificationContainer,
+  NotificationContent,
+  NotificationHandle,
+  NotificationIcon,
+  NotificationLabels,
+  NotificationListSemanticName,
+  NotificationOptions,
+  NotificationPlacement,
+  NotificationProps,
+  NotificationSemanticName,
+  NotificationStack,
+  NotificationStyles,
+  NotificationType
+} from './Notification/types.js';

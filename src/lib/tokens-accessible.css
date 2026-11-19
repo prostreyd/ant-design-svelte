@@ -90,6 +90,14 @@
   --ads-message-icon-success: #389e0d;
   --ads-message-icon-warning: #c27c00;
 
+  /*
+   * Notification: the type icons are held to 3:1 against the white box as those of the Message (the green is 2.27:1, the amber
+   * 1.90:1), and the close button, `rgba(0, 0, 0, 0.45)` (3.4:1) on the demo, is held to 4.5:1 like the one of the Message.
+   */
+  --ads-notification-icon-success: #389e0d;
+  --ads-notification-icon-warning: #c27c00;
+  --ads-notification-close-color: rgba(0, 0, 0, 0.65);
+
   /* Modal: the icons of a static dialog are held to 3:1 against the white card, as the icons of the Message (the green is 2.27:1, the amber 1.90:1). */
   --ads-modal-confirm-icon-success: #389e0d;
   --ads-modal-confirm-icon-warning: #c27c00;
