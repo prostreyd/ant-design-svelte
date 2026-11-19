@@ -18,7 +18,7 @@ Ant Design.
 
 ## Status
 
-Version `0.12.1`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Grid` (`Row`, `Col` and `Breakpoints`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Menu` (with `MenuItem`, `MenuSubMenu`, `MenuItemGroup` and `MenuDivider`), `Radio` (with `RadioButton` and `RadioGroup`), `Select` (with `SelectOption` and `SelectOptGroup`), `Spin`, `Switch`, `Tooltip`, `Message` (the `message` calls and `MessageHost`), `Modal` (the `Modal` component, the `modal` calls and `ModalHost`), `Notification` (the `notification` calls and `NotificationHost`). More components are planned.
+Version `0.13.0`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Form` (with `FormItem`), `Grid` (`Row`, `Col` and `Breakpoints`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Menu` (with `MenuItem`, `MenuSubMenu`, `MenuItemGroup` and `MenuDivider`), `Radio` (with `RadioButton` and `RadioGroup`), `Select` (with `SelectOption` and `SelectOptGroup`), `Spin`, `Switch`, `Tooltip`, `Message` (the `message` calls and `MessageHost`), `Modal` (the `Modal` component, the `modal` calls and `ModalHost`), `Notification` (the `notification` calls and `NotificationHost`). More components are planned.
 
 ## Browser support
 
@@ -59,6 +59,7 @@ Vite in `tests/packaging`; other bundlers are not covered.
 
 See the [Button](https://prostreyd.github.io/ant-design-svelte/components/button/),
 [Checkbox](https://prostreyd.github.io/ant-design-svelte/components/checkbox/),
+[Form](https://prostreyd.github.io/ant-design-svelte/components/form/),
 [Grid](https://prostreyd.github.io/ant-design-svelte/components/grid/),
 [Input](https://prostreyd.github.io/ant-design-svelte/components/input/),
 [Menu](https://prostreyd.github.io/ant-design-svelte/components/menu/),
@@ -72,6 +73,7 @@ See the [Button](https://prostreyd.github.io/ant-design-svelte/components/button
 [Notification](https://prostreyd.github.io/ant-design-svelte/components/notification/) pages of the documentation site for
 examples and the API tables, or [`src/lib/Button/README.md`](./src/lib/Button/README.md),
 [`src/lib/Checkbox/README.md`](./src/lib/Checkbox/README.md),
+[`src/lib/Form/README.md`](./src/lib/Form/README.md),
 [`src/lib/Grid/README.md`](./src/lib/Grid/README.md),
 [`src/lib/Input/README.md`](./src/lib/Input/README.md),
 [`src/lib/Menu/README.md`](./src/lib/Menu/README.md),

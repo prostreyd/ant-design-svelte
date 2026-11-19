@@ -1,6 +1,6 @@
 // Public API of the library. Components are re-exported from here.
 
-export const VERSION = '0.12.1';
+export const VERSION = '0.13.0';
 
 export { default as Button } from './Button/Button.svelte';
 export { default as Switch } from './Switch/Switch.svelte';
@@ -31,6 +31,45 @@ export type {
   RowAlign,
   RowJustify
 } from './Grid/types.js';
+export { default as Form } from './Form/Form.svelte';
+export { default as FormItem } from './Form/FormItem.svelte';
+export { createForm } from './Form/store.svelte.js';
+export { getFormInstance } from './Form/context.js';
+export type {
+  FormClassNames,
+  FormColProps,
+  FormDeepPartial,
+  FormFeedbackIcons,
+  FormField,
+  FormFieldData,
+  FormFieldError,
+  FormFinishFailedInfo,
+  FormInstance,
+  FormItemLayout,
+  FormItemProps,
+  FormLabelAlign,
+  FormLayout,
+  FormNamePath,
+  FormNamePathPart,
+  FormProps,
+  FormRequiredMark,
+  FormRules,
+  FormRule,
+  FormRuleConfig,
+  FormRuleType,
+  FormScrollOptions,
+  FormSemanticName,
+  FormSize,
+  FormStyles,
+  FormTooltipConfig,
+  FormValidateConfig,
+  FormValidateMessages,
+  FormValidateStatus,
+  FormValidateTrigger,
+  FormValidatorResult,
+  FormValidatorRule,
+  FormVariant
+} from './Form/types.js';
 export { default as Menu } from './Menu/Menu.svelte';
 export { default as MenuItem } from './Menu/MenuItem.svelte';
 export { default as MenuSubMenu } from './Menu/MenuSubMenu.svelte';

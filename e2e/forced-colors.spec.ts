@@ -260,6 +260,68 @@ test.describe('Forced colors: Tooltip (specs/tooltip.md)', () => {
   });
 });
 
+test.describe('Forced colors: Form', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/#form');
+    await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+    // If an engine ignored the emulation, every test below would pass for the wrong reason.
+    expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
+  });
+
+  /** The text colour of the page as the browser computes it in this mode. */
+  const textColor = (page: Page) => page.evaluate(() => getComputedStyle(document.body).color);
+
+  /** Whether the engine replaces the colours of the author (Chromium and Firefox do; WebKit only matches the media query). */
+  const engineAdjustsColors = (page: Page) =>
+    page.evaluate(() => {
+      const probe = document.createElement('span');
+      probe.style.color = 'rgb(1, 2, 3)';
+      document.body.append(probe);
+      const adjusted = getComputedStyle(probe).color !== 'rgb(1, 2, 3)';
+      probe.remove();
+      return adjusted;
+    });
+
+  test('form: a message, the star and the icons stay visible, in the system text colour where the engine applies it', async ({ page }) => {
+    const text = await textColor(page);
+    const adjusts = await engineAdjustsColors(page);
+    await page.getByTestId('input-user').fill('a');
+    await page.getByTestId('input-user').fill('');
+    const message = page.getByTestId('item-user').locator('.ads-form-item-help-item');
+    await expect(message).toBeVisible();
+    // The message is text: it stays readable. Where the engine applies the system palette, it is the system colour and
+    // not the danger red; WebKit keeps the author colour (which the accessible tokens keep readable) and is checked as visible.
+    if (adjusts) {
+      await expect(message).toHaveCSS('color', text);
+      expect(await computed(page.getByTestId('item-user').locator('.ads-form-item-mark'), 'color')).toBe(text);
+    } else {
+      await expect(message).not.toHaveCSS('color', 'rgba(0, 0, 0, 0)');
+    }
+    for (const status of ['success', 'warning', 'error', 'validating']) {
+      const icon = page.getByTestId(`f-item-${status}`).locator('.ads-form-feedback');
+      await expect(icon).toBeVisible();
+      await expect(icon).toHaveCSS('color', adjusts ? text : await computed(icon, 'color'));
+    }
+  });
+
+  test('form: the icons of the statuses are told apart by their shape, which does not depend on colour', async ({ page }) => {
+    const shapes = new Set<string>();
+    for (const status of ['success', 'warning', 'error', 'validating']) {
+      shapes.add(await page.getByTestId(`f-item-${status}`).locator('.ads-form-feedback svg').innerHTML());
+    }
+    expect(shapes.size).toBe(4);
+  });
+
+  test('form: the help icon of a label keeps a visible focus ring', async ({ page }) => {
+    await page.getByTestId('input-user').focus();
+    await page.keyboard.press('Tab');
+    const icon = page.getByTestId('item-pass').getByRole('button', { name: 'More information' });
+    await expect(icon).toBeFocused();
+    expect(await computed(icon, 'outline-style')).toBe('solid');
+    expect(await computed(icon, 'outline-width')).not.toBe('0px');
+  });
+});
+
 // Ant Design's own Spin vanishes in this mode: its dots are backgrounds, which the system replaces with Canvas (found
 // 2026-11-17 on their public demo). Ours draws the dots and the ring with system colors (specs/spin.md, A11y).
 test.describe('Forced colors: Spin (specs/spin.md)', () => {

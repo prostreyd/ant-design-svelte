@@ -4,6 +4,7 @@ import '$lib/tokens.css';
 import '$lib/tokens-accessible.css';
 import { mount } from 'svelte';
 import App from './App.svelte';
+import FormLab from './FormLab.svelte';
 import GridLab from './GridLab.svelte';
 import MenuLab from './MenuLab.svelte';
 import MessageLab from './MessageLab.svelte';
@@ -23,7 +24,7 @@ if (!target) {
 
 // `/#popup` opens the lab of the popup primitive, `/#select` the one of the Select, `/#tooltip` the one of the
 // Tooltip, `/#radio` the one of the Radio, `/#grid` the one of the Row and Col, `/#menu` the one of the Menu, `/#message` the one of the
-// Message, `/#spin` the one of the Spin and `/#overlay` the one of the overlay primitives, `/#modal` the one of the Modal, `/#notification` the one of the Notification; every other URL is the component page.
+// Message, `/#spin` the one of the Spin and `/#overlay` the one of the overlay primitives, `/#modal` the one of the Modal, `/#form` the one of the Form, `/#notification` the one of the Notification; every other URL is the component page.
 const pages: Record<string, typeof App> = {
   '#popup': PopupLab,
   '#select': SelectLab,
@@ -35,6 +36,7 @@ const pages: Record<string, typeof App> = {
   '#spin': SpinLab,
   '#overlay': OverlayLab,
   '#modal': ModalLab,
+  '#form': FormLab,
   '#notification': NotificationLab
 };
 mount(pages[location.hash] ?? App, { target });

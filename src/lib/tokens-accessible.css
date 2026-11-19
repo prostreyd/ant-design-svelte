@@ -6,8 +6,8 @@
  * off track of a Switch is 1.84:1 against a white page and the border of a Checkbox or an Input 1.41:1 (3:1 is needed).
  * Import this file AFTER tokens.css to get darker values for the `-solid`, `-text` and link tokens, for the
  * Switch, for the Checkbox border, for the Input (border, placeholder, count, icons, warning), for the Select
- * (the group label and the empty-result text of its list), for the Message (the success and warning icons) and for the Spin
- * (the description and the fullscreen mask):
+ * (the group label and the empty-result text of its list), for the Form (help, extra, warning, icons), for the Message (the
+ * success and warning icons) and for the Spin (the description and the fullscreen mask):
  *
  *   import 'svelte-ant-design/tokens.css';
  *   import 'svelte-ant-design/tokens-accessible.css';
@@ -119,4 +119,15 @@
   --ads-menu-dark-item-selected-bg: #1668dc;
   --ads-menu-dark-danger-selected-bg: #d9363e;
   --ads-menu-dark-danger-active-bg: #d9363e;
+
+  /*
+   * Form: the neutral help and the extra hint are 5.7:1 against a white page (4.5:1 is needed), the warning text 7.1:1,
+   * and the icons of the success, warning and validating statuses and of the label tooltip at least 3:1.
+   */
+  --ads-form-help-color: #666666;
+  --ads-form-extra-color: #666666;
+  --ads-form-warning-text: #874d00;
+  --ads-form-success-icon: #389e0d;
+  --ads-form-warning-icon: #ad6800;
+  --ads-form-tooltip-icon-color: #737373;
 }

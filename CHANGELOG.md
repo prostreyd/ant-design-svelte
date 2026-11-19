@@ -34,6 +34,50 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
   `transform` and a mounted `MessageHost`; because the setting is global, the messages of the other examples ended up in that region. Now a layer in the `body` is
   covered by the dialog and a layer in the dialog stands above it, and the setting is given back when the dialog closes. The README says what `container` is for.
 
+## [0.13.0] - 2026-11-19
+
+### Added
+
+- `Form`: `Form`, `FormItem`, `createForm()` and `getFormInstance()`. A form lays out labels, controls, messages and hints
+  (`layout` horizontal, vertical or inline; `labelCol` and `wrapperCol` are the props of `Col`; below 576 px the label stacks
+  above the control), validates fields with rules and submits them. The API is inspired by Ant Design; the implementation is
+  original for Svelte.
+  - A control is connected through an explicit `field` object that `FormItem` hands to its snippet (`bind:value={field.value}`,
+    `field.status`, spread `field.attrs`), not by cloning the child. Any control works, and the status of an item cannot
+    leak into a popup (a class of bugs the Ant Design changelog still fixes). A field that a control binds needs an initial value,
+    because Svelte throws when `undefined` is bound to a prop with a default; development builds warn about it.
+  - Rules (`required`, `type`, `min`, `max`, `len`, `pattern`, `enum`, `whitespace`, `transform`, `message`, `validator`,
+    `defaultField`, `fields`) are checked by `@rc-component/async-validator`, the first runtime dependency of the package; `warningOnly`,
+    `validateFirst`, `validateDebounce`, message templates (`${name}`, `${min}`), `dependencies` and rules written as a function of the form
+    are the form's own. `validateTrigger` is `change`, `blur` or both; a change validation waits for the end of an IME composition.
+  - Typed values: `createForm<Values>()` gives the instance the shape of the values, and `Form` takes `Values` from the
+    instance or from `model`. `getFieldValue` and `setFieldValue` are typed by top-level key (a path takes an array and is
+    not typed), `validateFields()`, `onfinish`, `onfinishfailed` and `onvalueschange` use `Values`, `getFieldsValue(true)` is the whole `Values`
+    while `getFieldsValue()`, a list of names and `{ filter }` give a deep partial (a field without an item is not there), and
+    `setFieldsValue` and `initialValues` take a deep partial of it. `createForm()` without a type is as loose as before.
+  - `model`: your own `$state` object can hold the values (`<Form model={values}>`, `bind:value={values.username}`), as in Vue.
+    A change of it from outside (a bound control, an assignment) counts as a change by the user: the field is touched,
+    `onvalueschange` runs and the field is validated; the methods of the instance (`setFieldValue`, `resetFields`) do not
+    count. `initialValues` fill only the keys the model lacks, `resetFields` writes the model back as it was when the form
+    mounted, and the callbacks get copies. `form` and `model` can be given together. Form-level `rules` by field name
+    (a list per name, or nested objects) are added before the rules of the item with that name.
+  - The instance has `getFieldValue(s)`, `setFieldValue(s)`, `getFieldError(s)`, `getFieldWarning`, `isField*Touched`,
+    `isFieldValidating`, `setFields`, `validateFields` (`validateOnly`, `recursive`, `dirty`), `resetFields`, `submit` and
+    `scrollToField`. Values are reactive: reading them in markup or `$derived` is enough, there is no `useWatch`.
+  - `hasFeedback` gives the control a status icon (`field.feedback`), `help`, `extra` and `tooltip` take text or a snippet,
+    `requiredMark` takes `true`, `false`, `'optional'` or a snippet, `classNames` and `styles` address six parts of every item.
+    `disabled`, `size` and `variant` of the form are passed through `field`.
+  - A failed submit scrolls to the first invalid control **and focuses it** by default (`scrollToFirstError`, default
+    `{ focus: true }`); in Ant Design the default is off, so a failed submit moves nothing. The messages are linked with
+    `aria-describedby` and are not `role="alert"`; the star and the colon are `aria-hidden`
+    elements, not generated content, so the name of the control is the label text alone.
+  - The message area lives in the margin of the item, so one line of message changes neither the height of the item nor the
+    position of the next one, also frame by frame while it appears (the React changelog records a bug of this kind).
+  - Not in this version: `Form.List`, `Form.ErrorList`, `Form.Provider`, `noStyle` and passing the status through a context
+    (names and contract are reserved). `labelAlign` takes `start` and `end`; `left` and `right` are deprecated in Ant Design.
+  - Page of `Form` on the documentation site with 20 examples and a section at the top, "Typed values and your own model", that shows how a type is passed to `createForm` and how to keep the values in your own `$state` object (as in Vue), and the API tables in English, Russian and Chinese. Design tokens
+    `--ads-form-*`, with darker values for the help, extra, warning and icon colours in `tokens-accessible.css`.
+
 ## [0.12.1] - 2026-11-19
 
 ### Fixed
