@@ -14,6 +14,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 - `Message` with a `MessageHost` and `stack`: when every message went while the pointer (or focus) was over the list, the next pile opened already held open
   by a pointer that was no longer there, and its timers stood still. The list is removed without a `pointerleave`, so the layer now forgets the pointer and the focus
   with it.
+- `Message`: a message that is closing (it stays on the page for the 0.2 s of its exit) caught the pointer, so a click on it did not reach what was under it
+  and called its `onclick`. A closing message takes no pointer now.
 
 ## [0.12.1] - 2026-11-19
 

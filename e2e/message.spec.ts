@@ -435,6 +435,31 @@ test.describe('motion', () => {
     expect(fade.duration).toBe(shrink.duration);
   });
 
+  test('a message that is leaving takes no pointer: a click on it goes to what is under it', async ({ page }) => {
+    await call(page, 'info', { content: 'a', key: 'a', duration: 0 });
+    await call(page, 'info', { content: 'b', duration: 0 });
+    await page.waitForTimeout(400);
+    // The leave is made long, so that a busy machine cannot let it end before the point is read.
+    const result = await page.evaluate(
+      () =>
+        new Promise<{ attached: boolean; hit: boolean }>((resolve) => {
+          document.documentElement.style.setProperty('--ads-motion-duration', '5s');
+          const leaving = document.querySelector('.ads-message') as HTMLElement;
+          window.__messageLab.message.destroy('a');
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              const r = leaving.getBoundingClientRect();
+              const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+              document.documentElement.style.removeProperty('--ads-motion-duration');
+              resolve({ attached: leaving.isConnected, hit: leaving.contains(hit) });
+            })
+          );
+        })
+    );
+    expect(result.attached, 'the message is still leaving when it is tested').toBe(true);
+    expect(result.hit, 'the leaving box catches the pointer').toBe(false);
+  });
+
   test('prefers-reduced-motion: the box is there at full opacity in its first frame, and gone in the next', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     const out = await frames(page, "lab.message.info('x', 0)", '.ads-message', 100);

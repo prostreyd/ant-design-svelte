@@ -102,6 +102,7 @@
 >
   <div
     class="ads-message-item"
+    class:ads-message-leaving={record.state === 'closing'}
     {@attach inert}
     aria-hidden={buried ? 'true' : undefined}
     bind:this={item}
@@ -172,6 +173,12 @@
     transition:
       transform var(--ads-motion-duration) var(--ads-motion-ease),
       opacity var(--ads-motion-duration) var(--ads-motion-ease);
+  }
+
+  /* A message that is leaving is closed already: it stays on the page for the length of its exit, and must not take a click meant
+     for what is under it, nor call its `onclick`. */
+  .ads-message-leaving .ads-message {
+    pointer-events: none;
   }
 
   /* Behind the first message of a collapsed pile: lowered, smaller, and only the first of them peeks out below. */
