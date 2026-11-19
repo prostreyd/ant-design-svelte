@@ -92,7 +92,7 @@
 <div
   class="ads-message-slot"
   class:ads-message-slot-stack={stacked}
-  data-message-id={`${record.id}`}
+  data-row-id={`${record.id}`}
   data-depth={piled ? depth : undefined}
   style={`--ads-message-i: ${index}`}
   style:z-index={piled ? 100 - index : undefined}

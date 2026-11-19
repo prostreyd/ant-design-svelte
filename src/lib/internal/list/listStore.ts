@@ -26,6 +26,14 @@ export type PauseReason = 'hover' | 'focus' | 'pile' | 'hidden';
  */
 export type CloseReason = 'timeout' | 'user' | 'replaced' | 'destroy';
 
+/** What `timer(id)` says about the timer of a record. */
+export interface TimerState {
+  /** Milliseconds left (0 for a record that is closing, or one that never closes by time). */
+  readonly remaining: number;
+  /** A reason holds the timer. */
+  readonly paused: boolean;
+}
+
 /** What every record has. A component adds its own fields; the list never reads them. */
 export interface ListRecord {
   readonly id: number;
@@ -86,6 +94,11 @@ export interface ListStore<Rec extends ListRecord, Config extends object, Settin
   open(args: ListOpen<Rec>): ListEntryRef | undefined;
   /** Holds or releases the timer of a record for a reason. */
   setPaused(id: number, reason: PauseReason, on: boolean): void;
+  /**
+   * The timer of a record, read only: the milliseconds left and whether a reason holds it. `undefined` for an id that is not in the
+   * list. A strip that shows the time left draws from it (specs/overlay.md, LS10).
+   */
+  timer(id: number): TimerState | undefined;
   /** Closes the open record with this id (the close button and Escape of a box use it). */
   closeById(id: number, reason?: CloseReason): void;
   /** Removes a closing record once its exit motion is over. A record that is still open is not touched. */
@@ -172,6 +185,12 @@ export function createListStore<Rec extends ListRecord, Config extends object, S
 
   function setPaused(id: number, reason: PauseReason, on: boolean): void {
     entries.find((candidate) => candidate.record.id === id)?.timer.setPaused(reason, on);
+  }
+
+  function timerOf(id: number): TimerState | undefined {
+    const entry = entries.find((candidate) => candidate.record.id === id);
+    if (!entry) return undefined;
+    return { remaining: entry.record.state === 'open' ? entry.timer.remaining : 0, paused: entry.timer.paused };
   }
 
   function onVisibility(): void {
@@ -323,5 +342,5 @@ export function createListStore<Rec extends ListRecord, Config extends object, S
     notify();
   }
 
-  return { getSnapshot, subscribe, settings: resolveNow, open, setPaused, closeById, finalize, destroy, setConfig, registerHost, reset };
+  return { getSnapshot, subscribe, settings: resolveNow, open, setPaused, timer: timerOf, closeById, finalize, destroy, setConfig, registerHost, reset };
 }

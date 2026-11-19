@@ -688,6 +688,52 @@ describe('LS8: destroy and reset', () => {
   });
 });
 
+describe('LS10: the timer of a record', () => {
+  it('remaining counts down, stands still while a reason holds the timer, and paused follows the reasons', () => {
+    const store = fresh();
+    put(store, 'x', { duration: 10 });
+    const { id } = records(store)[0];
+    expect(store.timer(id)).toEqual({ remaining: 10_000, paused: false });
+    vi.advanceTimersByTime(3000);
+    expect(store.timer(id)).toEqual({ remaining: 7000, paused: false });
+    store.setPaused(id, 'hover', true);
+    vi.advanceTimersByTime(5000);
+    expect(store.timer(id)).toEqual({ remaining: 7000, paused: true });
+    store.setPaused(id, 'hover', false);
+    vi.advanceTimersByTime(1000);
+    expect(store.timer(id)).toEqual({ remaining: 6000, paused: false });
+  });
+
+  it('an update by key makes it full again', () => {
+    const store = fresh();
+    put(store, 'x', { key: 'k', duration: 10 });
+    const { id } = records(store)[0];
+    vi.advanceTimersByTime(6000);
+    put(store, 'y', { key: 'k', duration: 20 });
+    expect(store.timer(id)).toEqual({ remaining: 20_000, paused: false });
+  });
+
+  it('a closing record has nothing left, and a record that never closes by time has no time to count', () => {
+    const store = fresh();
+    const ref = put(store, 'x', { duration: 10 });
+    put(store, 'never', { duration: 0 });
+    const [first, never] = records(store);
+    expect(store.timer(never.id)).toEqual({ remaining: 0, paused: false });
+    ref.close();
+    expect(store.timer(first.id)).toEqual({ remaining: 0, paused: false });
+  });
+
+  it('an id that is not in the list gives undefined, also after the record has gone', () => {
+    const store = fresh();
+    expect(store.timer(42)).toBeUndefined();
+    put(store, 'x', { duration: 1 });
+    const { id } = records(store)[0];
+    vi.advanceTimersByTime(1000);
+    store.finalize(id);
+    expect(store.timer(id)).toBeUndefined();
+  });
+});
+
 describe('LS9: helpers', () => {
   it('validDuration: a finite number, 0 or more', () => {
     for (const ok of [0, 1, 4.5]) expect(validDuration(ok)).toBe(true);

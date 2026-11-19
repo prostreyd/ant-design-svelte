@@ -220,12 +220,47 @@ describe('motion (A2)', () => {
     ]);
   });
 
+  it('A3: each side gives its slide, in and out', async () => {
+    const { slot, item } = rows();
+    const cases = [
+      ['top', 'translateY(-64px)', 'translateY(0)'],
+      ['bottom', 'translateY(64px)', 'translateY(0)'],
+      ['left', 'translateX(-64px)', 'translateX(0)'],
+      ['right', 'translateX(64px)', 'translateX(0)']
+    ] as const;
+    let call = 0;
+    for (const [from, away, home] of cases) {
+      playEnter(slot, item, false, { from });
+      expect(frames(call).map((frame) => frame.transform)).toEqual([away, home]);
+      call += 1;
+      await playLeave(slot, item, { from });
+      expect(frames(call).map((frame) => frame.transform)).toEqual([home, away]);
+      call += 2; // the box and the slot
+    }
+  });
+
+  it('A3: gap start animates the padding at the start of the slot and not the one at the end', async () => {
+    stubStyle({ paddingBlockStart: '16px', paddingBlockEnd: '0px' });
+    const { slot, item } = rows();
+    slot.getBoundingClientRect = () => ({ height: 40 }) as DOMRect;
+    playEnter(slot, item, true, { gap: 'start' });
+    expect(animate.mock.calls[1][0]).toEqual([
+      { height: '0px', paddingBlockStart: '0px' },
+      { height: '40px', paddingBlockStart: '16px' }
+    ]);
+    await playLeave(slot, item, { gap: 'start' });
+    expect(animate.mock.calls[3][0]).toEqual([
+      { height: '40px', paddingBlockStart: '16px' },
+      { height: '0px', paddingBlockStart: '0px' }
+    ]);
+  });
+
   it('readTops reads the top of each row by its id, and playFlip slides the rows that moved from there', () => {
     const list = document.createElement('div');
     const first = document.createElement('div');
     const second = document.createElement('div');
-    first.dataset.messageId = 'a';
-    second.dataset.messageId = 'b';
+    first.dataset.rowId = 'a';
+    second.dataset.rowId = 'b';
     list.append(first, second);
     document.body.append(list);
     let top = 100;
@@ -247,8 +282,8 @@ describe('motion (A2)', () => {
     const list = document.createElement('div');
     const old = document.createElement('div');
     const added = document.createElement('div');
-    old.dataset.messageId = 'old';
-    added.dataset.messageId = 'new';
+    old.dataset.rowId = 'old';
+    added.dataset.rowId = 'new';
     list.append(old, added);
     document.body.append(list);
     old.getBoundingClientRect = () => ({ top: 10.3 }) as DOMRect;

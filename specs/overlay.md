@@ -64,6 +64,11 @@ the scroll lock and `inert` follow MDN. API inspired by Ant Design (MIT); the im
   `prefers-reduced-motion` or without `Element.animate`. The only change: the token for the distance of the slide is a parameter
   (`offsetToken`), because the file no longer belongs to Message; Message passes `--ads-message-motion-offset`, so its public
   token keeps working. Without a token the distance is 64 px.
+- **A3** (`motion.ts`, added with Notification, additive: the default is the behavior of A2). `playEnter` and `playLeave` take `from`: the side
+  the box comes in from and leaves to (`top` by default; `bottom`, `left`, `right`), which turns the slide into a vertical or a horizontal one
+  of the same distance. They take `gap` (`'end'` by default, or `'start'`): which padding of the slot is the gap to the next row and so is
+  animated with the height; a list that stands on the bottom edge keeps its gap at the start of each row. The attribute that `readTops` and
+  `playFlip` look for is `data-row-id` (it was `data-message-id`; the name does not say "message" any more).
 
 ### Timer (`timer/`)
 
@@ -132,6 +137,10 @@ createdAt }` plus whatever the component adds; the core never reads the rest.
   calling `onclose`: the records, the timers, the settings and the hosts.
 - **LS9. Helpers.** `validDuration` (a finite number, 0 or more), `validCount` (a finite number, 1 or more) and `mergeParts` are exported for the
   components' `resolve`, so that the checks are not written twice.
+- **LS10. The timer of a record** (added with Notification, additive). `timer(id)` gives `{ remaining, paused }` of the record's timer (milliseconds left;
+  whether a reason holds it), or `undefined` for an id that is not in the list. It only reads: a strip that shows the time left (the progress of a
+  notification) draws from it, so that it stands still on every pause and restarts with an update by key, instead of a CSS animation that knows
+  nothing of the pauses. A record that is closing has `remaining` 0.
 
 ### Pile (`pile/`)
 
@@ -216,8 +225,8 @@ layer without a mask (a Drawer with no mask) takes only what it needs.
 5. **`data-ads-overlay-keep`** is the only way out of `inert`. A prop on `openOverlay` was the alternative; an attribute
    lets a component that is not part of the layer (Message) say it on its own, without the layer knowing it.
 6. **`motion.ts` takes the token as an argument** (A2) and does not get a generic token: a new public token for a value nobody
-   asked to change is not added. `readTops` and `playFlip` still look for `data-message-id`; the name is decided when
-   Notification, the second user, is specified. (2026-11-18 it stayed in Message; moved 2026-11-19, in the branch before Notification.)
+   asked to change is not added. `readTops` and `playFlip` look for `data-row-id` (renamed from `data-message-id` with
+   Notification, the second user; A3).
 7. **The timer, the layer and the motion move together, before Notification** (the maintainer, 2026-11-19, after the three
    libraries were compared in `specs/notification.md`: all of them share one core between their message and their notification,
    and the motion, the timer and the layer are in it). No second copy for Notification (rule 6b). The core of the list itself
@@ -272,6 +281,10 @@ and must pass unchanged, which is how "no change of behavior" is shown.
   first, on add, on `setConfig` and on a host; a pause keeps the time left; `hidden` on every timer, a record opened while hidden, the listener removed;
   the merge of settings (undefined removes, the merged names, the host over the global); hosts (last is active, update, dispose twice); the same snapshot
   object until a change; listeners; `destroy` with and without a key; `reset` calls no `onclose`; the helpers.
+- A3 (`tests/anim.test.ts`): each side gives its keyframes (a vertical slide for `top` and `bottom`, a horizontal one for `left` and `right`) in and
+  out; `gap: 'start'` animates the padding at the start and not the one at the end; the default is unchanged.
+- LS10 (`tests/listStore.test.ts`): `remaining` counts down, stands still while a reason holds the timer, is full again after an update by key, is 0 for a
+  closing record; `paused` follows the reasons; an unknown id gives `undefined`.
 - PL1 to PL7 (`tests/pile.test.ts`, probe `tests/fixtures/PileProbe.svelte` with a fake `setPaused`; the motion is replaced by spies): not piled while
   not collapsed; piled when collapsed; the pointer of a mouse and a pen opens it and leaving closes it, a touch does not; focus opens it, focus moving to
   an element inside does not close it, focus leaving does; the reason `pile` with the pointer for the records with `pauseOnHover` only and with the focus
