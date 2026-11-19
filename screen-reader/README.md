@@ -2,7 +2,7 @@
 
 Tests that drive a real screen reader, Orca with Firefox, through [Guidepup](https://www.guidepup.dev/) and assert on
 what it says: the name and the state of a control and how the state changes after Space. They cover the Switch and the
-Checkbox on the e2e fixtures (`e2e/fixtures`), and the Radio on its lab (`/#radio`): one test, because Orca keeps its state
+Checkbox on the e2e fixtures (`e2e/fixtures`), and the Radio and the Form on their labs (`/#radio`, `/#form`): one test each, because Orca keeps its state
 from one test to the next. Orca says nothing for a one-letter name, so the lab uses words. This folder has its own `package.json`; it is not part of `npm test`.
 
 Orca runs on Linux only. Guidepup tests it with Firefox: in our attempt Chromium did not register with the accessibility
