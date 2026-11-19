@@ -20,9 +20,10 @@ concurrency:
 # engines reached the limit of 40 minutes on 2026-11-17, and two jobs of three engines each took 16 and 26 minutes (2026-11-19, the
 # engines one after the other). An engine is about a third of that. The tests of the site are slower than the others (on 2026-11-19
 # the tests of Chromium took 7.8 minutes, of Firefox 9.3 and of WebKit 14.3, against 6.5, 8.0 and 7.4 for the library), so the
-# site is cut in two parts for Firefox and WebKit (`--shard`): ten e2e jobs, each about 8 to 9 minutes, and a run takes about the time of
-# the slowest of them. What a job costs on top of its tests is under a minute (the container, `npm ci`, the build), so a part is cheap.
-# A new component adds to every job.
+# site is cut in two parts for Firefox and WebKit (`--shard`): eight e2e jobs (three for the library, five for the site) and the fast
+# checks. On 2026-11-20 the parts of the site took 5.6 to 7.4 minutes and the whole run 12.4, with the library now the slowest
+# (WebKit 12.4 and Firefox 10.7 minutes in that run, 8.3 and 8.7 in the one before: the runners vary). What a job costs on top of its
+# tests is under a minute (the container, `npm ci`, the build), so a part is cheap. A new component adds to every job.
 #
 # Pinned, not `ubuntu-latest`: on 2026-11-17 that label moved to Ubuntu 26.04, where the WebKit of Playwright 1.65 does not
 # start (`libicudata.so.74: cannot open shared object file`, every WebKit test fails). 24.04 is the image the jobs were green on.
