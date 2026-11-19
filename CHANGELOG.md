@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-19
+
 ### Added
 
 - `Form`: `Form`, `FormItem`, `createForm()` and `getFormInstance()`. A form lays out labels, controls, messages and hints
