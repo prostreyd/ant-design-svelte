@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-19
+
 ### Added
 
 - `Notification`: a box with a title, a text and, if you want, buttons, at a corner or at the top or bottom edge of the window. It is opened by a call from code
