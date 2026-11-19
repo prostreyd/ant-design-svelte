@@ -46,3 +46,29 @@ describe('the Playwright image of the CI', () => {
     for (const host of hosts) expect(host).toBe('ubuntu-24.04');
   });
 });
+
+// The two e2e jobs run once for every engine, at the same time, so a run takes the time of one engine and not of three
+// (2026-11-19: 16 and 26 minutes one after the other, about a third of that apart).
+describe('the e2e jobs of the CI go by engine', () => {
+  const steps = ci.replace(/^\s*#.*$/gm, '');
+  const matrix = [...steps.matchAll(/^\s+engine:\s*\[([^\]]*)\]\s*$/gm)].map((match) => match[1].split(',').map((name) => name.trim()));
+  const configured = (file: string) => [...readFileSync(join(root, file), 'utf8').matchAll(/name:\s*'(\w+)'/g)].map((match) => match[1]);
+
+  it('the library job and the site job each have a matrix of the engines', () => {
+    expect(matrix).toHaveLength(2);
+  });
+
+  it('the matrix lists every project of the Playwright config of its job, so no engine is left out of the CI', () => {
+    expect(matrix[0]).toEqual(configured('playwright.config.ts'));
+    expect(matrix[1]).toEqual(configured('docs/playwright.config.ts'));
+  });
+
+  it('each job gives its engine to Playwright, and a failed job keeps its report under its own name', () => {
+    expect(steps.match(/--project=\$\{\{ matrix\.engine \}\}/g) ?? []).toHaveLength(2);
+    expect(steps.match(/name: playwright-test-results-(library|site)-\$\{\{ matrix\.engine \}\}/g) ?? []).toHaveLength(2);
+  });
+
+  it('an engine that fails does not stop the other engines', () => {
+    expect(steps.match(/fail-fast:\s*false/g) ?? []).toHaveLength(2);
+  });
+});

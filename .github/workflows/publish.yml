@@ -32,7 +32,7 @@ permissions:
   contents: read
 
 jobs:
-  # Stage 1. It fails in a minute, before the 25 minutes of the checks, when the tag cannot be published at all.
+  # Stage 1. It fails in a minute, before the 15 minutes of the checks, when the tag cannot be published at all.
   guard:
     runs-on: ubuntu-latest
     timeout-minutes: 5

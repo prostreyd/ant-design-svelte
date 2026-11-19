@@ -15,10 +15,11 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Three jobs that run at the same time: the fast checks, the e2e tests of the library and the tests of the documentation site.
-# The e2e tests (each in three engines) are most of the time, and one job for all of them reached the limit of 40 minutes
-# on 2026-11-17 (the library 17 minutes, the site 19 and more). Each job now takes about 20 to 25 minutes, and a new
-# component adds to one of the two e2e jobs, not to the sum of them.
+# Jobs that run at the same time: the fast checks, and the e2e tests of the library and of the documentation site, each of the two
+# once for every engine (Chromium, Firefox, WebKit), so seven jobs. The e2e tests are most of the time: one job for all of them
+# and all three engines reached the limit of 40 minutes on 2026-11-17, and two jobs of three engines each took 16 and 26 minutes
+# (2026-11-19, the engines one after the other). An engine is about a third of that, so a run now takes about the time of the
+# slowest engine of the site (10 minutes of tests, the install and the build on top). A new component adds to each of the jobs.
 #
 # Pinned, not `ubuntu-latest`: on 2026-11-17 that label moved to Ubuntu 26.04, where the WebKit of Playwright 1.65 does not
 # start (`libicudata.so.74: cannot open shared object file`, every WebKit test fails). 24.04 is the image the jobs were green on.
@@ -52,15 +53,21 @@ jobs:
         run: npm run package
 
   e2e-library:
+    name: e2e-library (${{ matrix.engine }})
     runs-on: ubuntu-24.04
+    strategy:
+      # An engine that fails does not stop the others: the whole list of what is red is read in one run.
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
     # The official image of Playwright: the three browsers and all their system packages are already in it, so a job downloads
     # nothing and runs no `apt` at the start. (On 2026-11-18 the `apt` of `playwright install --with-deps` timed out on a slow
     # Ubuntu mirror in every e2e job, `main` included, before a test ran.) The tag is the version of Playwright in
     # package-lock.json; tests/ciPlaywright.test.ts fails when they differ, so change both together.
     container:
       image: mcr.microsoft.com/playwright:v1.65.0-noble
-    # About 20 minutes; a slow runner adds 40% to that, so the limit leaves room for it.
-    timeout-minutes: 40
+    # About 8 minutes for one engine; a slow runner adds 40% to that, so the limit leaves room for it.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -71,8 +78,8 @@ jobs:
 
       - run: npm ci
 
-      - name: End-to-end tests of the library
-        run: npm run test:e2e
+      - name: End-to-end tests of the library (${{ matrix.engine }})
+        run: npm run test:e2e -- --project=${{ matrix.engine }}
         env:
           # In a container job `$HOME` is /github/home, owned by another user, while the steps run as root, and Firefox refuses to
           # start then ("Firefox is unable to launch if the $HOME folder isn't owned by the current user"). The workaround that
@@ -83,21 +90,26 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-test-results-library
+          name: playwright-test-results-library-${{ matrix.engine }}
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
 
   e2e-site:
+    name: e2e-site (${{ matrix.engine }})
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
     # The official image of Playwright: the three browsers and all their system packages are already in it, so a job downloads
     # nothing and runs no `apt` at the start. (On 2026-11-18 the `apt` of `playwright install --with-deps` timed out on a slow
     # Ubuntu mirror in every e2e job, `main` included, before a test ran.) The tag is the version of Playwright in
     # package-lock.json; tests/ciPlaywright.test.ts fails when they differ, so change both together.
     container:
       image: mcr.microsoft.com/playwright:v1.65.0-noble
-    # About 25 minutes with the build; the limit leaves room for a slow runner.
-    timeout-minutes: 45
+    # About 14 minutes for one engine with the build; the limit leaves room for a slow runner.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -114,8 +126,14 @@ jobs:
         env:
           BASE_PATH: /ant-design-svelte
 
-      - name: Check and test the documentation site
-        run: npm run test:docs
+      # `npm run test:docs` is these two steps in one line; the engine goes to the second one, so they are written apart.
+      - name: Check the build of the documentation site
+        run: npm run verify -w docs
+        env:
+          BASE_PATH: /ant-design-svelte
+
+      - name: Test the documentation site (${{ matrix.engine }})
+        run: npm run test:e2e -w docs -- --project=${{ matrix.engine }}
         env:
           BASE_PATH: /ant-design-svelte
           # See the HOME of the library job above: Firefox does not start in a container without it.
@@ -125,7 +143,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-test-results-site
+          name: playwright-test-results-site-${{ matrix.engine }}
           path: docs/test-results/
           if-no-files-found: ignore
           retention-days: 7
