@@ -9,9 +9,10 @@ to move it to `internal/anim/` in a branch of its own just before Notification, 
 and Modal (T, L), and changes nothing a user can see. Notification, Drawer and the next components import these parts. **Extended again 2026-11-19 in `refactor/list-core`** (standing on
 `refactor/anim-motion`): the core of the global list of `Message/store.ts` becomes the sixth block, `list/`, so that Notification does
 not copy it (D7 of `specs/notification.md`, answered 2026-11-19). The branch changes nothing a user can see; the unchanged tests of
-Message are the proof.
+Message are the proof. **And again 2026-11-19 in `refactor/pile`** (standing on `refactor/list-core`): the behavior of the collapsed pile that
+`MessageLayer.svelte` held becomes the seventh block, `pile/` (D7 of `specs/notification.md`, option A: list-core, then the pile).
 
-Six internal blocks under `src/lib/internal/`. They are not components, not exported from the package and have no page
+Seven internal blocks under `src/lib/internal/`. They are not components, not exported from the package and have no page
 on the documentation site; each component built on them documents its own behavior on its own page.
 
 | Folder | What | Written | Used by |
@@ -21,6 +22,7 @@ on the documentation site; each component built on them documents its own behavi
 | `overlay/` | What makes a layer modal: the page does not scroll, the page behind it cannot be reached, focus stays inside and comes back, Escape closes the topmost one. | New. | Modal, Drawer, Image preview. |
 | `timer/` | A timer that stands still for several reasons at once and resumes with the time left. | The timer of `Message/store.ts`, moved (2026-11-19). | Message; Notification next. |
 | `list/` | The global list that a call from code fills (`message.success(...)`): the records, the keys and the update by key, the close with its reason, the limit, the timers, the hosts, the settings of three layers, the server no-op. | The core of `Message/store.ts`, moved (2026-11-19). What stays in Message: the shape of its record, its settings and their defaults, the form of its handle. | Message; Notification next. |
+| `pile/` | The behavior of a list that lies in a pile past a threshold: the pointer or the focus opens it, the timers wait while it is open, the rows slide when it opens or closes, and what the pointer and the focus did is forgotten with the list. | The pile of `Message/MessageLayer.svelte` and the `inert` of `MessageItem.svelte`, moved (2026-11-19). The geometry (offsets, scale steps, the direction) stays CSS of each component. | Message; Notification next. |
 | `layer/` | The layer the library makes on the body for a call from code (`message.success(...)`, `modal.confirm(...)`) while no host is mounted. | `Message/layer.ts` and `Modal/layer.ts` were the same file; now one part and two short files that say what to mount. | Message, Modal; Notification next. |
 
 The comparison with the three Ant Design libraries is not repeated here: it belongs to the specification of each component
@@ -131,6 +133,32 @@ createdAt }` plus whatever the component adds; the core never reads the rest.
 - **LS9. Helpers.** `validDuration` (a finite number, 0 or more), `validCount` (a finite number, 1 or more) and `mergeParts` are exported for the
   components' `resolve`, so that the checks are not written twice.
 
+### Pile (`pile/`)
+
+`createPile({ collapsed, records, rows, setPaused })` in `pile.svelte.ts`; it returns `{ piled, attach }`. It makes effects, so it is called while a
+component initializes (once for each list that can pile: Notification has up to six, each in its own component). `collapsed()` says that the list is long
+enough to lie in a pile (past the threshold, and the component's own `stack` is on); `records()` are the records of the list, `{ id, pauseOnHover }`;
+`rows()` is anything that changes when the rows change; `setPaused` is the one of the list (LS4). `attach` is an attachment for the element that holds
+the rows. What a pile looks like (offsets, scale, which way it leans at the bottom places) is the CSS of the component and is not here.
+
+- **PL1. `piled`.** True while `collapsed()` is true and the pile is not open. The pile is open while a mouse or a pen is over the element with `attach`,
+  or focus is inside it. A list that is not collapsed is never piled, whatever the pointer does.
+- **PL2. The pointer.** `pointerenter` of a mouse or a pen opens the pile and `pointerleave` closes it. A touch does nothing: a tap leaves a hover that
+  never goes, and the pile would stay open.
+- **PL3. The focus.** `focusin` inside the element opens it; `focusout` closes it, unless focus goes to another element inside (the pile does not shut
+  between two of its own buttons).
+- **PL4. The timers wait.** While the pile is open (`collapsed()` and the pointer or the focus), every record's timer is held with the reason `'pile'`:
+  with the focus every record, with the pointer only those with `pauseOnHover`. The hold is let go when the pile closes, when the list stops being
+  collapsed, when `records()` changes (the effect starts again with the new list) and when the owner is destroyed.
+- **PL5. Forgotten with the element.** When the element goes away (the cleanup of the attachment), the pointer and the focus are forgotten: a removed
+  element sends no `pointerleave` and no `focusout`, so without this the next pile would open already held by a pointer that is no longer there
+  (the fault of the public issue of the React package; fixed in Message on 2026-11-19).
+- **PL6. The rows slide.** When `piled` changes, the rows move from where they were (FLIP of `anim/motion.ts`): the places are read before the page
+  changes and played after. Nothing slides at the first render, or when `piled` did not change, or when there is no element yet.
+- **PL7. `inertWhen(active)`.** An attachment that sets the attribute `inert` on its element while `active()` is true, and removes it otherwise, as
+  `active()` changes. The attribute and not the property: a browser without `inert` (the floor) ignores a property it does not know. It is for the rows
+  that lie behind the first one: they cannot take focus and cannot be read again.
+
 ### Overlay (`overlay/`)
 
 One call, `openOverlay(options)`, returns the function that closes it. The pieces are also exported on their own, so that a
@@ -210,6 +238,15 @@ layer without a mask (a Drawer with no mask) takes only what it needs.
 12. **A closure per list, not module state.** The core of Message was module state; it is now one call of `createListStore` in `Message/store.ts`,
     so the exported functions of that file keep their names and signatures, and nothing that imports them changes.
 
+13. **The pile shares the behavior, not the geometry.** The offset, the scale step and the way the pile leans (down at the top places, up at the bottom
+    ones) are CSS tokens of each component: Message and Notification are measured on their own demos and their values differ, and one geometry would
+    need tokens of one component read by the other. What is shared is what has no look: when it opens, what waits, what slides, what is forgotten.
+14. **One pile per call.** `createPile` holds the state of one list. Notification draws up to six lists (D6 of `specs/notification.md`) and each calls it
+    in its own component, so the pointer in one place opens that place only.
+15. **An attachment, not handlers and `bind:this`.** The element, its four listeners and the forgetting of what they set are one thing; Message had a
+    `bind:this`, four handlers in the template and an effect that watched the element go. The listeners are added with `addEventListener` on the element
+    itself, as `pointerenter` and `pointerleave` are not delegated by Svelte anyway.
+
 ## Tests (each item is at least one test)
 
 Unit, jsdom (`tests/portal.test.ts`, `tests/anim.test.ts`, `tests/overlay*.test.ts`); the existing Popup tests stay as they are
@@ -235,6 +272,13 @@ and must pass unchanged, which is how "no change of behavior" is shown.
   first, on add, on `setConfig` and on a host; a pause keeps the time left; `hidden` on every timer, a record opened while hidden, the listener removed;
   the merge of settings (undefined removes, the merged names, the host over the global); hosts (last is active, update, dispose twice); the same snapshot
   object until a change; listeners; `destroy` with and without a key; `reset` calls no `onclose`; the helpers.
+- PL1 to PL7 (`tests/pile.test.ts`, probe `tests/fixtures/PileProbe.svelte` with a fake `setPaused`; the motion is replaced by spies): not piled while
+  not collapsed; piled when collapsed; the pointer of a mouse and a pen opens it and leaving closes it, a touch does not; focus opens it, focus moving to
+  an element inside does not close it, focus leaving does; the reason `pile` with the pointer for the records with `pauseOnHover` only and with the focus
+  for all; let go on closing, on `collapsed` turning false, on a change of the records and on destroy; the pointer forgotten when the element goes
+  (the next element is not held); the places read before and played after when `piled` changes, nothing at the first render or when it did not change;
+  `inertWhen` sets, removes and follows `active`. Message keeps its own tests unchanged (`tests/Message.test.ts` has the pile ones, and the browser
+  ones are in `e2e/message.spec.ts`).
 - O1: lock and unlock restore the inline values (set and empty); `html` is locked and restored with the body; two locks, one
   restore; the scrollbar width goes to the padding; none when there is none; an element container; unlock in any order.
 - O2: siblings of every ancestor, not the layer; `inert` or `aria-hidden` by feature; a previously inert element is left alone;
@@ -276,5 +320,5 @@ and must pass unchanged, which is how "no change of behavior" is shown.
 ## Dependencies
 
 Rule 6b: these are shared parts, they import no component. Popup (`popup/Popup.svelte`) takes `portal` and `anim`; the Modal takes
-`portal`, `anim`, `overlay` and `layer`; Message takes `portal`, `anim` (the motion), `timer`, `layer` and `list`. Notification takes the
-same five as Message. `list/` imports `timer/` and `env.ts`, nothing else.
+`portal`, `anim`, `overlay` and `layer`; Message takes `portal`, `anim` (the motion), `timer`, `layer`, `list` and `pile`. Notification takes the
+same six as Message. `list/` imports `timer/` and `env.ts`, nothing else; `pile/` imports `anim/` and the type `PauseReason` of `list/`.
