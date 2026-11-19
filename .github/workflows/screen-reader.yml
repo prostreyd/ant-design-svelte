@@ -2,10 +2,38 @@
 # that the CI of the library does not wait for it and a speech that is late does not stop a release by itself.
 name: Screen reader
 
+# It runs when what the speech depends on changes (the library, the e2e fixtures, the tests of the screen reader, the build and
+# the packages), and once a week by itself: Orca, Firefox, the Ubuntu image and the packages of the screen reader change
+# without a commit of ours, and a week is the longest a change of theirs stays unseen. A push that only touches the
+# documentation, the specifications or the rules does not start it. By hand it runs at any time. The list of paths is kept
+# in step with what the build of the fixtures reads by tests/screenReaderWorkflow.test.ts.
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/lib/**'
+      - 'e2e/fixtures/**'
+      - 'screen-reader/**'
+      - 'vite.e2e.config.ts'
+      - 'svelte.config.js'
+      - 'tsconfig*.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/screen-reader.yml'
   pull_request:
+    paths:
+      - 'src/lib/**'
+      - 'e2e/fixtures/**'
+      - 'screen-reader/**'
+      - 'vite.e2e.config.ts'
+      - 'svelte.config.js'
+      - 'tsconfig*.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/screen-reader.yml'
+  schedule:
+    # Every Monday at 03:00 UTC (a scheduled run is made on the default branch).
+    - cron: '0 3 * * 1'
   workflow_dispatch:
 
 permissions:
