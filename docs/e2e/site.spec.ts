@@ -8,6 +8,7 @@ import { demos as gridDemos } from '../src/docs/data/grid.ts';
 import { demos as inputDemos } from '../src/docs/data/input.ts';
 import { demos as menuDemos } from '../src/docs/data/menu.ts';
 import { demos as messageDemos } from '../src/docs/data/message.ts';
+import { demos as notificationDemos } from '../src/docs/data/notification.ts';
 import { demos as modalDemos } from '../src/docs/data/modal.ts';
 import { demos as radioDemos } from '../src/docs/data/radio.ts';
 import { demos as selectDemos } from '../src/docs/data/select.ts';
@@ -284,8 +285,8 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Grid', 'Menu', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Spin', 'Modal', 'Message'];
-    const PLANNED = ['Typography', 'Icon', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Drawer', 'Notification'];
+    const READY = ['Button', 'Grid', 'Menu', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Tooltip', 'Spin', 'Modal', 'Message', 'Notification'];
+    const PLANNED = ['Typography', 'Icon', 'Dropdown', 'DatePicker', 'Form', 'Table', 'Drawer'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
       await open(page, 'components/');
@@ -426,7 +427,8 @@ test.describe('home page', () => {
     await expect(now).toContainText('Spin');
     await expect(now).toContainText('Modal');
     await expect(now).toContainText('Message');
-    // The ready components follow the order of the sidebar: Button, Grid, Menu, Input, Checkbox, Radio, Switch, Select, Tooltip, Spin, Modal, Message.
+    await expect(now).toContainText('Notification');
+    // The ready components follow the order of the sidebar: Button, Grid, Menu, Input, Checkbox, Radio, Switch, Select, Tooltip, Spin, Modal, Message, Notification.
     await expect(now.locator('.chips').nth(1)).toContainText('gutter');
     await expect(now.locator('.chips').nth(2)).toContainText('selectedKeys');
     await expect(now.locator('.chips').nth(3)).toContainText('variant');
@@ -1905,6 +1907,152 @@ test.describe('Message page', () => {
     await kept.locator('.ads-message-close').click();
     await expect(kept).toHaveCount(0);
   });
+
+});
+
+test.describe('Notification page', () => {
+  // A notification fades in; a rectangle or a colour read in its first frames is the one of a half-shown notification.
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+  });
+
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    test.slow();
+    await open(page, 'components/notification/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(notificationDemos.length);
+
+    for (let i = 0; i < notificationDemos.length; i++) {
+      const demo = examples.nth(i);
+      // Nothing is on the page before a press: the layer appears with the first notification and goes with the last one.
+      await expect(demo.locator('.demo-pre').getByRole('button').first()).toBeAttached();
+
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/notification/${String(i + 1).padStart(2, '0')}-${notificationDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+  });
+
+  test('a press shows a notification; an error is an alert and the others are status; the layer leaves with the last one', async ({ page }) => {
+    await open(page, 'components/notification/');
+    await expect(page.locator('.ads-notification-layer')).toHaveCount(0);
+
+    const types = demoOf(page, 'Types').locator('.demo-pre');
+    await types.scrollIntoViewIfNeeded();
+    await types.getByRole('button', { name: 'success', exact: true }).click();
+    const done = page.locator('.ads-notification-success');
+    await expect(done).toContainText('Saved');
+    await expect(done).toHaveAttribute('role', 'status');
+
+    await types.getByRole('button', { name: 'error', exact: true }).click();
+    const failed = page.locator('.ads-notification-error');
+    await expect(failed).toContainText('Upload failed');
+    await expect(failed).toHaveAttribute('role', 'alert');
+
+    // Both go by themselves (4.5 s), and then the page is as it was.
+    await expect(page.locator('.ads-notification')).toHaveCount(0, { timeout: 9000 });
+    await expect(page.locator('.ads-notification-layer')).toHaveCount(0);
+  });
+
+  test('the container example: a modal dialog covers a layer in the body, a layer in the dialog stands above it, and the setting is given back', async ({ page }) => {
+    await open(page, 'components/notification/');
+    const demo = demoOf(page, 'Container').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const dialog = demo.locator('dialog');
+    const note = page.locator('[data-demo="container"]');
+    // Whether the notification is what the pointer would meet at its centre, or the dialog (its backdrop) is on top of it.
+    const reachable = () =>
+      note.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        return element.contains(document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2));
+      });
+
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('.ads-notification-layer')).toHaveCount(0);
+    await demo.getByRole('button', { name: 'Open the dialog' }).click();
+    await expect(dialog).toBeVisible();
+
+    // Not set: the layer is in the body, and the dialog is over it.
+    await dialog.getByRole('button', { name: 'Show a notification' }).first().click();
+    await expect(dialog.locator('.out').first()).toContainText('The layer is in the body');
+    await expect(note).toHaveCount(1);
+    await expect(dialog.locator('.ads-notification-layer')).toHaveCount(0);
+    await expect.poll(reachable, { message: 'covered by the dialog' }).toBe(false);
+
+    // The dialog: the layer moves into it (the same notification, updated), and now it can be reached and closed.
+    await dialog.getByRole('button', { name: 'Show a notification' }).last().click();
+    await expect(dialog.locator('.out').last()).toContainText('The layer is in the dialog');
+    await expect(dialog.locator('.out').first()).toContainText('Press to see');
+    await expect(dialog.locator('.ads-notification-layer')).toHaveCount(1);
+    await expect.poll(reachable, { message: 'above the dialog' }).toBe(true);
+    await note.locator('.ads-notification-close').click();
+    await expect(note).toHaveCount(0);
+
+    // The dialog closes: the setting is given back, so a notification of another example puts its layer in the body.
+    await dialog.getByRole('button', { name: 'Close the dialog' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('.ads-notification-layer')).toHaveCount(0);
+    await demoOf(page, 'Basic').locator('.demo-pre').getByRole('button').first().click();
+    await expect(page.locator('.ads-notification-layer')).toHaveCount(1);
+    await expect(dialog.locator('.ads-notification-layer')).toHaveCount(0);
+  });
+
+  test('the container example: Escape closes the dialog and takes its notification and its setting with it', async ({ page }) => {
+    await open(page, 'components/notification/');
+    const demo = demoOf(page, 'Container').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const dialog = demo.locator('dialog');
+    await demo.getByRole('button', { name: 'Open the dialog' }).click();
+    await dialog.getByRole('button', { name: 'Show a notification' }).last().click();
+    await expect(dialog.locator('.ads-notification-layer')).toHaveCount(1);
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('.ads-notification-layer')).toHaveCount(0);
+    await expect(dialog.locator('.out').last()).toContainText('Press to see');
+  });
+
+  test('the six places: each button opens a notification in its own place', async ({ page }) => {
+    await open(page, 'components/notification/');
+    const demo = demoOf(page, 'Placement').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    for (const placement of ['topLeft', 'top', 'topRight', 'bottomLeft', 'bottom', 'bottomRight']) {
+      await demo.getByRole('button', { name: placement, exact: true }).click();
+      await expect(page.locator(`.ads-notification-list[data-placement="${placement}"] .ads-notification`)).toHaveCount(1);
+    }
+  });
+
+  test('the close button closes a notification that stays, and onclose says why', async ({ page }) => {
+    await open(page, 'components/notification/');
+    const demo = demoOf(page, 'Click and close').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    await demo.getByRole('button', { name: 'Open', exact: true }).click();
+    const note = page.locator('.ads-notification').filter({ hasText: 'Click me, or close me' });
+    await expect(note).toBeVisible();
+    await note.locator('.ads-notification-close').click();
+    await expect(note).toHaveCount(0);
+    await expect(demo.getByRole('status')).toContainText('closed by: user');
+  });
+
+  test('the stack: past three the older ones lie behind the newest, and the examples do not touch each other', async ({ page }) => {
+    await open(page, 'components/notification/');
+    const demo = demoOf(page, 'Stack').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    for (let index = 0; index < 4; index++) await demo.getByRole('button', { name: 'Open', exact: true }).click();
+    // The button may stand under the place of the notifications: a pile with the pointer in it is open.
+    await page.mouse.move(2, 2);
+    await expect(page.locator('.ads-notification-piled')).toHaveCount(1);
+    await demo.getByRole('button', { name: 'Destroy all' }).click();
+    await expect(page.locator('.ads-notification')).toHaveCount(0);
+    await demo.getByRole('switch', { name: 'stack' }).click();
+    for (let index = 0; index < 4; index++) await demo.getByRole('button', { name: 'Open', exact: true }).click();
+    await page.mouse.move(2, 2);
+    await expect(page.locator('.ads-notification')).toHaveCount(4);
+    await expect(page.locator('.ads-notification-piled')).toHaveCount(0);
+  });
 });
 
 test.describe('Modal page', () => {
@@ -2129,7 +2277,7 @@ test.describe('Menu page', () => {
     await open(page, 'components/menu/');
     const demo = demoOf(page, 'Selection').locator('.demo-pre');
     await demo.scrollIntoViewIfNeeded();
-    const status = demo.getByRole('status');
+    const status = demo.locator('.out');
     await expect(status.nth(0)).toContainText('selectedKeys: a');
     await expect(status.nth(1)).toContainText('selectedKeys: a, c');
     await demo.getByRole('menu', { name: 'Single selection' }).getByRole('menuitemradio', { name: 'Beta' }).click();

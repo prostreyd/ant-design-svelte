@@ -38,6 +38,7 @@ export const componentPages: PageDef[] = [
   { path: '/components/menu/', section: 'components', title: 'mn.title', description: 'seo.menu' },
   { path: '/components/message/', section: 'components', title: 'msg.title', description: 'seo.message' },
   { path: '/components/modal/', section: 'components', title: 'mod.title', description: 'seo.modal' },
+  { path: '/components/notification/', section: 'components', title: 'nt.title', description: 'seo.notification' },
   { path: '/components/radio/', section: 'components', title: 'rd.title', description: 'seo.radio' },
   { path: '/components/select/', section: 'components', title: 'sel.title', description: 'seo.select' },
   { path: '/components/spin/', section: 'components', title: 'spn.title', description: 'seo.spin' },
@@ -111,7 +112,7 @@ export const componentGroups: ComponentGroup[] = [
       { name: 'Modal', note: 'n.modal', phase: 'now', path: '/components/modal/' },
       { name: 'Drawer', note: 'n.drawer', phase: 'later' },
       { name: 'Message', note: 'n.message', phase: 'now', path: '/components/message/' },
-      { name: 'Notification', note: 'n.notification', phase: 'later' }
+      { name: 'Notification', note: 'n.notification', phase: 'now', path: '/components/notification/' }
     ]
   }
 ];
