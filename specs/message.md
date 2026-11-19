@@ -182,7 +182,7 @@ page says so next to the first example, and `closed`, `update` and `key` stay po
 | `top` | `number \| string` | `8` | Distance from the top of the window; a number is pixels. P7. |
 | `duration` | `number` (seconds) | `3` | Default of every message. |
 | `maxCount` | `number` | none | When exceeded, the oldest message is closed (its `onclose` runs). |
-| `container` | `HTMLElement \| (() => HTMLElement)` | `document.body` | React and Vue `getContainer`. The layer is `position: fixed` anyway. |
+| `container` | `HTMLElement \| (() => HTMLElement)` | `document.body` | React and Vue `getContainer`. **Only where the layer sits in the page:** it stays `position: fixed` and is drawn at the window. What it is for (the owner, 2026-11-19): a native modal `<dialog>` (`showModal()`) is in the top layer, so a layer in the `body` is covered and cannot be reached, while a layer in the dialog stands above it; also an iframe or a shadow root. The `Modal` of this library does not need it (`data-ads-overlay-keep`). |
 | `closable` | `boolean` | `false` | Default of every message. |
 | `labels` | `Partial<Record<MessageType \| 'close', string>>` | English (D3, D4) | The hidden type word read before the text (`Info`, `Success`, `Error`, `Warning`, `Loading`) and the name of the close button (`Close`); `''` removes a type word. |
 | `classNames`, `styles` | `{ list?, listContent?, root?, wrapper?, icon?, title?, close? }` | — | Defaults for every message; a message's own value wins (P3). |
@@ -483,9 +483,13 @@ What the implementation settled, and what it changed in this document:
   0.9.0: "plain, unclear, not sharp"). It was 12 px with a stroke of 1.4, a cross 5 px across on a button with no background,
   and beside the disc of the `error` icon (which has a cross in it too) it did not read as a button. Now the button has a faint
   background at rest (`--ads-message-close-bg`), which grows on hover (`--ads-message-close-bg-hover`); the box is still 40 px.
-- **The container with a `transform`** is the box the layer is fixed to; the page shows it as a feature (a message region
-  inside a part of the page). The line "the layer is `position: fixed` anyway" above holds only for a container without
-  `transform`, `filter` or `contain: layout`.
+- **The container example on the site (the owner, 2026-11-19; changed after the `Notification` page, where the same question came up).** It was a region
+  of the page with a `transform` and a mounted `MessageHost`: the setting is global, so the messages of the other examples ended up in the region, and
+  none of the three libraries has such a demo (a transformed element makes the layer fixed to it, but that is CSS, not a feature). Now it is a native
+  modal `<dialog>`, the case that `container` is for: with the container not set the layer is in the `body` and the dialog covers it (at the centre of the
+  message the pointer meets the dialog); with `container` set to the dialog the layer is in it and the message can be reached and closed. When the dialog
+  closes (the button or Escape) its message is closed and the setting is given back (the next message of another example puts its layer in the `body`).
+  Site tests: `the container example: ...` (two, in `docs/e2e/site.spec.ts`).
 - **The page of the library has no `MessageHost` in the demos by default.** Settings that a demo changes with
   `message.config()` are taken back when the demo goes (a site test checks it), and `stack` is off in the demo until its
   switch is turned on, so no demo changes the messages of another.

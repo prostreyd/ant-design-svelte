@@ -1908,6 +1908,63 @@ test.describe('Message page', () => {
     await expect(kept).toHaveCount(0);
   });
 
+  test('the container example: a modal dialog covers a layer in the body, a layer in the dialog stands above it, and the setting is given back', async ({ page }) => {
+    await open(page, 'components/message/');
+    const demo = demoOf(page, 'Container').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const dialog = demo.locator('dialog');
+    const note = page.locator('.container-demo');
+    // Whether the message is what the pointer would meet at its centre, or the dialog (its backdrop) is on top of it.
+    const reachable = () =>
+      note.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        return element.contains(document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2));
+      });
+
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('.ads-message-list')).toHaveCount(0);
+    await demo.getByRole('button', { name: 'Open the dialog' }).click();
+    await expect(dialog).toBeVisible();
+
+    // Not set: the layer is in the body, and the dialog is over it.
+    await dialog.getByRole('button', { name: 'Show a message' }).first().click();
+    await expect(dialog.locator('.out').first()).toContainText('The layer is in the body');
+    await expect(note).toHaveCount(1);
+    await expect(dialog.locator('.ads-message-list')).toHaveCount(0);
+    await expect.poll(reachable, { message: 'covered by the dialog' }).toBe(false);
+
+    // The dialog: the layer moves into it (the same message, updated), and now it can be reached and closed.
+    await dialog.getByRole('button', { name: 'Show a message' }).last().click();
+    await expect(dialog.locator('.out').last()).toContainText('The layer is in the dialog');
+    await expect(dialog.locator('.out').first()).toContainText('Press to see');
+    await expect(dialog.locator('.ads-message-list')).toHaveCount(1);
+    await expect.poll(reachable, { message: 'above the dialog' }).toBe(true);
+    await note.locator('.ads-message-close').click();
+    await expect(note).toHaveCount(0);
+
+    // The dialog closes: the setting is given back, so a message of another example puts its layer in the body.
+    await dialog.getByRole('button', { name: 'Close the dialog' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('.ads-message-list')).toHaveCount(0);
+    await demoOf(page, 'Basic').locator('.demo-pre').getByRole('button').first().click();
+    await expect(page.locator('.ads-message-list')).toHaveCount(1);
+    await expect(dialog.locator('.ads-message-list')).toHaveCount(0);
+  });
+
+  test('the container example: Escape closes the dialog and takes its message and its setting with it', async ({ page }) => {
+    await open(page, 'components/message/');
+    const demo = demoOf(page, 'Container').locator('.demo-pre');
+    await demo.scrollIntoViewIfNeeded();
+    const dialog = demo.locator('dialog');
+    await demo.getByRole('button', { name: 'Open the dialog' }).click();
+    await dialog.getByRole('button', { name: 'Show a message' }).last().click();
+    await expect(dialog.locator('.ads-message-list')).toHaveCount(1);
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('.ads-message-list')).toHaveCount(0);
+    await expect(dialog.locator('.out').last()).toContainText('Press to see');
+  });
 });
 
 test.describe('Notification page', () => {

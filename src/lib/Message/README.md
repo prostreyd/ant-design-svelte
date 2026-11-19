@@ -120,8 +120,20 @@ Firefox 85, the lowest supported versions, do not know: there only their close b
 
 ### Container
 
-The layer is `position: fixed`. Inside a container with a `transform`, a `filter` or `contain: layout` it is fixed to that
-container, which gives a message region inside a part of the page.
+`container` is the element the layer is put in (the `body` by default; an element or a function that returns one). It changes
+where the layer sits in the page, not where it is drawn: the layer is `position: fixed`, so the messages are still shown at the
+window, as with `getContainer` in Ant Design. It is a setting of `message.config()` or of a `MessageHost`, so it applies to
+every call on the page while it is in force.
+
+Where it helps: a native modal `<dialog>` (`showModal()`) is shown in the top layer of the browser, over everything outside of
+it, and nothing outside it can be reached. A layer in the `body` is then covered, and a layer in the dialog stands above it:
+
+```ts
+message.config({ container: dialogElement }); // while the dialog is open
+message.config({ container: undefined }); // back to the body when it closes
+```
+
+The `Modal` of this library does not need it: its layer keeps the message layer reachable.
 
 ## Accessibility
 
