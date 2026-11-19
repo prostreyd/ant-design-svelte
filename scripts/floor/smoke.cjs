@@ -5,7 +5,7 @@
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
 // It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab, the
-// Tooltip lab, the Radio lab, the grid lab, the Message lab, the Spin lab, the Menu lab, the overlay lab and the Modal lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// Tooltip lab, the Radio lab, the grid lab, the Message lab, the Notification lab, the Spin lab, the Menu lab, the overlay lab and the Modal lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -874,6 +874,118 @@ async function messagePage(context) {
   await page.close();
 }
 
+async function notificationPage(context) {
+  const page = await newPage(context, base + '/#notification');
+  await page.waitForSelector(idOf('before'));
+  await settle(page);
+  const call = (method, args) => page.evaluate(([name, list]) => { window.__notificationLab.notification[name].apply(null, list); }, [method, args]);
+  const boxes = () => page.evaluate(() => Array.from(document.querySelectorAll('.ads-notification')).length);
+
+  await check('notification: a box opens 24px from the top and the right, 384px wide, 64px high with a title only, with its icon, and a click next to it reaches the page', async () => {
+    await call('success', [{ title: 'Saved', duration: 0 }]);
+    await settle(page);
+    const box = await rectOf(page, '.ads-notification');
+    const icon = await rectOf(page, '.ads-notification-icon svg');
+    await page.click(idOf('under'));
+    const reached = await page.evaluate(() => window.__notificationLab.underClicks());
+    await call('destroy', []);
+    await settle(page);
+    const placed = Math.abs(box.y - 24) < 1 && Math.abs(box.width - 384) < 1 && Math.abs(box.height - 64) < 1.5 && Math.abs(VIEWPORT.width - 24 - box.right) < 1.5;
+    return [placed && icon.width === 24 && reached === 1, `y ${box.y}, width ${box.width}, height ${box.height}, right edge ${Math.round(box.right)}, icon ${icon.width}, page clicks ${reached}`];
+  });
+
+  await check('notification: the newest stands nearest the window edge at a top and at a bottom place, the older ones 16px away from it', async () => {
+    for (const title of ['one', 'two']) {
+      await call('info', [{ title, duration: 0, description: 'text' }]);
+      await call('info', [{ title, duration: 0, description: 'text', placement: 'bottomLeft' }]);
+    }
+    await settle(page);
+    const rows = await page.evaluate(() =>
+      ['topRight', 'bottomLeft'].map((placement) =>
+        Array.from(document.querySelectorAll('.ads-notification-list[data-placement="' + placement + '"] .ads-notification')).map((box) => {
+          const r = box.getBoundingClientRect();
+          return { text: box.textContent.replace(/\s+/g, ' ').trim().slice(0, 14), y: r.y, bottom: r.bottom };
+        })
+      )
+    );
+    await call('destroy', []);
+    await settle(page);
+    const [top, bottom] = rows;
+    const topOk = top.length === 2 && /two/.test(top[0].text) && Math.abs(top[0].y - 24) < 1.5 && Math.abs(top[1].y - (top[0].bottom + 16)) < 1.5;
+    const bottomOk = bottom.length === 2 && /two/.test(bottom[1].text) && Math.abs(bottom[1].bottom - (VIEWPORT.height - 24)) < 1.5 && Math.abs(bottom[0].bottom + 16 - bottom[1].y) < 1.5;
+    return [topOk && bottomOk, `top ${top.map((r) => r.text + '@' + Math.round(r.y)).join(', ')}; bottom ${bottom.map((r) => r.text + '@' + Math.round(r.bottom)).join(', ')}`];
+  });
+
+  await check('notification: it goes after its time, nothing of the layer is left in the page, and the strip runs down', async () => {
+    await call('info', [{ title: 'Short', duration: 1.2, showProgress: true }]);
+    await settle(page);
+    const full = await page.evaluate(() => document.querySelector('.ads-notification-progress-bar').getBoundingClientRect().width);
+    await page.waitForTimeout(500);
+    const part = await page.evaluate(() => document.querySelector('.ads-notification-progress-bar').getBoundingClientRect().width);
+    await page.waitForTimeout(1500);
+    const left = await page.evaluate(() => document.querySelectorAll('.ads-notification-layer').length);
+    return [full > 100 && part < full - 20 && (await boxes()) === 0 && left === 0, `strip ${Math.round(full)} -> ${Math.round(part)}, boxes ${await boxes()}, layers left ${left}`];
+  });
+
+  await check('notification: the close button is 24px, closes with a click and with Enter, and shows a focus ring for the keyboard', async () => {
+    await call('info', [{ title: 'x', duration: 0 }]);
+    await settle(page);
+    const button = await rectOf(page, '.ads-notification-close');
+    await page.click('.ads-notification-close');
+    await settle(page);
+    const clicked = (await boxes()) === 0;
+    await call('info', [{ title: 'y', duration: 0 }]);
+    await settle(page);
+    await page.focus(idOf('after'));
+    await page.keyboard.press('Tab');
+    const ring = await page.evaluate(() => {
+      const active = document.activeElement;
+      return active && active.classList.contains('ads-notification-close') ? getComputedStyle(active).outlineStyle : 'not focused';
+    });
+    await page.keyboard.press('Enter');
+    await settle(page);
+    const entered = (await boxes()) === 0;
+    return [Math.abs(button.width - 24) < 0.5 && clicked && entered && ring !== 'none' && ring !== 'not focused', `button ${button.width}, click ${clicked}, Enter ${entered}, ring ${ring}`];
+  });
+
+  await check('notification: a pile of four at a top and at a bottom place keeps the newest in front and the older ones inert; hovering opens the top one 110px apart', async () => {
+    await page.mouse.move(100, 400);
+    for (let index = 1; index <= 4; index++) {
+      await call('info', [{ title: 'm' + index, duration: 0, description: 'text' }]);
+      await call('info', [{ title: 'm' + index, duration: 0, description: 'text', placement: 'bottomLeft' }]);
+    }
+    await settle(page);
+    const state = await page.evaluate(() => {
+      const one = (placement) => {
+        const items = Array.from(document.querySelectorAll('.ads-notification-list[data-placement="' + placement + '"] .ads-notification-item'));
+        const front = placement === 'topRight' ? items[0] : items[items.length - 1];
+        const behind = items.filter((item) => item !== front);
+        return {
+          front: front.textContent.replace(/\s+/g, ' ').trim().slice(0, 14),
+          buried: behind.every((item) => item.hasAttribute('inert') && item.getAttribute('aria-hidden') === 'true'),
+          piled: Boolean(document.querySelector('.ads-notification-list[data-placement="' + placement + '"] .ads-notification-piled'))
+        };
+      };
+      return { top: one('topRight'), bottom: one('bottomLeft') };
+    });
+    const top = await rectOf(page, '.ads-notification-list[data-placement="topRight"] .ads-notification');
+    await page.mouse.move(top.x + top.width / 2, top.y + top.height / 2);
+    await settle(page);
+    const ys = await page.evaluate(() => Array.from(document.querySelectorAll('.ads-notification-list[data-placement="topRight"] .ads-notification')).map((box) => Math.round(box.getBoundingClientRect().y)));
+    const bottomStill = await page.evaluate(() => Boolean(document.querySelector('.ads-notification-list[data-placement="bottomLeft"] .ads-notification-piled')));
+    await page.mouse.move(100, 400);
+    await settle(page);
+    const piledAgain = await page.evaluate(() => Boolean(document.querySelector('.ads-notification-list[data-placement="topRight"] .ads-notification-piled')));
+    await call('destroy', []);
+    await settle(page);
+    const spread = ys.length === 4 && ys.every((y, index) => Math.abs(y - (24 + index * (ys[1] - ys[0]))) <= 2) && Math.abs(ys[1] - ys[0] - 110) <= 3;
+    const ok = state.top.piled && state.bottom.piled && state.top.buried && state.bottom.buried && /m4/.test(state.top.front) && /m4/.test(state.bottom.front) && spread && bottomStill && piledAgain;
+    return [ok, `top ${JSON.stringify(state.top)}, bottom ${JSON.stringify(state.bottom)}, rows ${ys.join(',')}, bottom still piled ${bottomStill}, piled again ${piledAgain}`];
+  });
+
+  await page.close();
+}
+
 async function menuPage(context) {
   const page = await newPage(context, base + '/#menu');
   await page.waitForSelector('ul#menu');
@@ -1146,6 +1258,7 @@ async function modalPage(context) {
     await radioPage(context);
     await gridPage(context);
     await messagePage(context);
+    await notificationPage(context);
     await spinPage(context);
     await menuPage(context);
     await overlayPage(context);

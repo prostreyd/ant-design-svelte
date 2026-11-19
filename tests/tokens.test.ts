@@ -260,8 +260,8 @@ describe('accessible tokens (tokens-accessible.css)', () => {
     for (const token of accessible.keys()) expect(light.has(token), token).toBe(true);
   });
 
-  it('changes the -solid, -text, link, switch, checkbox, radio, input, select, message, modal, spin and menu tokens, and nothing else', () => {
-    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color)|message-icon-(success|warning)|modal-confirm-icon-(success|warning)|spin-(description-color|mask-bg)|menu-(item-selected-color|submenu-selected-color|horizontal-(hover|selected)-color|group-title-color|danger-(color|hover-color|selected-color)|dark-(item-selected-bg|danger-selected-bg|danger-active-bg)))$/;
+  it('changes the -solid, -text, link, switch, checkbox, radio, input, select, message, notification, modal, spin and menu tokens, and nothing else', () => {
+    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color)|message-icon-(success|warning)|notification-(icon-(success|warning)|close-color)|modal-confirm-icon-(success|warning)|spin-(description-color|mask-bg)|menu-(item-selected-color|submenu-selected-color|horizontal-(hover|selected)-color|group-title-color|danger-(color|hover-color|selected-color)|dark-(item-selected-bg|danger-selected-bg|danger-active-bg)))$/;
     for (const token of accessible.keys()) expect(token, token).toMatch(allowed);
   });
 
@@ -965,5 +965,87 @@ describe('menu tokens (specs/menu.md)', () => {
   it('the z-index of the popups is the dropdown layer, which the primitive sets; the dark menu keeps its colors on a dark page', () => {
     expect(dark.get('--ads-menu-dark-bg')).toBeUndefined();
     expect(dark.get('--ads-menu-dark-item-selected-bg')).toBe('#1668dc');
+  });
+});
+
+describe('notification tokens (specs/notification.md)', () => {
+  // Measured on the Ant Design demo (React 6.7.1, 2026-11-19, Chromium, light theme).
+  const measuredLight: Record<string, string> = {
+    '--ads-notification-z-index': '2050',
+    '--ads-notification-width': '384px',
+    '--ads-notification-top': '24px',
+    '--ads-notification-bottom': '24px',
+    '--ads-notification-margin': '24px',
+    '--ads-notification-gap': '16px',
+    '--ads-notification-bg': '#ffffff',
+    '--ads-notification-color': 'rgba(0, 0, 0, 0.88)',
+    '--ads-notification-padding-block': '20px',
+    '--ads-notification-padding-inline': '24px',
+    '--ads-notification-radius': '8px',
+    '--ads-notification-title-size': '16px',
+    '--ads-notification-title-line-height': '24px',
+    '--ads-notification-line-height': '22px',
+    '--ads-notification-description-gap': '8px',
+    '--ads-notification-actions-gap': '12px',
+    '--ads-notification-icon-size': '24px',
+    '--ads-notification-icon-gap': '12px',
+    '--ads-notification-icon-success': '#52c41a',
+    '--ads-notification-icon-error': '#ff4d4f',
+    '--ads-notification-icon-warning': '#faad14',
+    '--ads-notification-icon-info': '#1677ff',
+    '--ads-notification-close-color': 'rgba(0, 0, 0, 0.45)',
+    '--ads-notification-close-color-hover': 'rgba(0, 0, 0, 0.88)',
+    '--ads-notification-close-bg-hover': 'rgba(0, 0, 0, 0.06)',
+    '--ads-notification-progress-bg': 'linear-gradient(90deg, #69b1ff, #1677ff)',
+    '--ads-notification-progress-track': 'rgba(0, 0, 0, 0.04)',
+    '--ads-notification-progress-height': '2px',
+    '--ads-notification-motion-offset': '64px',
+    '--ads-notification-stack-offset': '8px',
+    '--ads-notification-stack-scale-step': '0.06'
+  };
+
+  it('the light values are the ones measured on the Ant Design demo', () => {
+    for (const [token, value] of Object.entries(measuredLight)) expect(normalize(light.get(token) ?? ''), token).toBe(normalize(value));
+    expect(normalize(light.get('--ads-notification-shadow')!)).toContain('0 6px 16px 0 rgba(0, 0, 0, 0.08)');
+  });
+
+  it('the layer is above the Message (2010), and the dark theme has the box #1f1f1f with the text of Ant Design (85% white)', () => {
+    expect(Number(light.get('--ads-notification-z-index'))).toBeGreaterThan(Number(light.get('--ads-message-z-index')));
+    expect(normalize(dark.get('--ads-notification-bg')!)).toBe('#1f1f1f');
+    expect(normalize(dark.get('--ads-notification-color')!)).toBe('rgba(255, 255, 255, 0.85)');
+  });
+
+  it('the close button is 24 px, the smallest target of WCAG 2.5.8 (the demo has 22)', () => {
+    expect(light.get('--ads-notification-close-size')).toBe('24px');
+  });
+
+  for (const [theme, tokens] of [['light with the accessible file', lightAccessible], ['dark', darkTheme]] as const) {
+    describe(theme, () => {
+      it('the text reaches 4.5:1 on the box, and the close button 4.5:1 in rest and hover', () => {
+        expect(ratio(tokens, '--ads-notification-color', '--ads-notification-bg')).toBeGreaterThanOrEqual(4.5);
+        expect(ratio(tokens, '--ads-notification-close-color', '--ads-notification-bg')).toBeGreaterThanOrEqual(4.5);
+        expect(ratio(tokens, '--ads-notification-close-color-hover', '--ads-notification-bg')).toBeGreaterThanOrEqual(4.5);
+      });
+
+      it('each type icon reaches 3:1 on the box (WCAG 1.4.11)', () => {
+        for (const type of ['info', 'success', 'error', 'warning']) {
+          expect(ratio(tokens, `--ads-notification-icon-${type}`, '--ads-notification-bg'), type).toBeGreaterThanOrEqual(3);
+        }
+      });
+    });
+  }
+
+  it('the default light green, amber and close button are below the line, which is why the accessible file darkens them', () => {
+    expect(ratio(light, '--ads-notification-icon-success', '--ads-notification-bg')).toBeLessThan(3);
+    expect(ratio(light, '--ads-notification-icon-warning', '--ads-notification-bg')).toBeLessThan(3);
+    expect(ratio(light, '--ads-notification-close-color', '--ads-notification-bg')).toBeLessThan(4.5);
+    expect(ratio(light, '--ads-notification-icon-error', '--ads-notification-bg')).toBeGreaterThanOrEqual(3);
+    expect(ratio(light, '--ads-notification-icon-info', '--ads-notification-bg')).toBeGreaterThanOrEqual(3);
+  });
+
+  it('the dark theme overrides everything that is a color of the box', () => {
+    for (const token of ['bg', 'color', 'shadow', 'icon-info', 'icon-success', 'icon-error', 'icon-warning', 'close-color', 'close-color-hover', 'close-bg-hover', 'progress-track']) {
+      expect(dark.has(`--ads-notification-${token}`), token).toBe(true);
+    }
   });
 });
