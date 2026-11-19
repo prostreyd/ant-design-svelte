@@ -2568,7 +2568,7 @@ test.describe('Menu page', () => {
     await open(page, 'components/menu/');
     const demo = demoOf(page, 'Selection').locator('.demo-pre');
     await demo.scrollIntoViewIfNeeded();
-    const status = demo.locator('.out');
+    const status = demo.getByRole('status');
     await expect(status.nth(0)).toContainText('selectedKeys: a');
     await expect(status.nth(1)).toContainText('selectedKeys: a, c');
     await demo.getByRole('menu', { name: 'Single selection' }).getByRole('menuitemradio', { name: 'Beta' }).click();
