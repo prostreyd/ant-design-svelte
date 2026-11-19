@@ -361,12 +361,18 @@ built, so the analysis is done after the fact, against `origin/main` at `1e1ee4f
 - **Primitive `layer`** (`src/lib/internal/layer/layer.ts`, since 2026-11-19, `specs/overlay.md`, L1 to L4). `Message/layer.ts` and
   `Modal/layer.ts` were line for line the same; now both are a few lines that say which component to mount and when, over the shared
   part. `ensureLayer` and `removeLayer` keep their names.
+- **Primitive `list`** (`src/lib/internal/list/listStore.ts`, since 2026-11-19, `specs/overlay.md`, LS1 to LS9). The core of the global list that
+  `store.ts` held (the records, the keys and the update by key, the close and its reason, the limit, the timers and the page-hidden pause, the
+  hosts, the merge of the three layers of settings, the server no-op) is a shared part, one independent list per call of `createListStore`.
+  What stays in `store.ts`: the fields of a message record, its settings and their defaults (`resolveSettings`), the validation warnings, and
+  the thenable handle. The exported functions of `store.ts` keep their names and signatures; `onclose` of a message still takes no argument (the
+  reason is in the core and can be passed on later, additively). Behavior unchanged: the tests of Message are not edited.
 - **Shared without copies:** `internal/semantic.ts` (`classList`, `styleText`), `internal/options.ts` (`resolveOption`),
   `internal/env.ts` (`isProduction`), and the tokens `--ads-motion-*`, `--ads-radius-*`, `--ads-font-*` and the focus ring.
 - **Decision (motion): was A** (2026-11-17, `motion.ts` stays in `Message/` until the second consumer), **now B**: the maintainer
   chose, before Notification, to move it to `internal/` (2026-11-19, together with the timer and the layer). Notification and
   Drawer import it from there. A new consumer adds itself to its own `## Dependencies`. The core of the list (`store.ts`: records,
-  keys, handles, hosts, settings) is a later, separate move.
+  keys, handles, hosts, settings) was moved the same day in the next branch (`refactor/list-core`), see the next item.
 - **Primitive `icons`** (since 2026-11-18, `specs/icons.md`): `MessageIcon.svelte` is a thin adapter over the shared `internal/icons/Icon.svelte`, which draws the
   four status discs, the spinner and the cross exactly as this component drew them before; the class names (`ads-message-svg`) are unchanged.
 
