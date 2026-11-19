@@ -1,19 +1,23 @@
 # Overlay primitives specification (internal)
 
-Status: **decisions taken 2026-11-17, implementation in `feat/overlay-primitives`**. The maintainer chose to build the
-shared parts in a branch of their own before the Modal (rule 6b, step 0 of the workflow), and to write `specs/modal.md` after
-these parts are in `main`. The motion of Message (`Message/motion.ts`) is **not** moved here: Message is released and in `main`,
-and the maintainer decided (2026-11-18) to move it to `internal/anim/` in a branch of its own just before Notification, the
-second user (option A of the Dependencies section of `specs/message.md` stays in force until then).
+Status: **decisions taken 2026-11-17, implementation in `feat/overlay-primitives` (released with the Modal, 0.12.0); extended
+2026-11-19 in `refactor/anim-motion`**. The maintainer chose to build the shared parts in a branch of their own before the Modal
+(rule 6b, step 0 of the workflow), and to write `specs/modal.md` after these parts were in `main`. The motion of Message
+(`Message/motion.ts`) was left out of that branch: Message was released and in `main`, and the maintainer decided (2026-11-18)
+to move it to `internal/anim/` in a branch of its own just before Notification, the second user. That branch is
+`refactor/anim-motion`: it moves the motion (A2), takes the timer that waits and the layer made for a global call out of Message
+and Modal (T, L), and changes nothing a user can see. Notification, Drawer and the next components import these parts.
 
-Three internal blocks under `src/lib/internal/`. They are not components, not exported from the package and have no page
+Five internal blocks under `src/lib/internal/`. They are not components, not exported from the package and have no page
 on the documentation site; each component built on them documents its own behavior on its own page.
 
 | Folder | What | Written | Used by |
 |---|---|---|---|
-| `portal/` | Moves a panel out of its place in the tree into a container, and takes it back out when its owner goes. | Taken out of `popup/Popup.svelte`. `Message/MessageLayer.svelte` has the same line of its own and moves to the shared one together with its motion, before Notification. | Popup; Modal, Drawer, Image next. |
-| `anim/` | How a panel leaves: `leave.ts` waits for a CSS animation to end before the panel is hidden. (The Web Animations of a list of rows, `Message/motion.ts`, join this folder before Notification.) | `leave.ts` out of `Popup.svelte`. | Popup; Modal, Drawer next. |
+| `portal/` | Moves a panel out of its place in the tree into a container, and takes it back out when its owner goes. | Taken out of `popup/Popup.svelte`. `Message/MessageLayer.svelte` had the same line of its own and uses the shared one since 2026-11-19. | Popup, Message; Modal, Drawer, Image, Notification next. |
+| `anim/` | The two ways a panel comes and goes: `leave.ts` waits for a CSS animation to end before the panel is hidden; `motion.ts` plays Web Animations for a list of rows. | `leave.ts` out of `Popup.svelte`; `motion.ts` is `Message/motion.ts`, moved (2026-11-19). | `leave.ts`: Popup, Modal. `motion.ts`: Message; Notification next. |
 | `overlay/` | What makes a layer modal: the page does not scroll, the page behind it cannot be reached, focus stays inside and comes back, Escape closes the topmost one. | New. | Modal, Drawer, Image preview. |
+| `timer/` | A timer that stands still for several reasons at once and resumes with the time left. | The timer of `Message/store.ts`, moved (2026-11-19). | Message; Notification next. |
+| `layer/` | The layer the library makes on the body for a call from code (`message.success(...)`, `modal.confirm(...)`) while no host is mounted. | `Message/layer.ts` and `Modal/layer.ts` were the same file; now one part and two short files that say what to mount. | Message, Modal; Notification next. |
 
 The comparison with the three Ant Design libraries is not repeated here: it belongs to the specification of each component
 (Modal: `specs/modal.md`). Nothing below is taken from their source code; it was not read. The focus, keyboard and background
@@ -48,9 +52,41 @@ the scroll lock and `inert` follow MDN. API inspired by Ant Design (MIT); the im
 - **A1** (`leave.ts`). `waitForLeave(element, done)` calls `done` once: when the element's own animation ends or is cancelled
   (the end of an animation of a child does not count), after one second if it never ends, or at once if the element has no
   animation (`animation-name: none`, which is what `prefers-reduced-motion` sets) or there is no element (a panel that is not in the page yet). It returns a function that cancels it.
-- **A2** (`motion.ts`, **not in this branch**). The Web Animations of `Message/motion.ts` move here, with the distance of the slide
-  as a parameter (`offsetToken`, which Message fills with its own `--ads-message-motion-offset`), in the branch that comes just
-  before Notification. The changes are saved in the private notes of the maintainer's folder (`notes/message-motion-move/`).
+- **A2** (`motion.ts`). The same behavior as `Message/motion.ts` had: `motionAllowed`, `playEnter`, `playLeave`, `readTops`,
+  `playFlip`; the box fades in from above and, with `shift`, its slot grows from nothing; a closing row fades up while its slot
+  shrinks, so that the neighbours slide into its place; a pile that opens or closes slides by FLIP. No motion under
+  `prefers-reduced-motion` or without `Element.animate`. The only change: the token for the distance of the slide is a parameter
+  (`offsetToken`), because the file no longer belongs to Message; Message passes `--ads-message-motion-offset`, so its public
+  token keeps working. Without a token the distance is 64 px.
+
+### Timer (`timer/`)
+
+`createPausableTimer(duration, onElapsed)` in `pausableTimer.ts`. `duration` is in milliseconds. It is a closure and not a class: private
+class fields are not known to Firefox 85, the floor.
+
+- **T1.** `start()` counts the duration down and calls `onElapsed` **once**; a duration of 0 never fires. `remaining` is the time
+  left: it counts down while the timer runs and stands still while a reason holds it.
+- **T2.** `setPaused(reason, on)` holds the timer for a reason or lets the reason go. Any number of reasons may hold at once, a
+  reason set twice is one reason, and the timer runs only when none holds. A pause **keeps the time left** and the timer resumes
+  with it, it does not start again (also after many pauses; React fixed a loss of the remainder in 2.1.1). A reason set before `start()`
+  keeps the timer from starting until it lets go.
+- **T3.** `restart(duration)` gives a new duration and counts it in full; the reasons that hold stay, so a held timer waits for
+  them (the update of a message by its key).
+- **T4.** `cancel()` stops it for good; after it, or after `onElapsed` has been called, `start`, `restart` and a pause that lets
+  go do not start it again. Calling `cancel()` again does nothing.
+
+### Layer (`layer/`)
+
+`createLayer({ component, props, wanted, subscribe })` in `layer.ts`; it returns `{ ensure, remove }`. It imports no component:
+the component is an argument.
+
+- **L1.** `ensure()` mounts the component on the body, with the props, when `wanted()` is true, and starts watching through
+  `subscribe`. Asked again it makes no second layer and no second subscription.
+- **L2.** When `wanted()` turns false (nothing is left to show, or a host has taken over) the layer is unmounted, and made again
+  when it turns true. `remove()` unmounts it and stops watching.
+- **L3.** A change heard through `subscribe` is looked at in the next microtask, and several changes in one go are looked at once:
+  a host that unmounts hands what it showed back in the middle of its own teardown, and Svelte forbids creating effects there.
+- **L4.** On a server (no `document`) `ensure()` does nothing and starts no watching.
 
 ### Overlay (`overlay/`)
 
@@ -70,12 +106,8 @@ layer without a mask (a Drawer with no mask) takes only what it needs.
   `aria-hidden="true"` instead, and the focus trap of O3 keeps the keyboard in. An element that was already inert or
   `aria-hidden` keeps its own value when the layer closes. Counted per element, so closing layers in any order never frees an
   element that another layer still holds. Elements added to the page **after** the layer opened (a Select list, a Tooltip) are
-  not touched, because they come from inside the layer. An element with `data-ads-overlay-keep` is never touched. The Message
-  layer does **not** carry it yet (Message is released and is not changed here): a message layer that is already on the page when
-  a Modal opens is put out of reach with the page, so a message added to it is not read by a screen reader; a message that opens a
-  new layer after the Modal (the usual case: a message from the OK button when none is on the page) is not touched. The Modal
-  specification decides where the attribute is added (the layer of Message, in the branch that moves its motion, or in the Modal's
-  branch); until then this is a known gap of the primitive.
+  not touched, because they come from inside the layer. An element with `data-ads-overlay-keep` is never touched (the Message
+  layer carries it since 0.12.0: a message must stay readable above a Modal, also one that was on the page before the Modal opened).
 - **O3** (`focus.ts`). On open, focus goes to `initialFocus` (an element or a function; the layer itself by default, which
   has `tabindex="-1"`), without scrolling the page. **Tab** on the last focusable element goes to the first and **Shift+Tab**
   on the first goes to the last; a Tab while focus is outside the layer (the body, after a press on the mask) goes in; a layer
@@ -112,9 +144,18 @@ layer without a mask (a Drawer with no mask) takes only what it needs.
    contain` on its own scroll area.
 5. **`data-ads-overlay-keep`** is the only way out of `inert`. A prop on `openOverlay` was the alternative; an attribute
    lets a component that is not part of the layer (Message) say it on its own, without the layer knowing it.
-6. **`Message/motion.ts` stays where it is for now** (2026-11-18). Message is released; moving it here changes four of its files
-   and its spec, and Modal does not need it. It moves just before Notification (A2). Said then: the token of the distance is an
-   argument, no generic token is added, and `readTops` and `playFlip` look for `data-message-id` until Notification is specified.
+6. **`motion.ts` takes the token as an argument** (A2) and does not get a generic token: a new public token for a value nobody
+   asked to change is not added. `readTops` and `playFlip` still look for `data-message-id`; the name is decided when
+   Notification, the second user, is specified. (2026-11-18 it stayed in Message; moved 2026-11-19, in the branch before Notification.)
+7. **The timer, the layer and the motion move together, before Notification** (the maintainer, 2026-11-19, after the three
+   libraries were compared in `specs/notification.md`: all of them share one core between their message and their notification,
+   and the motion, the timer and the layer are in it). No second copy for Notification (rule 6b). The core of the list itself
+   (`Message/store.ts`: records, keys, handles, hosts) is a **separate** later branch, so this one stays a move that changes no
+   behavior and that the unchanged tests of Message and Modal show.
+8. **The page-hidden pause stays in the owner for now.** The timer knows reasons, not the page: `Message/store.ts` listens for
+   `visibilitychange` and sets the reason `hidden` on every timer. It moves with the core of the list.
+9. **`createLayer` takes the component as an argument.** An internal part imports no component (rule 6b); the part that mounts and
+   unmounts is shared, what is mounted is not.
 
 ## Tests (each item is at least one test)
 
@@ -125,6 +166,16 @@ and must pass unchanged, which is how "no change of behavior" is shown.
   on each activation; follows a changed container; removed on destroy; the server render touches nothing.
 - A1: the end of the element's own animation, not a child's; cancel; a cancelled animation; one second; none at once;
   `cancel()` stops the calls.
+- A2 (`tests/anim.test.ts`, with `Element.animate` stubbed; the frames themselves are measured in `e2e/message.spec.ts`): the
+  distance is the token's value, or 64 px; seconds and milliseconds; `shift` grows the slot to its measured height and gap; a
+  closing row resolves also when an animation is cancelled; `readTops` and `playFlip` (the rows that moved, not the new ones, not
+  the ones that moved less than half a pixel); none under reduced motion or without `Element.animate`.
+- T1 to T4 (`tests/pausableTimer.test.ts`): once, and not before the time; 0 never; `remaining` counts down; a pause keeps what is
+  left, also after repeated pauses; several reasons; the same reason twice; a reason before `start`; `restart` in full, held
+  reasons stay; `cancel`, and finished means finished.
+- L1 to L4 (`tests/layer.test.ts`, probe `tests/fixtures/LayerProbe.svelte`): mounted on the body with its props; none while not
+  needed; one layer however often; removed and made again; `remove` stops watching; the microtask; one look for several
+  changes; nothing on a server.
 - O1: lock and unlock restore the inline values (set and empty); `html` is locked and restored with the body; two locks, one
   restore; the scrollbar width goes to the padding; none when there is none; an element container; unlock in any order.
 - O2: siblings of every ancestor, not the layer; `inert` or `aria-hidden` by feature; a previously inert element is left alone;
@@ -143,8 +194,9 @@ and must pass unchanged, which is how "no change of behavior" is shown.
   lock turns on and off, on a page with a scrollbar; the background cannot be clicked or tabbed to; Tab wraps in both
   directions; focus comes back to the button that opened the layer; Escape in a Popup inside the layer closes the Popup first;
   a second layer over the first takes Tab and Escape, and the first one takes them back when the second closes.
-- Popup keeps its own tests (R10, R11) and e2e unchanged after the portal and the leave were taken out. Message and its tests are not
-  changed by this branch.
+- Popup keeps its own tests (R10, R11) and e2e unchanged after the portal and the leave were taken out. Message and Modal keep their
+  tests unchanged in `refactor/anim-motion` as well (the one edit is the list of source files that the Message page test reads: the
+  motion is now in `internal/anim/`); that is how "no change of behavior" is shown for the move of the motion, the timer and the layer.
 - Mutation testing: the runner mutates only `src/lib/<Component>/*.svelte`. The new parts are `.ts` (not mutated; 100% of lines and
   branches covered, and every file has tests that call it), and `Popup.svelte` is not a target of the runner. No component
   changed in this branch.
@@ -164,4 +216,5 @@ and must pass unchanged, which is how "no change of behavior" is shown.
 ## Dependencies
 
 Rule 6b: these are shared parts, they import no component. Popup (`popup/Popup.svelte`) takes `portal` and `anim`; the Modal takes
-all three. Message takes `portal` and `anim` when its motion moves (before Notification).
+`portal`, `anim`, `overlay` and `layer`; Message takes `portal`, `anim` (the motion), `timer` and `layer`. Notification takes the
+same four as Message.

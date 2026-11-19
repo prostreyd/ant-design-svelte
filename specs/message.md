@@ -344,24 +344,29 @@ built, so the analysis is done after the fact, against `origin/main` at `1e1ee4f
 - **Components: none.** The plan says Message takes no component, and none is needed. The close button is a native
   `<button>` with a cross and the name `labels.close`: it is not the `Button` that a user sees elsewhere (no type, size or
   shape), so it is not taken as a component.
-- **Primitive `anim`: not available as a module.** In `main` it exists only inside `Popup.svelte` (a CSS animation on the
-  panel and a wait for `animationend`). A list of rows needs other things: a row that collapses to nothing while the others
-  slide, a `finished` promise that removes the row, and FLIP for the pile. So Message has its own
-  `src/lib/Message/motion.ts` (Web Animations API). It is **not a copy** of anything in `Popup`; the mechanism is different.
-  Rule 6b says to stop and ask when a primitive is missing and not to create one silently in a branch: this was not asked in
-  time, so the decision on it is recorded below.
-- **Primitive `portal`: not used as a module** (it is inside `Popup.svelte` too, and the plan does not list Message among its
-  users). `MessageLayer.svelte` moves its fixed layer to the container with one `appendChild` in an attachment and removes it
-  with the component. When `portal` is extracted for Modal and Drawer, that line should use it.
+- **Primitive `anim`** (`src/lib/internal/anim/motion.ts`). In `main` at the time of writing the animation existed only inside
+  `Popup.svelte` (a CSS animation on the panel and a wait for `animationend`). A list of rows needs other things: a row that
+  collapses to nothing while the others slide, a `finished` promise that removes the row, and FLIP for the pile. So Message had
+  its own `motion.ts` (Web Animations API), **not a copy** of anything in `Popup`. Rule 6b says to stop and ask when a primitive is
+  missing; this was not asked in time. **Moved on 2026-11-19** (branch `refactor/anim-motion`, `specs/overlay.md`, A2): the file is
+  now `internal/anim/motion.ts`, behavior unchanged, and the distance of the slide is an argument (`offsetToken`) that Message
+  fills with its own `--ads-message-motion-offset`.
+- **Primitive `portal`** (`src/lib/internal/portal/portal.svelte.ts`). It was inside `Popup.svelte` too. `MessageLayer.svelte`
+  moved its fixed layer to the container with one `appendChild` in an attachment; since 2026-11-19 it uses the shared attachment
+  (`specs/overlay.md`, P1 to P5), with the same behavior. The layer also carries `data-ads-overlay-keep` (since 0.12.0,
+  `specs/overlay.md`, O2): a Modal that is open puts the page out of reach, and a message must stay readable above it.
+- **Primitive `timer`** (`src/lib/internal/timer/pausableTimer.ts`, since 2026-11-19, `specs/overlay.md`, T1 to T4). The timer that
+  stands still for the reasons `hover`, `focus`, `pile` and `hidden` and resumes with the time left was in `store.ts`; it is now a
+  shared part, and the store keeps one for each message. Behavior unchanged. What stays in the store: the page-hidden listener.
+- **Primitive `layer`** (`src/lib/internal/layer/layer.ts`, since 2026-11-19, `specs/overlay.md`, L1 to L4). `Message/layer.ts` and
+  `Modal/layer.ts` were line for line the same; now both are a few lines that say which component to mount and when, over the shared
+  part. `ensureLayer` and `removeLayer` keep their names.
 - **Shared without copies:** `internal/semantic.ts` (`classList`, `styleText`), `internal/options.ts` (`resolveOption`),
   `internal/env.ts` (`isProduction`), and the tokens `--ads-motion-*`, `--ads-radius-*`, `--ads-font-*` and the focus ring.
-- **Decision (motion): A, `motion.ts` stays in `Message/` for now** (2026-11-17). Notification (React shares the list, the pile
-  and the motion with Message) and Drawer will need the same mechanism. The options were: (A) keep it here and move it to
-  `src/lib/internal/` when the second consumer arrives (the "extract before the second consumer" rule of 6b: the moment is the
-  start of Notification, before it is written, and that component's Dependencies section must say so); (B) move it to
-  `internal/` now (a rename of one file and its imports, no change of behavior); (C) first extract `anim` from `Popup` in a
-  branch of its own and rebuild Message on it. The maintainer sent the release command without choosing among them, so the option
-  that needs no change and breaks no rule (A) was taken; the move to `internal/` changes no public API and can be made at any time.
+- **Decision (motion): was A** (2026-11-17, `motion.ts` stays in `Message/` until the second consumer), **now B**: the maintainer
+  chose, before Notification, to move it to `internal/` (2026-11-19, together with the timer and the layer). Notification and
+  Drawer import it from there. A new consumer adds itself to its own `## Dependencies`. The core of the list (`store.ts`: records,
+  keys, handles, hosts, settings) is a later, separate move.
 - **Primitive `icons`** (since 2026-11-18, `specs/icons.md`): `MessageIcon.svelte` is a thin adapter over the shared `internal/icons/Icon.svelte`, which draws the
   four status discs, the spinner and the cross exactly as this component drew them before; the class names (`ads-message-svg`) are unchanged.
 
@@ -440,7 +445,7 @@ the ConfigProvider settings.
 
 Files: `src/lib/Message/` (`message.ts` the `message` object, `store.ts` the list, timers, keys, settings and hosts with no
 Svelte in it, `layer.ts` the layer the library makes itself, `MessageHost.svelte`, `MessageLayer.svelte` the drawing
-shared by the host and the library layer, `MessageItem.svelte`, `MessageIcon.svelte`, `motion.ts` the Web Animations,
+shared by the host and the library layer, `MessageItem.svelte`, `MessageIcon.svelte` (the Web Animations are `internal/anim/motion.ts`, the timer `internal/timer/`, the mounting of the layer `internal/layer/`, since 2026-11-19),
 `types.ts`, `README.md`), 24 `--ads-message-*` tokens in `tokens.css` and two overrides in `tokens-accessible.css`.
 Tests: `tests/Message.test.ts` (80 cases), `tests/MessageMotion.test.ts`, `tests/MessageStore.test.ts`,
 `tests/MessageIcon.test.ts`, the Message cases of `tests/tokens.test.ts`, `tests/docs/message-page.test.ts`,
@@ -484,7 +489,7 @@ What the implementation settled, and what it changed in this document:
 - **Mutation testing (2026-11-17):** `npm run test:mutation -- --target=Message --file=<file>` for `MessageItem` (48 mutants),
   `MessageLayer` (35), `MessageHost` (8) and `MessageIcon` (10): 101 mutants, 101 killed (100%). The tool mutates comments as
   well: a doc comment with the word `true` showed up as a surviving mutant and was reworded. It handles only `.svelte`
-  files; `store.ts`, `motion.ts`, `layer.ts` and `message.ts` are covered by 100% of lines and branches and by the tests
+  files; `store.ts`, `layer.ts` and `message.ts` (and the shared `internal/anim/motion.ts`, `internal/timer/`, `internal/layer/`) are covered by 100% of lines and branches and by the tests
   that call them, but are not mutated.
 - **Floor (2026-11-16):** Chromium 90.0.4392.0, Firefox 85.0b5 and WebKit 15.4 pass the five Message checks (30, 30 and 30
   of 30 checks in all). No new entry in `ENHANCEMENTS`: the Message adds one forced-colors rule and logical properties

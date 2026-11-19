@@ -288,7 +288,7 @@ Rule 6b, step 0 of the workflow, done on 2026-11-18 against the stack `feat/over
 - **Component, whole: `Button`** (public file `src/lib/Button/Button.svelte`): the OK and Cancel buttons are the same element the user sees elsewhere and take the same props
   (`okButtonProps: ComponentProps<typeof Button>`). The plan (`ai/dependencies.md`) lists it for the Modal and it is in all three libraries, so rule 6b takes it without a question; it
   goes into `DEPENDENCIES` of `scripts/check-architecture.mjs` with the reason when the component is written.
-- **Primitives (`src/lib/internal/`):** `portal` (the layer in the body), `anim` (`leave.ts`: hide when the leave animation ends), `overlay` (scroll lock, the page behind, focus, Escape and Tab) and `icons` (the cross of the close button and
+- **Primitives (`src/lib/internal/`):** `portal` (the layer in the body), `anim` (`leave.ts`: hide when the leave animation ends), `overlay` (scroll lock, the page behind, focus, Escape and Tab), `layer` (the layer made for `modal.confirm(...)` while no host is mounted; added 2026-11-19, it was a copy of the file of Message) and `icons` (the cross of the close button and
   the four status icons of the static dialogs). None is in `origin/main`: they are on the two branches under this one. Rule 6b says to stop and ask; the maintainer decided on 2026-11-18 to build the Modal over the primitives branch (and, with D3 B,
   over a branch of the icons) and to push all of them together when the Modal is done. Helpers: `semantic`, `options`, `env`.
 - **Not taken as components:** `Popup` (the Modal is not anchored), `Spin` (`confirmLoading` is the loading of `Button`), `Skeleton` (not in the library; `loading` is deferred).
