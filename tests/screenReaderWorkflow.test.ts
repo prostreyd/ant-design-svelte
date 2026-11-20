@@ -1,8 +1,7 @@
 // The workflow `Screen reader` (.github/workflows/screen-reader.yml) runs Orca, a real screen reader, about nine minutes a run. It
-// starts when what the speech depends on changes, and once a week by itself: Orca, Firefox, the Ubuntu image and the packages of
-// the screen reader change without a commit of ours. These tests keep the paths in step with what the build of the fixtures reads,
-// keep the weekly run, and keep the workflow in the gate of a release (the owner, 2026-11-20: a release is published only after
-// the screen reader passed for its commit).
+// starts when what the speech depends on changes. These tests keep the paths in step with what the build of the fixtures reads,
+// keep it from running by schedule (the owner dropped the weekly run on 2026-11-20), and keep the workflow in the gate of a
+// release (the owner, 2026-11-20: a release is published only after the screen reader passed for its commit).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -75,18 +74,15 @@ describe('the paths that start the Screen reader workflow', () => {
   });
 });
 
-describe('the weekly run of the Screen reader workflow', () => {
-  const schedule = trigger('schedule');
-  const crons = [...schedule.matchAll(/^\s+-\s*cron:\s*'([^']+)'\s*$/gm)].map((match) => match[1]);
-
-  it('has one schedule: a fixed minute and hour, any day of the month, any month, one day of the week', () => {
-    expect(crons).toHaveLength(1);
-    expect(crons[0]).toMatch(/^\d{1,2} \d{1,2} \* \* [0-6]$/);
-  });
-
-  it('can still be started by hand, and a push is limited to main', () => {
+describe('what starts the Screen reader workflow besides a change of the files', () => {
+  it('can be started by hand, and a push is limited to main', () => {
     expect(triggers).toMatch(/^ {2}workflow_dispatch:/m);
     expect(trigger('push')).toMatch(/branches:\s*\[main\]/);
+  });
+
+  it('does not run by schedule: the owner dropped the weekly run on 2026-11-20', () => {
+    expect(triggers).not.toMatch(/^ {2}schedule:/m);
+    expect(workflow).not.toMatch(/cron:/);
   });
 });
 

@@ -11,7 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Tests
 
-- The workflow `Screen reader` (Orca, a real screen reader) starts on a push to `main` or a pull request only when the library, the e2e fixtures, the tests of the screen reader, the build of the fixtures or the packages change, and once a week on Monday by itself, so a change of Orca, Firefox or the runner image shows up without a commit of ours. A push that only touches documentation, specifications or rules does not start it. `tests/screenReaderWorkflow.test.ts` keeps the paths, the weekly run and the fact that a release does not wait for it.
+- The workflow `Screen reader` (Orca, a real screen reader) starts on a push to `main` or a pull request only when the library, the e2e fixtures, the tests of the screen reader, the build of the fixtures or the packages change. A push that only touches documentation, specifications or rules does not start it, and it does not run by schedule. `tests/screenReaderWorkflow.test.ts` keeps the paths, the absence of a schedule and the fact that a release does not wait for it.
 
 ## [0.14.0] - 2026-11-19
 

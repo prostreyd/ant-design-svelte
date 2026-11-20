@@ -5,10 +5,9 @@
 name: Screen reader
 
 # It runs when what the speech depends on changes (the library, the e2e fixtures, the tests of the screen reader, the build and
-# the packages), and once a week by itself: Orca, Firefox, the Ubuntu image and the packages of the screen reader change
-# without a commit of ours, and a week is the longest a change of theirs stays unseen. A push that only touches the
-# documentation, the specifications or the rules does not start it. By hand it runs at any time. The list of paths is kept
-# in step with what the build of the fixtures reads by tests/screenReaderWorkflow.test.ts.
+# the packages). A push that only touches the documentation, the specifications or the rules does not start it. By hand it
+# runs at any time. There is no run by schedule (the owner dropped the weekly run on 2026-11-20). The list of paths is kept in
+# step with what the build of the fixtures reads by tests/screenReaderWorkflow.test.ts.
 on:
   push:
     branches: [main]
@@ -33,9 +32,6 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/screen-reader.yml'
-  schedule:
-    # Every Monday at 03:00 UTC (a scheduled run is made on the default branch).
-    - cron: '0 3 * * 1'
   workflow_dispatch:
   # Called by publish.yml for a release whose commit has no run of its own (see the gate there).
   workflow_call:
