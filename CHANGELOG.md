@@ -9,9 +9,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-11-20
+
 ### Tests
 
+- `Notification`: a test with a real screen reader (`screen-reader/notification.spec.ts`, Orca with Firefox through Guidepup): it reads the role (an error is an alert, a success a status), the type word, the title, the description, the new text after an update by key, and the name of the close button.
+- The release is published only after the tests passed for the commit of its tag: `publish.yml` waits for the runs of `CI` and `Screen reader` that GitHub made for that commit and runs the one that has no run itself (a red one stops the release). The documentation site is built after a green CI on `main`, not on every push. The e2e tests of the site for Firefox and WebKit are cut in two parts, so a CI run takes about 12 minutes instead of 15.
 - The workflow `Screen reader` (Orca, a real screen reader) starts on a push to `main` or a pull request only when the library, the e2e fixtures, the tests of the screen reader, the build of the fixtures or the packages change. A push that only touches documentation, specifications or rules does not start it, and it does not run by schedule. `tests/screenReaderWorkflow.test.ts` keeps the paths, the absence of a schedule and the fact that a release does not wait for it.
+
+### Documentation
+
+- `Notification`: the README and the page say that a real screen reader was checked (Orca with Firefox) and what is not: whether a notification is announced when it opens, NVDA, JAWS, VoiceOver, a phone screen reader, a real touch device and a real Safari.
 
 ## [0.14.0] - 2026-11-19
 
