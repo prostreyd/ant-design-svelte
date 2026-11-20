@@ -9,6 +9,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Tests
+
+- `Icon`: a test with a real screen reader (`screen-reader/icon.spec.ts`, Orca with Firefox through Guidepup): it reads a drawing as its name and "image", a `label` in place of that name, nothing for `label=""`, a button by its own text or name when the icon inside is hidden, and an icon with `role="button"` as a button with its label. The Icon lab of the e2e fixtures got the three controls it needs.
+
+### Documentation
+
+- `Icon`: the README and the page say that a real screen reader was checked (Orca with Firefox) and what is not: NVDA, JAWS, VoiceOver and a phone screen reader.
+
 ## [0.15.0] - 2026-11-20
 
 ### Added

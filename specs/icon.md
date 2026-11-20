@@ -229,7 +229,7 @@ It is small (about half a day, with a test that serves a fake script locally) an
   the package is a change of the generator. (The first plan was one adapter file that every component imports; a development server then loads all 848 modules, see "Implementation notes", 2.)
 - **P10.** The docs page has a **gallery**: a search box, a theme control (All, Outlined, Filled, TwoTone; All is the first and the default: a name is followed by its themes, as on that list) and the drawings in **the six groups of the Ant Design list, in its order** (added 2026-11-20 at the maintainer's request), click to copy the name; plus examples of each prop. A
   gallery of 848 items is not drawn all at once on the server: the server sends the first chunk and the page draws the rest as soon as it has loaded.
-- **P11.** `README` and the docs page say what is not checked ("not checked with a screen reader", until the Orca test exists) and that a drawing can look uneven on a pixel grid (issue 684).
+- **P11.** `README` and the docs page say what is not checked (NVDA, JAWS, VoiceOver and a phone screen reader; before the Orca test existed, any screen reader) and that a drawing can look uneven on a pixel grid (issue 684).
 - **P12.** Version: a new component is **+0.1.0** (`0.14.1` to `0.15.0`); a new dependency pair (`@ant-design/icons-svg`, `@ant-design/colors`) is named in the changelog.
 - **P13.** The test for each requirement goes in `tests/Icon.test.ts` (unit, a11y, server render), `e2e/icon.spec.ts` (three engines: spin and rotate really turn, no layout change between `Outlined` and `Filled`, `g` and `defs`
   drawings render in the SVG namespace), the docs page test, and the floor smoke.
@@ -258,7 +258,7 @@ It is small (about half a day, with a test that serves a fake script locally) an
 | Touch | n/a | not interactive; a clickable icon is the owner's element (the docs example uses a button) |
 | Browsers | test | `e2e/icon.spec.ts`: layout, spin, rotate, two-tone colors, SVG namespace of `g` and `defs`, the accessible name, the iconfont.cn font, in three engines |
 | Browser floor | test | `npm run test:floor`: the Icon page of the smoke (six checks, passed 2026-11-20 on all three engines); it also proves that the data package and the color package run on Chromium 90, Firefox 85 and WebKit 15.4 |
-| Screen reader | manual pending | an Orca test (`screen-reader/icon.spec.ts`) is planned after the maintainer agrees; until then the README and the page say "not checked with a screen reader" |
+| Screen reader | test | `screen-reader/icon.spec.ts`: Orca with Firefox reads a drawing as its name and "image", a `label` in place of that name, nothing for `label=""`, a button by its own text or name when its icon is hidden, and an icon with `role="button"` as a button with its label (2026-11-20, three runs in a row). NVDA, JAWS, VoiceOver and a phone screen reader are not checked: the README and the page say so |
 
 ## Список тестов
 
@@ -323,6 +323,10 @@ What the implementation found out, and where it differs from the draft:
 12. **The documentation site styled every svg inside a Button's icon slot as a stroke icon** (`docs/src/docs/styles/site.css`, written for the hand-drawn svgs of the Button demos): `fill: none` blanked the real icons. Found by
     looking at the built page, not by a test; the rule is now `.ads-btn-icon > svg`, and the clicked-icons example and its site test (the button is named by its text alone, the icon is hidden) cover it. The library has no such rule.
 13. **`withDefaults` is exported from `iconfont.ts` for its tests only** (the package entry does not export it); its Proxy traps (`get`, `has`, `ownKeys`, `getOwnPropertyDescriptor`) are tested directly.
+16. **The Orca test (2026-11-20, after the release of 0.15.0, at the maintainer's request).** What Orca 51 with Firefox says on the Icon lab (`e2e/fixtures/IconLab.svelte`: an icon between two words, three more icons, and three controls): `Before. star. image. After`
+    for a drawing (its name in English and the word "image"; nothing for the svg inside), `Before. Favourite. image. After` for `label="Favourite"`, `Before After` for `label=""`, `Before. loading. image. After` for the loading drawing, and for the
+    controls `Search. button` (the text names the button, its hidden icon adds nothing), `Delete. button` (an icon-only button by its `aria-label`) and `Add a star. button` (an icon with `role="button"` and a `label`), the same by Tab. The test
+    fails when an icon with `label=""` is no longer hidden (checked by breaking the component). It needed the lab to hold the controls, and the run needed the display started by hand (`xvfb-run` waited for ever in the container, as the README of the folder says).
 15. **The gallery is in the groups of the Ant Design list** (`docs/src/docs/data/icon-groups.ts`). The public icon page of Ant Design (React) was opened in a browser and the order of the names in its six groups was read from the page (Directional Icons
     63 names, Suggested Icons 24, Editor Icons 33, Data Icons 13, Brand and Logos 117, Application Icons 246: 496 names, each followed by its themes that exist). The list on that page is 842 drawings; the package has 848: `CopyrightCircle` and
     `DollarCircle` (three themes each) are not on it, and stand next to `Copyright` and `Dollar`. Our first gallery was one list in alphabetical order with an "All" theme and a "Show more" button; the groups replaced the alphabetical order, the "All" choice stays (the maintainer asked for it, 2026-11-20: to see every icon)

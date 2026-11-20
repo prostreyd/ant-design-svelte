@@ -77,7 +77,7 @@ An icon is a `<span role="img">` named by its drawing in English (`aria-label="s
 `label=""` for an icon next to visible text. A custom drawing has no name and is hidden until it gets a `label`. An icon is not focusable; to click one, use a
 `Button` (it names the button) or add `role="button"`, `tabindex` and the keys yourself.
 
-**Not checked:** how a real screen reader (Orca, NVDA, JAWS, VoiceOver) reads an icon. The names follow WAI-ARIA and are covered by automated tests.
+**Checked with a real screen reader** (Orca with Firefox, `screen-reader/icon.spec.ts`): a drawing is read as its name and "image", `label` replaces the name, `label=""` is silent, a button with a hidden icon keeps its own name, and an icon with `role="button"` is a button with its label. **Not checked:** NVDA, JAWS, VoiceOver and a phone screen reader.
 
 ## Differences from Ant Design
 
