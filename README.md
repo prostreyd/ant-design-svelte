@@ -18,7 +18,7 @@ Ant Design.
 
 ## Status
 
-Version `0.14.1`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Form` (with `FormItem`), `Grid` (`Row`, `Col` and `Breakpoints`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Menu` (with `MenuItem`, `MenuSubMenu`, `MenuItemGroup` and `MenuDivider`), `Radio` (with `RadioButton` and `RadioGroup`), `Select` (with `SelectOption` and `SelectOptGroup`), `Spin`, `Switch`, `Tooltip`, `Message` (the `message` calls and `MessageHost`), `Modal` (the `Modal` component, the `modal` calls and `ModalHost`), `Notification` (the `notification` calls and `NotificationHost`). More components are planned.
+Version `0.14.1`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Form` (with `FormItem`), `Grid` (`Row`, `Col` and `Breakpoints`), `Icon` (848 icons of the Ant Design set, from `svelte-ant-design/icons`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Menu` (with `MenuItem`, `MenuSubMenu`, `MenuItemGroup` and `MenuDivider`), `Radio` (with `RadioButton` and `RadioGroup`), `Select` (with `SelectOption` and `SelectOptGroup`), `Spin`, `Switch`, `Tooltip`, `Message` (the `message` calls and `MessageHost`), `Modal` (the `Modal` component, the `modal` calls and `ModalHost`), `Notification` (the `notification` calls and `NotificationHost`). More components are planned.
 
 ## Browser support
 
@@ -63,6 +63,7 @@ See the [Button](https://prostreyd.github.io/ant-design-svelte/components/button
 [Checkbox](https://prostreyd.github.io/ant-design-svelte/components/checkbox/),
 [Form](https://prostreyd.github.io/ant-design-svelte/components/form/),
 [Grid](https://prostreyd.github.io/ant-design-svelte/components/grid/),
+[Icon](https://prostreyd.github.io/ant-design-svelte/components/icon/),
 [Input](https://prostreyd.github.io/ant-design-svelte/components/input/),
 [Menu](https://prostreyd.github.io/ant-design-svelte/components/menu/),
 [Radio](https://prostreyd.github.io/ant-design-svelte/components/radio/),
@@ -77,6 +78,7 @@ examples and the API tables, or [`src/lib/Button/README.md`](./src/lib/Button/RE
 [`src/lib/Checkbox/README.md`](./src/lib/Checkbox/README.md),
 [`src/lib/Form/README.md`](./src/lib/Form/README.md),
 [`src/lib/Grid/README.md`](./src/lib/Grid/README.md),
+[`src/lib/Icon/README.md`](./src/lib/Icon/README.md),
 [`src/lib/Input/README.md`](./src/lib/Input/README.md),
 [`src/lib/Menu/README.md`](./src/lib/Menu/README.md),
 [`src/lib/Radio/README.md`](./src/lib/Radio/README.md),

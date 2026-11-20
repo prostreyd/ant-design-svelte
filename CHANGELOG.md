@@ -9,6 +9,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- `Icon`: the icons of the Ant Design set, 848 drawings, most of them in three themes (`Outlined`, `Filled`, `TwoTone`). Each is a component with the name it has in
+  `@ant-design/icons` (`StarOutlined`, `StarFilled`, `StarTwoTone`), imported from the new entry `svelte-ant-design/icons` (or one by one from
+  `svelte-ant-design/icons/<Name>`), so a build keeps the drawings it uses and drops the others; a React project moves by changing the import path. `spin`, `rotate`,
+  `twoToneColor` (one color, whose second shade is derived as Ant Design does, or a pair), `label` (the accessible name, `label=""` to hide the icon), `class`, `style` and the
+  attributes of the wrapper. The generic `Icon` draws a definition of your own (`icon`), a Svelte component (`component`) or your own `<svg>` (`children`);
+  `setTwoToneColor` and `getTwoToneColor` set the default two-tone colors for a page; `createFromIconfontCN` loads the sprite script of an iconfont.cn project and returns an
+  icon component. The drawings are not copied into the repository: they come from the data package `@ant-design/icons-svg` (MIT), the one the Ant Design icon packages for
+  React and Vue use, which is now a dependency, together with `@ant-design/colors` for the second shade of two-tone icons. New tokens `--ads-icon-twotone-primary` and
+  `--ads-icon-twotone-secondary`, and a page on the documentation site with a gallery of all the icons, in the six groups of the Ant Design list and in its order, all themes together or one at a time.
+
 ## [0.14.1] - 2026-11-20
 
 ### Tests
