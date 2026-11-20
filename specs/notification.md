@@ -334,7 +334,7 @@ become part of this branch and ship with it in one release). Nothing is missing:
 | Touch | test | `e2e/notification-touch.chromium.spec.ts` (emulated touch, Chromium): a tap on the box calls `onclick` and does not hold the timer, a tap on the close button closes it, a tap does not open a pile. A real touch device is **not checked**; the page and the README say so |
 | Browsers | test | `npm run test:e2e` (Chromium, Firefox and WebKit) |
 | Browser floor | test | `npm run test:floor`: the Notification checks in `scripts/floor/smoke.cjs` (a box at a corner with its click-through layer, the six places and the order, the progress strip, a pile with its `inert` rows) in Chromium 90, Firefox 85 and WebKit 15.4 |
-| Screen reader | manual pending | not checked with a real screen reader yet: the Orca test of `Message` (`screen-reader/message.spec.ts`) is the pattern to copy; **the page and the README say "not checked with a screen reader"** |
+| Screen reader | test | `screen-reader/notification.spec.ts`: Orca with Firefox through Guidepup reads the role, the type word, the title and the description of an error, a success and a warning without a close button, the new text after an update by key, the close button after the text, and the name of the close button on Tab (run in Docker on 2026-11-20, twice alone and once with the whole suite of ten tests, all passed; two changes of the component fail it, as they should: every notification a `status` gives "status bar" for an error instead of "alert", and no type word gives "Upload failed" without "Error:"). Whether a notification is **announced when it opens** is not shown (this setup does not speak even a plain `role="alert"`, the limit of `Message`). NVDA, JAWS, VoiceOver `manual pending` |
 
 ## Список тестов
 
@@ -396,7 +396,7 @@ tested in their own files (`specs/overlay.md`); here only what Notification does
 
 `docs/src/docs/components/notification` in the way of `Message` (`docs/README.md`), texts in en, ru and zh, the table of the API (the options, the
 config and host props, the methods, the close reasons, the semantic parts, the tokens), a section of keyboard and screen reader notes that
-says "not checked with a screen reader". Examples (each on its own line, one state per component; the demo order is the two-column grid;
+says what Orca was shown to read and what is not checked (a notification announced when it opens, NVDA, JAWS, VoiceOver, a phone). Examples (each on its own line, one state per component; the demo order is the two-column grid;
 the ones that need width, `placement` and `stack`, are `wide`): 01 basic (title and description), 02 types, 03 placement (the six
 places), 04 duration (4.5, a number, never), 05 update by key, 06 actions (a Snippet with buttons), 07 icon (custom, none), 08 close (default,
 `closable: false`, `closeIcon`), 09 progress, 10 pause on hover, 11 stack (default, off, threshold), 12 maxCount, 13 styling (`class`,

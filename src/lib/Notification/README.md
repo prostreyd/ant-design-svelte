@@ -170,8 +170,11 @@ The `Modal` of this library does not need it: its layer keeps the notification l
   theme, and in the light theme with `tokens-accessible.css`, which darkens the green, the amber and the close button).
 - In forced-colors modes such as Windows High Contrast the box, the close button and the strip are drawn with a border.
 - Positions use logical properties, so the order of icon and text mirrors in right-to-left layouts.
-- **Not checked:** a real screen reader (there is no Orca test for Notification yet; `Message` has one), NVDA, JAWS,
-  VoiceOver, a phone screen reader, a real touch device (touch is tested with emulated touch in Chromium) and a real Safari.
+- Checked with a real screen reader: Orca with Firefox reads the role, the type word, the title, the description, the new
+  text after an update by key and the name of the close button (`screen-reader/notification.spec.ts`).
+- **Not checked:** whether a screen reader *announces* a notification when it opens (the Orca harness does not speak even a
+  plain `role="alert"` inserted with the DOM, so it cannot show it), NVDA, JAWS, VoiceOver, a phone screen reader, a real
+  touch device (touch is tested with emulated touch in Chromium) and a real Safari.
 
 ## Scope decisions and differences from Ant Design
 
