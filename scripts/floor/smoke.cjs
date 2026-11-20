@@ -5,7 +5,7 @@
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
 // It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab, the
-// Tooltip lab, the Radio lab, the grid lab, the Message lab, the Notification lab, the Spin lab, the Menu lab, the overlay lab, the Modal lab and the Form lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// Tooltip lab, the Radio lab, the grid lab, the Message lab, the Notification lab, the Spin lab, the Icon lab, the Menu lab, the overlay lab, the Modal lab and the Form lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -1075,6 +1075,95 @@ async function notificationPage(context) {
   await page.close();
 }
 
+async function iconPage(context) {
+  const page = await newPage(context, base + '/#icon');
+  await page.waitForFunction(() => Boolean(window.__iconLab));
+  const set = (next) => page.evaluate((args) => window.__iconLab.set(args), next);
+  const near = (a, b, tolerance) => Math.abs(a - b) <= (tolerance === undefined ? 0.6 : tolerance);
+  const fills = () => page.evaluate(() => Array.prototype.map.call(document.querySelectorAll('[data-testid="icon"] path'), (path) => getComputedStyle(path).fill));
+
+  await check('icon: a drawing is an svg of the text size, drawn (it has a size) and in the SVG namespace', async () => {
+    await set({ name: 'StarOutlined', fontSize: 24 });
+    const r = await page.evaluate(() => {
+      const wrapper = document.querySelector('[data-testid="icon"]');
+      const path = wrapper.querySelector('path');
+      const box = path.getBBox();
+      const box2 = wrapper.getBoundingClientRect();
+      return { w: box2.width, h: box2.height, ns: path.namespaceURI, bw: box.width, display: getComputedStyle(wrapper).display };
+    });
+    return [near(r.w, 24) && near(r.h, 24) && r.ns === 'http://www.w3.org/2000/svg' && r.bw > 1 && r.display === 'inline-flex', JSON.stringify(r)];
+  });
+
+  await check('icon: a drawing with a group and defs is drawn (it has a size only when every node is in the SVG namespace)', async () => {
+    const r = await page.evaluate(() => {
+      const group = document.querySelector('[data-testid="dot-net"] g');
+      const box = group.getBBox();
+      return { ns: group.namespaceURI, w: box.width, h: box.height };
+    });
+    return [r.ns === 'http://www.w3.org/2000/svg' && r.w > 1 && r.h > 1, JSON.stringify(r)];
+  });
+
+  await check('icon: spin turns the wrapper (a running animation whose clock moves), rotate turns the drawing', async () => {
+    await set({ name: 'StarOutlined', fontSize: 14, props: { spin: true, rotate: 90 } });
+    const sample = () =>
+      page.evaluate(() => {
+        const found = document.querySelector('[data-testid="icon"]').getAnimations()[0];
+        return found ? { state: found.playState, time: Number(found.currentTime) } : null;
+      });
+    const first = await sample();
+    await page.waitForTimeout(250);
+    const second = await sample();
+    const matrix = await page.evaluate(() => getComputedStyle(document.querySelector('[data-testid="icon"] svg')).transform);
+    const numbers = matrix.replace(/^matrix\(|\)$/g, '').split(',').map(Number);
+    const turned = numbers.length === 6 && near(numbers[0], 0, 0.01) && near(numbers[1], 1, 0.01) && near(numbers[2], -1, 0.01) && near(numbers[3], 0, 0.01);
+    return [Boolean(first && second && second.state === 'running' && second.time > first.time) && turned, JSON.stringify([first, second, matrix])];
+  });
+
+  await check('icon: a turning icon does not move its neighbours (the layout box stays)', async () => {
+    await set({ name: 'LoadingOutlined', fontSize: 14, props: { spin: true } });
+    const frame = () =>
+      page.evaluate(() => {
+        const r = (selector) => {
+          const box = document.querySelector(selector).getBoundingClientRect();
+          return [box.x, box.y, box.width, box.height];
+        };
+        const icon = document.querySelector('[data-testid="icon"]');
+        return JSON.stringify([r('[data-testid="before"]'), r('[data-testid="after"]'), [icon.offsetLeft, icon.offsetTop, icon.offsetWidth, icon.offsetHeight]]);
+      });
+    const frames = [];
+    for (let i = 0; i < 5; i += 1) {
+      frames.push(await frame());
+      await page.waitForTimeout(90);
+    }
+    return [frames.every((one) => one === frames[0]), frames[0]];
+  });
+
+  await check('icon: a two-tone drawing is painted with the theme colors, and with a color and its derived light shade', async () => {
+    await set({ name: 'SmileTwoTone', props: {} });
+    const theme = await fills();
+    await set({ name: 'HeartTwoTone', props: { twoToneColor: '#eb2f96' } });
+    const pink = await fills();
+    const ok =
+      theme.join('|') === 'rgb(22, 119, 255)|rgb(230, 244, 255)|rgb(22, 119, 255)' && pink.join('|') === 'rgb(235, 47, 150)|rgb(255, 240, 246)';
+    return [ok, theme.join('|') + ' / ' + pink.join('|')];
+  });
+
+  await check('icon: an iconfont.cn sprite loaded by the page is drawn, and a later script overrides an earlier one', async () => {
+    const sprite = (id, radius) =>
+      "(function(){var d=document.createElement('div');d.innerHTML='<svg><symbol id=\"" + id + "\" viewBox=\"0 0 10 10\"><circle cx=\"5\" cy=\"5\" r=\"" + radius + "\"/></symbol></svg>';var s=d.firstChild;s.style.position='absolute';s.style.width=0;s.style.height=0;document.body.insertBefore(s,document.body.firstChild);})();";
+    await page.route('**/fonts/early.js', (route) => {
+      setTimeout(() => route.fulfill({ contentType: 'application/javascript', body: sprite('icon-dup', 2) }), 300);
+    });
+    await page.route('**/fonts/late.js', (route) => route.fulfill({ contentType: 'application/javascript', body: sprite('icon-dup', 4) }));
+    await page.evaluate(() => window.__iconLab.font({ scriptUrl: ['/fonts/early.js', '/fonts/late.js'] }, 'icon-dup'));
+    await page.waitForFunction(() => document.querySelectorAll('symbol#icon-dup').length === 2);
+    const width = await page.evaluate(() => document.querySelector('[data-testid="font-0"] use').getBBox().width);
+    return [width > 9, 'bbox ' + width];
+  });
+
+  await page.close();
+}
+
 async function menuPage(context) {
   const page = await newPage(context, base + '/#menu');
   await page.waitForSelector('ul#menu');
@@ -1349,6 +1438,7 @@ async function modalPage(context) {
     await messagePage(context);
     await notificationPage(context);
     await spinPage(context);
+    await iconPage(context);
     await menuPage(context);
     await overlayPage(context);
     await modalPage(context);

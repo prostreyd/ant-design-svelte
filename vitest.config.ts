@@ -8,6 +8,8 @@ export default defineConfig({
     alias: [
       { find: '$lib', replacement: fileURLToPath(new URL('./src/lib', import.meta.url)) },
       // The examples of the documentation site import the library by its package name.
+      { find: /^svelte-ant-design\/icons$/, replacement: fileURLToPath(new URL('./src/lib/Icon/icons/index.ts', import.meta.url)) },
+      { find: /^svelte-ant-design\/icons\/(.+)$/, replacement: fileURLToPath(new URL('./src/lib/Icon/icons/$1.svelte', import.meta.url)) },
       { find: /^svelte-ant-design$/, replacement: fileURLToPath(new URL('./src/lib/index.ts', import.meta.url)) }
     ],
     conditions: ['browser']

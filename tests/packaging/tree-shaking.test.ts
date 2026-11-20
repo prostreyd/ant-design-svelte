@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { HeartOutlined, StarOutlined } from '../../src/lib/Icon/data';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const rootPackage = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
@@ -120,6 +121,9 @@ let form: Bundle;
 let version: Bundle;
 let probe: Bundle;
 let tokens: Bundle;
+let icon: Bundle;
+let iconDeep: Bundle;
+let iconMain: Bundle;
 
 beforeAll(async () => {
   // 1. A copy of the library: the real sources and the real package.json, plus the probe component.
@@ -168,6 +172,10 @@ beforeAll(async () => {
   probe = await bundle('probe', mountIt('Probe'));
   version = await bundle('version', `import { VERSION } from '${name}'; document.body.textContent = VERSION;`);
   tokens = await bundle('tokens', `import '${name}/tokens.css';`);
+  // The icons: the entry of the 848 ready components, one of them by its own path, and the generic Icon from the main entry.
+  icon = await bundle('icon', mountIt('StarOutlined').replace(`from '${name}'`, `from '${name}/icons'`));
+  iconDeep = await bundle('icon-deep', `import HeartOutlined from '${name}/icons/HeartOutlined'; import { mount } from 'svelte'; mount(HeartOutlined, { target: document.body, props: {} });`);
+  iconMain = await bundle('icon-main', mountIt('Icon'));
 }, 180_000);
 
 afterAll(() => {
@@ -224,5 +232,34 @@ describe('tree shaking of the packaged library (Vite production build)', () => {
 
   it('tokens.css: a side-effect import of the stylesheet is kept', () => {
     expect(tokens.css).toContain('--ads-color-primary-solid');
+  });
+
+  describe('the icons (specs/icon.md)', () => {
+    const pathOf = (definition: { icon: unknown }) => (definition.icon as { children: { attrs: { d: string } }[] }).children[0].attrs.d.slice(0, 60);
+
+    it('the entry `<package>/icons` resolves, and one icon from it bundles that drawing and not the other 847', () => {
+      expect(bundled(icon, '/dist/Icon/icons/StarOutlined.svelte'), 'StarOutlined module').toBe(true);
+      expect(bundled(icon, '/dist/Icon/icons/HeartOutlined.svelte'), 'HeartOutlined module').toBe(false);
+      expect(icon.js).toContain(pathOf(StarOutlined));
+      expect(icon.js).not.toContain(pathOf(HeartOutlined));
+      expect(icon.css, 'the icon styles come with it').toContain('ads-icon');
+      // The Svelte runtime is in both bundles (unminified here); what one more icon adds is its drawing, a few kilobytes, not the 848.
+      expect(icon.js.length - iconMain.js.length, 'what one icon adds to the generic Icon').toBeLessThan(15_000);
+    });
+
+    it('one icon by its own path (`<package>/icons/<Name>`) resolves too, and is just as small', () => {
+      expect(bundled(iconDeep, '/dist/Icon/icons/HeartOutlined.svelte')).toBe(true);
+      expect(iconDeep.js).toContain(pathOf(HeartOutlined));
+      expect(iconDeep.js).not.toContain(pathOf(StarOutlined));
+    });
+
+    it('the data package is a dependency that is bundled with the icons and not with anything else', () => {
+      expect(bundled(icon, '/node_modules/@ant-design/icons-svg/'), 'the icon bundles its drawing').toBe(true);
+      expect(bundled(iconMain, '/node_modules/@ant-design/icons-svg/'), 'the generic Icon holds no drawing').toBe(false);
+      expect(bundled(iconMain, '/dist/Icon/Icon.svelte'), 'the generic Icon is in the main entry').toBe(true);
+      expect(bundled(button, '/node_modules/@ant-design/icons-svg/'), 'Button').toBe(false);
+      expect(bundled(button, '/dist/Icon/'), 'Icon in the Button bundle').toBe(false);
+      expect(bundled(version, '/node_modules/@ant-design/colors/'), 'VERSION').toBe(false);
+    });
   });
 });
