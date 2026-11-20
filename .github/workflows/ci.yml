@@ -16,10 +16,14 @@ concurrency:
   cancel-in-progress: true
 
 # Jobs that run at the same time: the fast checks, and the e2e tests of the library and of the documentation site, each of the two
-# once for every engine (Chromium, Firefox, WebKit), so seven jobs. The e2e tests are most of the time: one job for all of them
-# and all three engines reached the limit of 40 minutes on 2026-11-17, and two jobs of three engines each took 16 and 26 minutes
-# (2026-11-19, the engines one after the other). An engine is about a third of that, so a run now takes about the time of the
-# slowest engine of the site (10 minutes of tests, the install and the build on top). A new component adds to each of the jobs.
+# once for every engine (Chromium, Firefox, WebKit). The e2e tests are most of the time: one job for all of them and all three
+# engines reached the limit of 40 minutes on 2026-11-17, and two jobs of three engines each took 16 and 26 minutes (2026-11-19, the
+# engines one after the other). An engine is about a third of that. The tests of the site are slower than the others (on 2026-11-19
+# the tests of Chromium took 7.8 minutes, of Firefox 9.3 and of WebKit 14.3, against 6.5, 8.0 and 7.4 for the library), so the
+# site is cut in two parts for Firefox and WebKit (`--shard`): eight e2e jobs (three for the library, five for the site) and the fast
+# checks. On 2026-11-20 the parts of the site took 5.6 to 7.4 minutes and the whole run 12.4, with the library now the slowest
+# (WebKit 12.4 and Firefox 10.7 minutes in that run, 8.3 and 8.7 in the one before: the runners vary). What a job costs on top of its
+# tests is under a minute (the container, `npm ci`, the build), so a part is cheap. A new component adds to every job.
 #
 # Pinned, not `ubuntu-latest`: on 2026-11-17 that label moved to Ubuntu 26.04, where the WebKit of Playwright 1.65 does not
 # start (`libicudata.so.74: cannot open shared object file`, every WebKit test fails). 24.04 is the image the jobs were green on.
@@ -96,20 +100,27 @@ jobs:
           retention-days: 7
 
   e2e-site:
-    name: e2e-site (${{ matrix.engine }})
+    name: e2e-site (${{ matrix.engine }} ${{ matrix.shard }})
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        engine: [chromium, firefox, webkit]
+        # `shard` is `part/parts` for Playwright: every part of every engine has to be here, or tests are left out of the run
+        # (tests/ciPlaywright.test.ts checks that the parts of each engine are complete).
+        include:
+          - { engine: chromium, shard: 1/1 }
+          - { engine: firefox, shard: 1/2 }
+          - { engine: firefox, shard: 2/2 }
+          - { engine: webkit, shard: 1/2 }
+          - { engine: webkit, shard: 2/2 }
     # The official image of Playwright: the three browsers and all their system packages are already in it, so a job downloads
     # nothing and runs no `apt` at the start. (On 2026-11-18 the `apt` of `playwright install --with-deps` timed out on a slow
     # Ubuntu mirror in every e2e job, `main` included, before a test ran.) The tag is the version of Playwright in
     # package-lock.json; tests/ciPlaywright.test.ts fails when they differ, so change both together.
     container:
       image: mcr.microsoft.com/playwright:v1.65.0-noble
-    # About 14 minutes for one engine with the build; the limit leaves room for a slow runner.
-    timeout-minutes: 30
+    # About 9 minutes for the slowest part with the build; the limit leaves room for a slow runner.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -132,8 +143,8 @@ jobs:
         env:
           BASE_PATH: /ant-design-svelte
 
-      - name: Test the documentation site (${{ matrix.engine }})
-        run: npm run test:e2e -w docs -- --project=${{ matrix.engine }}
+      - name: Test the documentation site (${{ matrix.engine }} ${{ matrix.shard }})
+        run: npm run test:e2e -w docs -- --project=${{ matrix.engine }} --shard=${{ matrix.shard }}
         env:
           BASE_PATH: /ant-design-svelte
           # See the HOME of the library job above: Firefox does not start in a container without it.
@@ -143,7 +154,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-test-results-site-${{ matrix.engine }}
+          name: playwright-test-results-site-${{ matrix.engine }}-${{ strategy.job-index }}
           path: docs/test-results/
           if-no-files-found: ignore
           retention-days: 7

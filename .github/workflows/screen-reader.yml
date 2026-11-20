@@ -1,12 +1,40 @@
-# Tests with a real screen reader (Orca with Firefox, through Guidepup) on a GitHub runner. A workflow of its own, so
-# that the CI of the library does not wait for it and a speech that is late does not stop a release by itself.
+# Tests with a real screen reader (Orca with Firefox, through Guidepup) on a GitHub runner. A workflow of its own, so that the CI of
+# the library does not wait for it and does not carry its nine minutes on every branch. Since 2026-11-20 it is part of the gate of a
+# release: publish.yml publishes only when it was green for the commit of the tag (the run that this workflow made on main, or, when
+# there is none for that commit, a run that publish.yml makes itself through `workflow_call` below).
 name: Screen reader
 
+# It runs when what the speech depends on changes (the library, the e2e fixtures, the tests of the screen reader, the build and
+# the packages). A push that only touches the documentation, the specifications or the rules does not start it. By hand it
+# runs at any time. There is no run by schedule (the owner dropped the weekly run on 2026-11-20). The list of paths is kept in
+# step with what the build of the fixtures reads by tests/screenReaderWorkflow.test.ts.
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/lib/**'
+      - 'e2e/fixtures/**'
+      - 'screen-reader/**'
+      - 'vite.e2e.config.ts'
+      - 'svelte.config.js'
+      - 'tsconfig*.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/screen-reader.yml'
   pull_request:
+    paths:
+      - 'src/lib/**'
+      - 'e2e/fixtures/**'
+      - 'screen-reader/**'
+      - 'vite.e2e.config.ts'
+      - 'svelte.config.js'
+      - 'tsconfig*.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/screen-reader.yml'
   workflow_dispatch:
+  # Called by publish.yml for a release whose commit has no run of its own (see the gate there).
+  workflow_call:
 
 permissions:
   contents: read
