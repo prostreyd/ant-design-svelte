@@ -387,6 +387,10 @@
   --ads-spin-fullscreen-z-index: 1000;
   --ads-spin-ring-track: rgba(0, 0, 0, 0.06);
 
+  /* Icon: the colors of a two-tone icon that has none of its own (the second color is the lightest shade of the first). */
+  --ads-icon-twotone-primary: var(--ads-color-primary);
+  --ads-icon-twotone-secondary: #e6f4ff;
+
   /*
    * Message: the values measured on the Ant Design demo (React 6.7.1, 2026-11-16, light theme): padding, radius, shadow,
    * 16 px icon with an 8 px gap, the layer above every popup (2010), the box 8 px from the top and 16 px from the next.
@@ -752,6 +756,9 @@
   --ads-spin-description-color: #69b1ff;
   --ads-spin-mask-bg: rgba(0, 0, 0, 0.45);
   --ads-spin-ring-track: rgba(255, 255, 255, 0.12);
+
+  /* Icon in the dark theme: the primary follows `--ads-color-primary`; the light shade is the dark palette's first step. */
+  --ads-icon-twotone-secondary: #111a2c;
 
   /* Message in the dark theme: an elevated panel one step lighter than the page, and the dark status colors. */
   --ads-message-bg: #1f1f1f;

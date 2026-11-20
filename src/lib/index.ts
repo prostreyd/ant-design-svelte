@@ -17,6 +17,9 @@ export { default as Modal } from './Modal/Modal.svelte';
 export { default as ModalHost } from './Modal/ModalHost.svelte';
 export { modal } from './Modal/modal.js';
 export { default as Spin } from './Spin/Spin.svelte';
+export { default as Icon } from './Icon/Icon.svelte';
+export { getTwoToneColor, setTwoToneColor } from './Icon/twoTone.svelte.js';
+export { createFromIconfontCN } from './Icon/iconfont.js';
 export { default as Row } from './Grid/Row.svelte';
 export { default as Col } from './Grid/Col.svelte';
 export { Breakpoints } from './Grid/Breakpoints.js';
@@ -267,3 +270,14 @@ export type {
   NotificationStyles,
   NotificationType
 } from './Notification/types.js';
+export type {
+  AbstractNode,
+  IconComponentProps,
+  IconDefinition,
+  IconFontOptions,
+  IconFontProps,
+  IconProps,
+  IconTheme,
+  NamedIconProps,
+  TwoToneColor
+} from './Icon/types.js';
