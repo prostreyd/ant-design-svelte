@@ -1,14 +1,16 @@
 <script lang="ts">
   import { flushSync, type Component } from 'svelte';
-  import { createFromIconfontCN, getTwoToneColor, Icon, setTwoToneColor, type IconFontOptions, type IconFontProps, type TwoToneColor } from '$lib';
+  import { Button, createFromIconfontCN, getTwoToneColor, Icon, setTwoToneColor, type IconFontOptions, type IconFontProps, type TwoToneColor } from '$lib';
   // Only the drawings the tests ask for, each from its own file: the labs are all loaded by every page of the browser tests, and an
   // import of the list of 848 made every page ask the development server for 848 more modules.
   import CheckCircleTwoTone from '@ant-design/icons-svg/es/asn/CheckCircleTwoTone.js';
+  import DeleteOutlined from '@ant-design/icons-svg/es/asn/DeleteOutlined.js';
   import DotNetOutlined from '@ant-design/icons-svg/es/asn/DotNetOutlined.js';
   import HeartTwoTone from '@ant-design/icons-svg/es/asn/HeartTwoTone.js';
   import LoadingOutlined from '@ant-design/icons-svg/es/asn/LoadingOutlined.js';
   import LoginOutlined from '@ant-design/icons-svg/es/asn/LoginOutlined.js';
   import RestOutlined from '@ant-design/icons-svg/es/asn/RestOutlined.js';
+  import SearchOutlined from '@ant-design/icons-svg/es/asn/SearchOutlined.js';
   import ShareAltOutlined from '@ant-design/icons-svg/es/asn/ShareAltOutlined.js';
   import SmileTwoTone from '@ant-design/icons-svg/es/asn/SmileTwoTone.js';
   import StarFilled from '@ant-design/icons-svg/es/asn/StarFilled.js';
@@ -58,6 +60,19 @@
   <Icon data-testid="rest" icon={RestOutlined} />
 </div>
 
+<!-- Icons in controls (tests with a real screen reader, screen-reader/icon.spec.ts): a button named by its text with a hidden icon, an icon-only
+     button named by itself with a hidden icon, and an icon that is a button by its own role and label. -->
+<div class="buttons" data-testid="buttons" style:font-size="14px">
+  <Button type="primary" data-testid="search-button">
+    {#snippet icon()}<Icon icon={SearchOutlined} label="" />{/snippet}
+    Search
+  </Button>
+  <Button shape="circle" aria-label="Delete" data-testid="delete-button">
+    {#snippet icon()}<Icon icon={DeleteOutlined} label="" />{/snippet}
+  </Button>
+  <Icon icon={StarOutlined} label="Add a star" role="button" tabindex={0} data-testid="star-button" />
+</div>
+
 <div class="fonts" data-testid="fonts" style:font-size="14px">
   {#each fonts as font, index (index)}
     {@const Font = font.component}
@@ -68,6 +83,7 @@
 <style>
   .host,
   .fixed,
+  .buttons,
   .fonts {
     margin: 12px;
     line-height: 1.5;
