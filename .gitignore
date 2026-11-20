@@ -2,6 +2,9 @@
 node_modules/
 tmp
 
+# Working copies of branches (git worktree), one folder per branch: the tools of the project do not look into them
+/worktrees/
+
 # Build outputs
 dist/
 build/

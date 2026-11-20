@@ -19,7 +19,9 @@ export default tseslint.config(
       // `npm publish` runs the linter, so build output in these folders must not fail it.
       'svelte-demo/**',
       'svelte-demo-local/**',
-      'tmp/**'
+      'tmp/**',
+      // Working copies of branches (git worktree, `worktrees/<name>/`): each is linted from its own root, never through this one.
+      'worktrees/**'
     ]
   },
   ...tseslint.configs.recommended,
