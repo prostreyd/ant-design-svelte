@@ -5,7 +5,6 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Component } from 'svelte';
 import { describe, expect, it } from 'vitest';
-// @ts-expect-error -- a plain script, not typed
 import { barrelSource, buildIcons, componentSource } from '../scripts/generate-icons.mjs';
 import * as data from '../src/lib/Icon/data';
 import type { AbstractNode, IconDefinition } from '../src/lib/Icon/types';
