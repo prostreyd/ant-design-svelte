@@ -5,11 +5,12 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Component } from 'svelte';
 import { describe, expect, it } from 'vitest';
-import { barrelSource, buildIcons, componentSource } from '../scripts/generate-icons.mjs';
+import { barrelSource, buildIcons, componentSource, dataSource } from '../scripts/generate-icons.mjs';
 import * as data from '../src/lib/Icon/data';
 import type { AbstractNode, IconDefinition } from '../src/lib/Icon/types';
 
-const directory = join(import.meta.dirname, '../src/lib/Icon/icons');
+const base = join(import.meta.dirname, '../src/lib/Icon');
+const directory = join(base, 'icons');
 const definitions = data as unknown as Record<string, IconDefinition>;
 const components = import.meta.glob('../src/lib/Icon/icons/*.svelte', { eager: true, import: 'default' }) as Record<string, Component>;
 const countNodes = (node: AbstractNode): number => 1 + (node.children ?? []).reduce((sum, child) => sum + countNodes(child), 0);
@@ -18,8 +19,8 @@ const paths = (node: AbstractNode): string[] => [...(node.tag === 'path' ? [node
 describe('the generated icon components', () => {
   it('P8: the files on disk are what the generator writes now, and no file is left over', async () => {
     const { files } = await buildIcons();
-    expect(readdirSync(directory).sort()).toEqual(Object.keys(files).sort());
-    for (const [file, source] of Object.entries(files)) expect(readFileSync(join(directory, file), 'utf8'), file).toBe(source);
+    expect(readdirSync(directory).map((file) => `icons/${file}`).sort()).toEqual(Object.keys(files).filter((file) => file.startsWith('icons/')).sort());
+    for (const [file, source] of Object.entries(files)) expect(readFileSync(join(base, file), 'utf8'), file).toBe(source);
   });
 
   it('P8: every drawing of the installed package has a component, and the barrel exports exactly those', async () => {
@@ -30,6 +31,29 @@ describe('the generated icon components', () => {
     expect(exported.map((match) => match[1])).toEqual(names);
     expect(exported.every((match) => match[1] === match[2] && existsSync(join(directory, `${match[2]}.svelte`)))).toBe(true);
     for (const name of ['StarOutlined', 'StarFilled', 'StarTwoTone', 'LoadingOutlined', 'GithubOutlined']) expect(names).toContain(name);
+  });
+
+  it('P8: the adapter imports every drawing from its own ES file with the extension, and nothing from the package root', () => {
+    // From the root a drawing is not found by Node before 24: the server render on Node 22 (the one CI runs) drew nothing.
+    const source = readFileSync(join(base, 'data.ts'), 'utf8');
+    expect(source).toBe(dataSource(Object.keys(data).sort()));
+    const imports = [...source.matchAll(/from '([^']+)'/g)].map((match) => match[1]);
+    expect(imports.length).toBeGreaterThan(800);
+    for (const specifier of imports) expect(specifier, specifier).toMatch(/^@ant-design\/icons-svg\/es\/asn\/[A-Za-z0-9]+\.js$/);
+    expect(source).not.toMatch(/from '@ant-design\/icons-svg'/);
+  });
+
+  it('P8: no source of the library imports the data package from its root, or any file but the adapter', () => {
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) walk(path);
+        else if (/\.(ts|svelte)$/.test(entry.name) && !path.endsWith(join('Icon', 'data.ts')) && /(from|import)\s*\(?\s*['"]@ant-design\/icons-svg/.test(readFileSync(path, 'utf8'))) offenders.push(path);
+      }
+    };
+    walk(join(import.meta.dirname, '../src/lib'));
+    expect(offenders).toEqual([]);
   });
 
   it('P8: a generated file is a name and an import: it holds no drawing, and says it is generated and from where', () => {

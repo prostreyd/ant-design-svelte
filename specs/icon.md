@@ -294,8 +294,12 @@ What the implementation found out, and where it differs from the draft:
 
 1. **A dynamic element needs its namespace said.** `<svelte:element>` inside a snippet that renders the nodes of a drawing makes the elements in the HTML namespace (a `path` with no size) unless each carries
    `xmlns="http://www.w3.org/2000/svg"`. A unit test and a real-engine test (the drawing has a size) hold it.
-2. **The data package is imported from its root.** In plain Node (a server render) `import X from '@ant-design/icons-svg/es/asn/StarOutlined'` fails (ES syntax in a package that is not `type: module`), and
-   `import { StarOutlined } from '@ant-design/icons-svg'` works, so `data.ts` is `export * from '@ant-design/icons-svg'`; a bundler resolves it to the ES build and keeps only what is used (`IconBundle.test.ts`).
+2. **Each drawing is imported from its own ES file, with the extension.** A named import from the package root (`import { StarOutlined } from '@ant-design/icons-svg'`, which is what the first version of `data.ts` did through
+   `export *`) works on Node 24 and **not on Node 22**: the package is CommonJS, and Node finds the names of a CommonJS module by a scan of its source, which finds all 851 on Node 24 and two on Node 22 (`default` is
+   `module.exports` on both). The server render drew nothing on the Node 22 that CI runs (the local machine had Node 24, so only CI saw it: ten failures of `tests/IconServer.test.ts`), and a SvelteKit server on Node 22 would
+   have drawn nothing either. The ES files `@ant-design/icons-svg/es/asn/<Name>.js` load natively on Node 22 and 24 (Node recognizes the ES syntax of a file in a package that is not `type: module`; **without the extension
+   they are not found**) and in every bundler, and each is a module of its own, so a bundler keeps only the drawings that are imported (`IconBundle.test.ts`, the packaging test). `data.ts` is therefore generated with one
+   re-export per drawing (`npm run generate:icons`), and a test fails on an import from the package root anywhere in `src/lib/`. The generator itself reads the names through `default` for the same reason.
 3. **`generate()` of `@ant-design/colors` never throws.** On text that is not a color it returns a dark grey (`#404040`), so a CSS variable or `currentColor` is detected first and keeps the default second color.
 4. **A `var()` is a style declaration, not a `fill` attribute**: a path whose fill is a `var(...)` gets `style="fill: ..."`; a literal color stays an attribute.
 5. **The rotation goes through the wrapper.** `rotate` sets `--ads-icon-rotate` on the wrapper and the svg child turns by it, so it reaches the svg of a `component` and of `children` too, and `spin` (on the wrapper)
@@ -305,7 +309,7 @@ What the implementation found out, and where it differs from the draft:
 8. **`createFromIconfontCN` returns `(internals, props) => IconFont(internals, props + the shared ones)`**: the shared props are added behind the real props with a `Proxy`, so the props stay reactive and the icon's own wins. The
    scripts run in the order of the list (`async = false`). The public sprite script that iconfont.cn generates (the example in the React docs) was read for how it inserts its symbols: it puts its `<svg>` at the **start** of the
    body, so a later script's symbols come first and win a duplicate name, which is "later overrides earlier" (tested with a fake script that does the same).
-9. **Server rendering through Vite loads the data package with Node itself** (`tests/IconServer.test.ts`), which is the case that decided note 2.
+9. **Server rendering through Vite loads the data package with Node itself** (`tests/IconServer.test.ts`, in a process of its own): the case that showed note 2. Run the unit tests on Node 22 as well as the local Node: CI uses 22.
 10. **Numbers.** 848 components, 849 generated files (with the barrel), a few hundred bytes each; `svelte-check` took about 10 s over 2410 files. The npm package is 343 kB packed (112 kB before), 1.7 MB unpacked,
     1956 files (the 848 `.svelte` files and their declarations; the drawings are in the dependency). Floor: 81 of 81 checks on Chromium 90, Firefox 85 and WebKit 15.4 (six are the icon's). `e2e/icon.spec.ts`: 26 tests in each of
     three engines. Branch coverage of `src/lib/Icon/` is 100%.
