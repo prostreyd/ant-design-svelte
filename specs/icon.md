@@ -224,8 +224,9 @@ It is small (about half a day, with a test that serves a fake script locally) an
 - **P7.** `spin` slows under `prefers-reduced-motion` (a deliberate difference from React; the private spinner does the same). Recorded as a difference in the docs.
 - **P8.** The generated components are **committed** (848 small files in `src/lib/icons/`, produced by `npm run generate:icons` from the installed `@ant-design/icons-svg`), with a test that fails when they differ from what the
   generator would write. The alternative (generate on every build) puts a step in lint, check, test, package and the CI workflows. The generated header says: generated, do not edit, data from `@ant-design/icons-svg` (MIT).
-- **P9.** The package is imported by **one adapter** (`src/lib/Icon/data.ts`: the generated files import their drawing through it, and `twoToneColor` imports `@ant-design/colors` through its own single file), so that
-  criterion 3 of `ai/dependencies.md` (replaceable without changing the public API) holds.
+- **P9.** Where the package is imported is **one place that knows the form**: the generator (`scripts/generate-icons.mjs`) writes every import of the drawings, in one form (`@ant-design/icons-svg/es/asn/<Name>.js`), into the ready
+  components and into the list `data.ts`, and `twoToneColor` imports `@ant-design/colors` through its own single file, so that criterion 3 of `ai/dependencies.md` (replaceable without changing the public API) holds: changing
+  the package is a change of the generator. (The first plan was one adapter file that every component imports; a development server then loads all 848 modules, see "Implementation notes", 2.)
 - **P10.** The docs page has a **gallery**: a search box, a theme control (All, Outlined, Filled, TwoTone; All is the first and the default: a name is followed by its themes, as on that list) and the drawings in **the six groups of the Ant Design list, in its order** (added 2026-11-20 at the maintainer's request), click to copy the name; plus examples of each prop. A
   gallery of 848 items is not drawn all at once on the server: the server sends the first chunk and the page draws the rest as soon as it has loaded.
 - **P11.** `README` and the docs page say what is not checked ("not checked with a screen reader", until the Orca test exists) and that a drawing can look uneven on a pixel grid (issue 684).
@@ -242,7 +243,7 @@ It is small (about half a day, with a test that serves a fake script locally) an
 - **Primitives in `internal/`:** none needed (`semantic.ts` for `classList` only). The private `internal/icons/` is **not** imported (the sets stay apart).
 - **Shared state:** the global two-tone color is a module with runes (`twoTone.svelte.ts`).
 - **Packages:** `@ant-design/icons-svg` (the maintainer agreed, 2026-11-20; passes the five criteria: replacement is more than a day and a migration would see different drawings; pure data, no dependencies, no peer
-  dependencies; one adapter file; browser floor to be proven by `npm run test:floor`; this record). `@ant-design/colors` and its dependency `@ant-design/fast-color` **only if Q4 is A**; one adapter file; floor the same way.
+  dependencies; the form of the import is known to one place, the generator; browser floor proven by `npm run test:floor`; this record). `@ant-design/colors` and its dependency `@ant-design/fast-color` **only if Q4 is A**; one adapter file; floor the same way.
 - **What is missing in `origin/main`:** nothing that Icon needs. (`ai/dependencies.md` rows for the two packages change; `scripts/check-architecture.mjs` gets the new package names in its `DEPENDENCIES` list with a reason: that is part
   of the implementation, after the agreement.)
 - **Who will use it:** Typography (`copy`, `edit`, `enter`, in the worktree `feat/typography`, which today has no such icons), and later Alert, Result, Pagination, Upload, DatePicker.
@@ -300,6 +301,10 @@ What the implementation found out, and where it differs from the draft:
    have drawn nothing either. The ES files `@ant-design/icons-svg/es/asn/<Name>.js` load natively on Node 22 and 24 (Node recognizes the ES syntax of a file in a package that is not `type: module`; **without the extension
    they are not found**) and in every bundler, and each is a module of its own, so a bundler keeps only the drawings that are imported (`IconBundle.test.ts`, the packaging test). `data.ts` is therefore generated with one
    re-export per drawing (`npm run generate:icons`), and a test fails on an import from the package root anywhere in `src/lib/`. The generator itself reads the names through `default` for the same reason.
+   **The components do not import that list.** The first version of the fix made every ready icon import `data.ts`; a development server then loaded 848 modules for any page that touched one icon, every page of the browser
+   tests asked for 848 more modules (1038 requests instead of 190), and the library jobs of CI took twice as long (Chromium 5 to 13 minutes, WebKit 10 to 19, Firefox 9 to more than the 25-minute limit). Now each generated
+   component imports only its own drawing (`import icon from '@ant-design/icons-svg/es/asn/<Name>.js'`); `data.ts` stays as the generated list that the tests and the docs read, and the labs import the few drawings they need
+   (200 requests per page again). A test fails if a component imports the list or any other file of the package.
 3. **`generate()` of `@ant-design/colors` never throws.** On text that is not a color it returns a dark grey (`#404040`), so a CSS variable or `currentColor` is detected first and keeps the default second color.
 4. **A `var()` is a style declaration, not a `fill` attribute**: a path whose fill is a `var(...)` gets `style="fill: ..."`; a literal color stays an attribute.
 5. **The rotation goes through the wrapper.** `rotate` sets `--ads-icon-rotate` on the wrapper and the svg child turns by it, so it reaches the svg of a `component` and of `children` too, and `spin` (on the wrapper)

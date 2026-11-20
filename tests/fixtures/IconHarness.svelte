@@ -2,7 +2,9 @@
   // The scenes of the server-render test (tests/IconServer.test.ts): the same markup must come out on the server and in a browser.
   import Icon from '$lib/Icon/Icon.svelte';
   import { createFromIconfontCN } from '$lib/Icon/iconfont.js';
-  import { LoadingOutlined, SmileTwoTone, StarOutlined } from '$lib/Icon/data';
+  import LoadingOutlined from '@ant-design/icons-svg/es/asn/LoadingOutlined.js';
+  import SmileTwoTone from '@ant-design/icons-svg/es/asn/SmileTwoTone.js';
+  import StarOutlined from '@ant-design/icons-svg/es/asn/StarOutlined.js';
   import StarOutlinedComponent from '$lib/Icon/icons/StarOutlined.svelte';
   import CustomSvg from './IconCustomSvg.svelte';
 

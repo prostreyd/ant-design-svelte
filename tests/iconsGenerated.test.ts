@@ -13,6 +13,7 @@ const base = join(import.meta.dirname, '../src/lib/Icon');
 const directory = join(base, 'icons');
 const definitions = data as unknown as Record<string, IconDefinition>;
 const components = import.meta.glob('../src/lib/Icon/icons/*.svelte', { eager: true, import: 'default' }) as Record<string, Component>;
+const DEEP = /^@ant-design\/icons-svg\/es\/asn\/[A-Za-z0-9]+\.js$/;
 const countNodes = (node: AbstractNode): number => 1 + (node.children ?? []).reduce((sum, child) => sum + countNodes(child), 0);
 const paths = (node: AbstractNode): string[] => [...(node.tag === 'path' ? [node.attrs.d] : []), ...(node.children ?? []).flatMap(paths)];
 
@@ -33,23 +34,34 @@ describe('the generated icon components', () => {
     for (const name of ['StarOutlined', 'StarFilled', 'StarTwoTone', 'LoadingOutlined', 'GithubOutlined']) expect(names).toContain(name);
   });
 
-  it('P8: the adapter imports every drawing from its own ES file with the extension, and nothing from the package root', () => {
+  it('P8: the list of drawings imports every drawing from its own ES file with the extension, and nothing from the package root', () => {
     // From the root a drawing is not found by Node before 24: the server render on Node 22 (the one CI runs) drew nothing.
     const source = readFileSync(join(base, 'data.ts'), 'utf8');
     expect(source).toBe(dataSource(Object.keys(data).sort()));
     const imports = [...source.matchAll(/from '([^']+)'/g)].map((match) => match[1]);
     expect(imports.length).toBeGreaterThan(800);
-    for (const specifier of imports) expect(specifier, specifier).toMatch(/^@ant-design\/icons-svg\/es\/asn\/[A-Za-z0-9]+\.js$/);
+    for (const specifier of imports) expect(specifier, specifier).toMatch(DEEP);
     expect(source).not.toMatch(/from '@ant-design\/icons-svg'/);
   });
 
-  it('P8: no source of the library imports the data package from its root, or any file but the adapter', () => {
+  it('P8: a ready icon imports its own drawing and no other file of the data package, and the components import no list of the drawings', () => {
+    // A development server loads what a file imports: through a list of 848 every page of the browser tests asked for 848 modules and the
+    // library jobs of CI took twice as long.
+    for (const name of ['StarOutlined', 'LoadingOutlined', 'SmileTwoTone']) {
+      const source = readFileSync(join(directory, `${name}.svelte`), 'utf8');
+      expect(source, name).toContain(`import icon from '@ant-design/icons-svg/es/asn/${name}.js';`);
+      expect(source, name).not.toMatch(/\.\.\/data/);
+    }
+    const imported = (path: string) => [...readFileSync(path, 'utf8').matchAll(/(?:from|import)\s*\(?\s*['"](@ant-design\/icons-svg[^'"]*)['"]/g)].map((match) => match[1]);
     const offenders: string[] = [];
     const walk = (dir: string) => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
         const path = join(dir, entry.name);
         if (entry.isDirectory()) walk(path);
-        else if (/\.(ts|svelte)$/.test(entry.name) && !path.endsWith(join('Icon', 'data.ts')) && /(from|import)\s*\(?\s*['"]@ant-design\/icons-svg/.test(readFileSync(path, 'utf8'))) offenders.push(path);
+        else if (/\.(ts|svelte)$/.test(entry.name) && !path.endsWith(join('Icon', 'data.ts'))) {
+          for (const specifier of imported(path)) if (!DEEP.test(specifier)) offenders.push(`${path}: ${specifier}`);
+          if (/\/data(\.js|\.ts)?'/.test(readFileSync(path, 'utf8')) && path.includes(join('Icon', 'icons'))) offenders.push(`${path}: imports the list`);
+        }
       }
     };
     walk(join(import.meta.dirname, '../src/lib'));
