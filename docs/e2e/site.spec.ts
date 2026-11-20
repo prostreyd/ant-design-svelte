@@ -6,6 +6,7 @@ import { demos } from '../src/docs/data/button.ts';
 import { demos as checkboxDemos } from '../src/docs/data/checkbox.ts';
 import { demos as formDemos } from '../src/docs/data/form.ts';
 import { demos as gridDemos } from '../src/docs/data/grid.ts';
+import { demos as iconDemos } from '../src/docs/data/icon.ts';
 import { demos as inputDemos } from '../src/docs/data/input.ts';
 import { demos as menuDemos } from '../src/docs/data/menu.ts';
 import { demos as messageDemos } from '../src/docs/data/message.ts';
@@ -286,8 +287,8 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Grid', 'Menu', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Form', 'Tooltip', 'Spin', 'Modal', 'Message', 'Notification'];
-    const PLANNED = ['Typography', 'Icon', 'Dropdown', 'DatePicker', 'Table', 'Drawer'];
+    const READY = ['Button', 'Icon', 'Grid', 'Menu', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Form', 'Tooltip', 'Spin', 'Modal', 'Message', 'Notification'];
+    const PLANNED = ['Typography', 'Dropdown', 'DatePicker', 'Table', 'Drawer'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
       await open(page, 'components/');
@@ -417,6 +418,7 @@ test.describe('home page', () => {
     await open(page, '');
     const now = page.locator('.road .card').first();
     await expect(now).toContainText('Button');
+    await expect(now).toContainText('Icon');
     await expect(now).toContainText('Grid');
     await expect(now).toContainText('Menu');
     await expect(now).toContainText('Input');
@@ -431,19 +433,20 @@ test.describe('home page', () => {
     await expect(now).toContainText('Modal');
     await expect(now).toContainText('Message');
     await expect(now).toContainText('Notification');
-    // The ready components follow the order of the sidebar: Button, Grid, Menu, Input, Checkbox, Radio, Switch, Select, Form, Tooltip, Spin, Modal, Message, Notification.
-    await expect(now.locator('.chips').nth(1)).toContainText('gutter');
-    await expect(now.locator('.chips').nth(2)).toContainText('selectedKeys');
-    await expect(now.locator('.chips').nth(3)).toContainText('variant');
-    await expect(now.locator('.chips').nth(4)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(5)).toContainText('orientation');
-    await expect(now.locator('.chips').nth(6)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(7)).toContainText('showSearch');
-    await expect(now.locator('.chips').nth(8)).toContainText('dependencies');
-    await expect(now.locator('.chips').nth(9)).toContainText('placement');
-    await expect(now.locator('.chips').nth(10)).toContainText('spinning');
-    await expect(now.locator('.chips').nth(11)).toContainText('closeOnOk');
-    await expect(now.locator('.chips').nth(12)).toContainText('stack');
+    // The ready components follow the order of the sidebar: Button, Icon, Grid, Menu, Input, Checkbox, Radio, Switch, Select, Form, Tooltip, Spin, Modal, Message, Notification.
+    await expect(now.locator('.chips').nth(1)).toContainText('twoToneColor');
+    await expect(now.locator('.chips').nth(2)).toContainText('gutter');
+    await expect(now.locator('.chips').nth(3)).toContainText('selectedKeys');
+    await expect(now.locator('.chips').nth(4)).toContainText('variant');
+    await expect(now.locator('.chips').nth(5)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(6)).toContainText('orientation');
+    await expect(now.locator('.chips').nth(7)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(8)).toContainText('showSearch');
+    await expect(now.locator('.chips').nth(9)).toContainText('dependencies');
+    await expect(now.locator('.chips').nth(10)).toContainText('placement');
+    await expect(now.locator('.chips').nth(11)).toContainText('spinning');
+    await expect(now.locator('.chips').nth(12)).toContainText('closeOnOk');
+    await expect(now.locator('.chips').nth(13)).toContainText('stack');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -2682,5 +2685,396 @@ test.describe('Menu page', () => {
     await expect(dynamic.locator('[data-ads-key]')).toHaveCount(2);
     await demo.getByRole('checkbox', { name: 'Show the beta section' }).check();
     await expect(dynamic.locator('[data-ads-key]')).toHaveCount(5);
+  });
+});
+
+test.describe('Icon page', () => {
+  /** The example section with the given title. */
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+  const pre = (demo: ReturnType<typeof demoOf>) => demo.locator('.demo-pre');
+  /** The numbers of a computed `matrix(...)`, or the identity for `none`. */
+  const matrix = (locator: ReturnType<typeof demoOf>) =>
+    locator.evaluate((element) => {
+      const text = getComputedStyle(element).transform;
+      return text === 'none' ? [1, 0, 0, 1, 0, 0] : text.replace(/^matrix\(|\)$/g, '').split(',').map(Number);
+    });
+  const fills = (locator: ReturnType<typeof demoOf>) => locator.locator('path').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).fill));
+  const rgb = (r: number, g: number, b: number) => `rgb(${r}, ${g}, ${b})`;
+
+  test('every example is the real component and shows its own source (the component example shows its part after it)', async ({ page }) => {
+    // A loop over every example with several browser commands each: WebKit needs about three times the default time.
+    test.slow();
+    await open(page, 'components/icon/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(iconDemos.length);
+
+    for (let i = 0; i < iconDemos.length; i++) {
+      const demo = examples.nth(i);
+      await expect(demo.locator('.demo-pre .ads-icon').first()).toBeVisible();
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = ((await demo.locator('.demo-code pre').textContent()) ?? '').trimEnd();
+      const file = new URL(`../src/docs/examples/icon/${String(i + 1).padStart(2, '0')}-${iconDemos[i].slug}.svelte`, import.meta.url);
+      const own = readFileSync(file, 'utf8').trimEnd();
+      if (iconDemos[i].slug === 'component') {
+        expect(shown.startsWith(own)).toBe(true);
+        expect(shown).toContain('<!-- panda-svg.part.svelte -->');
+        expect(shown).toContain('A custom drawing for Icon');
+      } else {
+        expect(shown).toBe(own);
+      }
+    }
+  });
+
+  test('every caption stands above the component it names, inside its own unit', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const misplaced = await page.locator('.demo-pre .field').evaluateAll((fields) =>
+      fields.filter((field) => field.querySelector(':scope > .caption') && !field.firstElementChild?.classList.contains('caption')).length
+    );
+    expect(misplaced).toBe(0);
+  });
+
+  test('no loose text or element stands beside the units of an example', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const loose = await page.locator('.demo-pre').evaluateAll((all) =>
+      all.flatMap((preview) => [...preview.children].filter((child) => !child.classList.contains('stack')).map((child) => child.className))
+    );
+    expect(loose).toEqual([]);
+  });
+
+  test('basic demo: an icon takes the size and the color of its parent', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const demo = pre(demoOf(page, 'Basic'));
+    const big = demo.locator('.big .ads-icon').first();
+    expect(Math.round((await big.boundingBox())!.width)).toBe(28);
+    const color = await big.evaluate((element) => getComputedStyle(element).color);
+    expect(await big.locator('path').first().evaluate((path) => getComputedStyle(path).fill)).toBe(color);
+    const small = demo.locator('.row').first().locator('.ads-icon').first();
+    expect(Math.round((await small.boundingBox())!.width)).toBe(14);
+  });
+
+  test('themes demo: the outlined, the filled and the two-tone drawing of one name are three different drawings', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const row = pre(demoOf(page, 'Themes')).locator('.row').first();
+    const shapes = await row.locator('.ads-icon').evaluateAll((icons) => icons.map((icon) => [...icon.querySelectorAll('path')].map((path) => path.getAttribute('d')).join('|')));
+    expect(shapes).toHaveLength(3);
+    expect(new Set(shapes).size).toBe(3);
+    expect(await row.locator('.ads-icon').evaluateAll((icons) => icons.map((icon) => icon.getAttribute('aria-label')))).toEqual(['star', 'star', 'star']);
+  });
+
+  test('spin and rotate demo: the switch turns the spin on and off, loading turns by itself, rotate turns the drawing', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const demo = pre(demoOf(page, 'Spin and rotate'));
+    const toggle = demo.getByRole('switch', { name: 'Spin' });
+    const sync = demo.getByRole('img', { name: 'sync' });
+    await expect(sync).toHaveClass(/ads-icon-spin/);
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await expect(sync).not.toHaveClass(/ads-icon-spin/);
+    await toggle.click();
+    await expect(sync).toHaveClass(/ads-icon-spin/);
+    await expect(demo.getByRole('img', { name: 'loading' })).toHaveClass(/ads-icon-spin/);
+    const arrows = demo.getByRole('img', { name: 'arrow-up' });
+    await expect(arrows).toHaveCount(4);
+    const expected = [[1, 0, 0, 1, 0, 0], [0, 1, -1, 0, 0, 0], [-1, 0, 0, -1, 0, 0], [0, -1, 1, 0, 0, 0]];
+    for (let i = 0; i < 4; i++) {
+      const got = await matrix(arrows.nth(i).locator('svg'));
+      got.forEach((value, index) => expect(value, `arrow ${i} [${index}]`).toBeCloseTo(expected[i][index], 3));
+    }
+    const rocket = demo.getByRole('img', { name: 'rocket' });
+    await expect(rocket).toHaveClass(/ads-icon-spin/);
+    await expect(rocket).toHaveClass(/ads-icon-rotated/);
+  });
+
+  test('two-tone demo: the theme, one color and its derived shade, a pair, and the color of the whole page', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const demo = pre(demoOf(page, 'Two-tone colors'));
+    const [theme, , , globalUnit] = await demo.locator('.field').all();
+    expect(await fills(theme)).toEqual([rgb(22, 119, 255), rgb(230, 244, 255), rgb(22, 119, 255)]);
+    const derived = demo.locator('.field').nth(1);
+    expect(await derived.getByRole('img', { name: 'heart' }).locator('path').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).fill))).toEqual([rgb(235, 47, 150), rgb(255, 240, 246)]);
+    expect(await derived.getByRole('img', { name: 'check-circle' }).locator('path').evaluateAll((paths) => paths.map((path) => getComputedStyle(path).fill))).toEqual([rgb(82, 196, 26), rgb(246, 255, 237), rgb(82, 196, 26)]);
+    const pair = demo.locator('.field').nth(2);
+    expect(await fills(pair.getByRole('img', { name: 'smile' }))).toEqual([rgb(22, 119, 255), rgb(255, 229, 143), rgb(22, 119, 255)]);
+    // The global color: the heart with no color of its own, the smile of the first group and the star of another example change; a color of its own stays.
+    const themesStar = pre(demoOf(page, 'Themes')).locator('.row').first().getByRole('img', { name: 'star' }).nth(2);
+    await globalUnit.getByRole('button', { name: 'Orange' }).click();
+    await expect(globalUnit.getByRole('status')).toContainText('#fa8c16 / #fff7e6');
+    expect(await fills(globalUnit.getByRole('img', { name: 'heart' }))).toEqual([rgb(250, 140, 22), rgb(255, 247, 230)]);
+    expect((await fills(theme))[0]).toBe(rgb(250, 140, 22));
+    // The paths of a drawing come in the order of its definition, so the primary color is somewhere in the list, not always first.
+    expect(await fills(themesStar)).toContain(rgb(250, 140, 22));
+    expect((await fills(derived.getByRole('img', { name: 'heart' })))[0]).toBe(rgb(235, 47, 150));
+    await globalUnit.getByRole('button', { name: 'Theme' }).click();
+    await expect(globalUnit.getByRole('status')).toContainText('var(--ads-icon-twotone-primary)');
+    expect((await fills(theme))[0]).toBe(rgb(22, 119, 255));
+  });
+
+  test('accessible name demo: named by the drawing, by a label of its own, and hidden', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const demo = pre(demoOf(page, 'Accessible name'));
+    await expect(demo.getByRole('img', { name: 'star', exact: true })).toHaveCount(1);
+    await expect(demo.getByRole('img', { name: 'Favourite' })).toHaveCount(1);
+    // The bell is hidden: only two images are exposed, and the bell is not one of them.
+    await expect(demo.getByRole('img')).toHaveCount(2);
+    await expect(demo.locator('.ads-icon-bell')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  test('clicked icons demo: a button is named by its text or label, and the icon with a role works with the mouse and the keys', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const demo = pre(demoOf(page, 'Icons that are clicked'));
+    // The icon inside is hidden, so the name is the text alone (an exact match fails if the icon spoke too).
+    await expect(demo.getByRole('button', { name: 'Search', exact: true })).toBeVisible();
+    await expect(demo.getByRole('button', { name: 'Delete', exact: true })).toBeVisible();
+    const star = demo.getByRole('button', { name: 'Add a star', exact: true });
+    const status = demo.getByRole('status');
+    await expect(status).toHaveText('stars: 0');
+    await star.click();
+    await expect(status).toHaveText('stars: 1');
+    await star.focus();
+    await page.keyboard.press('Enter');
+    await expect(status).toHaveText('stars: 2');
+    await page.keyboard.press('Space');
+    await expect(status).toHaveText('stars: 3');
+    // It is in the tab order only because the example gave it a tabindex.
+    await expect(star).toHaveAttribute('tabindex', '0');
+  });
+
+  test('custom drawing demo: a definition and an svg of your own are drawn, turned and spun', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const demo = pre(demoOf(page, 'Custom drawing'));
+    const flag = demo.locator('.ads-icon-flag').first();
+    expect((await flag.boundingBox())!.width).toBeCloseTo(28, 0);
+    expect(await flag.locator('path').evaluate((path) => (path as SVGGraphicsElement).getBBox().width)).toBeGreaterThan(5);
+    const turned = demo.getByRole('img', { name: 'Flag, turned' });
+    const got = await matrix(turned.locator('svg'));
+    [0, 1, -1, 0, 0, 0].forEach((value, index) => expect(got[index]).toBeCloseTo(value, 3));
+    const drop = demo.getByRole('img', { name: 'Drop', exact: true });
+    expect((await drop.boundingBox())!.width).toBeCloseTo(28, 0);
+    await expect(demo.getByRole('img', { name: 'Drop, spinning' })).toHaveClass(/ads-icon-spin/);
+  });
+
+  test('custom component demo: a Svelte component is drawn at the size of the text, and spins', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const demo = pre(demoOf(page, 'Custom component'));
+    await expect(demo.getByRole('img', { name: 'Panda', exact: true })).toBeVisible();
+    expect(Math.round((await demo.getByRole('img', { name: 'Panda, big' }).boundingBox())!.width)).toBe(40);
+    await expect(demo.getByRole('img', { name: 'Panda, spinning' })).toHaveClass(/ads-icon-spin/);
+    const circles = await demo.getByRole('img', { name: 'Panda', exact: true }).locator('circle').count();
+    expect(circles).toBe(5);
+  });
+
+  test('iconfont demo: the sprite the page makes is loaded and its symbols are drawn, with the shared style', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const demo = pre(demoOf(page, 'iconfont.cn'));
+    const ring = demo.locator('.field').first().getByRole('img', { name: 'Ring', exact: true });
+    await expect(ring).toBeVisible();
+    await expect.poll(() => ring.locator('use').evaluate((use) => (use as SVGGraphicsElement).getBBox().width), { timeout: 10000 }).toBeGreaterThan(5);
+    await expect.poll(() => demo.getByRole('img', { name: 'Square', exact: true }).first().locator('use').evaluate((use) => (use as SVGGraphicsElement).getBBox().width)).toBeGreaterThan(5);
+    // `extraCommonProps` gave every icon of the second font the primary color.
+    const marker = demo.locator('.field').nth(1).getByRole('img', { name: 'Square' });
+    const primary = await page.evaluate(() => {
+      const probe = document.createElement('i');
+      probe.style.color = 'var(--ads-color-primary)';
+      document.body.appendChild(probe);
+      const color = getComputedStyle(probe).color;
+      probe.remove();
+      return color;
+    });
+    expect(await marker.evaluate((element) => getComputedStyle(element).color)).toBe(primary);
+  });
+});
+
+test.describe('Icon page: the gallery', () => {
+  const cells = (page: Page) => page.locator('.gallery .grid li');
+  const groups = (page: Page) => page.locator('.gallery section.group');
+  const count = (page: Page) => page.locator('.gallery .count');
+  const GROUPS = ['Directional Icons', 'Suggested Icons', 'Editor Icons', 'Data Icons', 'Brand and Logos', 'Application Icons'];
+  const namesIn = (group: ReturnType<typeof groups>) => group.locator('.name').allTextContents();
+
+  test('the icons stand in the six groups of the Ant Design list, in its order, with every theme of a name after it (All is the first choice)', async ({ page }) => {
+    await open(page, 'components/icon/');
+    await expect(page.getByRole('radio', { name: 'All' })).toBeChecked();
+    await expect(groups(page)).toHaveCount(6);
+    expect(await groups(page).locator('h3').evaluateAll((heads) => heads.map((head) => head.firstChild?.textContent))).toEqual(GROUPS);
+    // The whole list is drawn once the page has loaded: all 848 drawings.
+    await expect(cells(page)).toHaveCount(848);
+    await expect(count(page)).toHaveText('848 icons');
+    expect((await namesIn(groups(page).nth(0))).slice(0, 8)).toEqual([
+      'StepBackwardOutlined', 'StepBackwardFilled', 'StepForwardOutlined', 'StepForwardFilled', 'FastBackwardOutlined', 'FastBackwardFilled', 'FastForwardOutlined', 'FastForwardFilled'
+    ]);
+    expect((await namesIn(groups(page).nth(1))).slice(0, 5)).toEqual(['QuestionOutlined', 'QuestionCircleOutlined', 'QuestionCircleFilled', 'QuestionCircleTwoTone', 'PlusOutlined']);
+    expect((await namesIn(groups(page).nth(5))).slice(0, 4)).toEqual(['AccountBookOutlined', 'AccountBookFilled', 'AccountBookTwoTone', 'AimOutlined']);
+  });
+
+  test('Outlined shows the outlined drawings only, in the same order of names', async ({ page }) => {
+    await open(page, 'components/icon/');
+    await expect(cells(page)).toHaveCount(848);
+    await page.getByRole('radio', { name: 'Outlined' }).check();
+    await expect(cells(page)).toHaveCount(447);
+    await expect(count(page)).toHaveText('447 icons');
+    expect((await namesIn(groups(page).nth(0))).slice(0, 6)).toEqual(['StepBackwardOutlined', 'StepForwardOutlined', 'FastBackwardOutlined', 'FastForwardOutlined', 'ShrinkOutlined', 'ArrowsAltOutlined']);
+    for (const name of await cells(page).locator('.name').allTextContents()) expect(name.endsWith('Outlined'), name).toBe(true);
+  });
+
+  test('each heading carries the number of its icons, and the numbers add up to the count', async ({ page }) => {
+    await open(page, 'components/icon/');
+    await expect(cells(page)).toHaveCount(848);
+    const numbers = await groups(page).evaluateAll((sections) => sections.map((section) => ({ shown: Number(section.querySelector('h3 .n')!.textContent), cells: section.querySelectorAll('li').length })));
+    for (const entry of numbers) expect(entry.shown).toBe(entry.cells);
+    expect(numbers.reduce((sum, entry) => sum + entry.shown, 0)).toBe(848);
+  });
+
+  test('every cell is a button named by its icon, and the drawing in it is hidden', async ({ page }) => {
+    await open(page, 'components/icon/');
+    await expect(page.getByRole('button', { name: 'StepBackwardOutlined', exact: true })).toBeVisible();
+    const unnamed = await cells(page).evaluateAll((items) => items.filter((item) => item.querySelector('.drawing .ads-icon')?.getAttribute('aria-hidden') !== 'true').length);
+    expect(unnamed).toBe(0);
+  });
+
+  test('the theme control switches the whole gallery to Outlined, Filled and TwoTone and back to All, and groups with none of the theme go', async ({ page }) => {
+    await open(page, 'components/icon/');
+    await expect(cells(page)).toHaveCount(848);
+    await page.getByRole('radio', { name: 'Outlined' }).check();
+    await expect(count(page)).toHaveText('447 icons');
+    const outlined = (await cells(page).locator('.name').allTextContents()).map((name) => name.replace(/Outlined$/, ''));
+    await page.getByRole('radio', { name: 'Filled' }).check();
+    await expect(count(page)).toHaveText('251 icons');
+    expect((await cells(page).locator('.name').allTextContents()).every((name) => name.endsWith('Filled'))).toBe(true);
+    // The names that have a filled drawing keep the order they have in the outlined list within each group.
+    const position = (name: string, list: string[]) => list.indexOf(name);
+    const inFirstGroup = (await namesIn(groups(page).nth(0))).map((name) => name.replace(/Filled$/, '')).filter((name) => outlined.includes(name));
+    for (let i = 1; i < inFirstGroup.length; i++) expect(position(inFirstGroup[i], outlined)).toBeGreaterThan(position(inFirstGroup[i - 1], outlined));
+    await page.getByRole('radio', { name: 'TwoTone' }).check();
+    await expect(count(page)).toHaveText('150 icons');
+    expect((await cells(page).locator('.name').allTextContents()).every((name) => name.endsWith('TwoTone'))).toBe(true);
+    // Data Icons has TwoTone ones (PieChart) and so keeps its heading.
+    await expect(groups(page).locator('h3').filter({ hasText: 'Data Icons' })).toHaveCount(1);
+    await page.getByRole('radio', { name: 'All' }).check();
+    await expect(count(page)).toHaveText('848 icons');
+    await expect(cells(page)).toHaveCount(848);
+  });
+
+  test('search narrows every group by the name, ignores case and separators, drops the empty groups, and says when nothing is found', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const search = page.getByRole('textbox', { name: 'Search icons' });
+    await search.fill('STAR');
+    await expect(cells(page).locator('.name')).toHaveText(['StarOutlined', 'StarFilled', 'StarTwoTone']);
+    await page.getByRole('radio', { name: 'TwoTone' }).check();
+    await expect(cells(page).locator('.name')).toHaveText(['StarTwoTone']);
+    await page.getByRole('radio', { name: 'All' }).check();
+    await search.fill('account book');
+    expect((await cells(page).locator('.name').allTextContents()).every((name) => name.startsWith('AccountBook'))).toBe(true);
+    await expect(groups(page)).toHaveCount(1);
+    await search.fill('zzzzzz');
+    await expect(cells(page)).toHaveCount(0);
+    await expect(groups(page)).toHaveCount(0);
+    await expect(page.getByText('No icon has this name.')).toBeVisible();
+    await expect(count(page)).toHaveText('0 icons');
+    await search.fill('');
+    await expect(cells(page)).toHaveCount(848);
+  });
+
+  test('every drawing of the package is somewhere in the gallery: All shows 848, and the three themes together are 848', async ({ page }) => {
+    await open(page, 'components/icon/');
+    await expect(count(page)).toHaveText('848 icons');
+    let total = 0;
+    for (const theme of ['Outlined', 'Filled', 'TwoTone']) {
+      await page.getByRole('radio', { name: theme }).check();
+      await expect(cells(page).first()).toBeVisible();
+      total += Number(((await count(page).textContent()) ?? '').replace(/\D/g, ''));
+    }
+    expect(total).toBe(848);
+  });
+
+  test('a click on a cell copies the name of the component, and the page says so', async ({ page, context, browserName }) => {
+    if (browserName === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.addInitScript(() => {
+      const written: string[] = [];
+      (window as unknown as { __written: string[] }).__written = written;
+      const original = navigator.clipboard.writeText.bind(navigator.clipboard);
+      navigator.clipboard.writeText = (text: string) => {
+        written.push(text);
+        return original(text);
+      };
+    });
+    await open(page, 'components/icon/');
+    await page.getByRole('button', { name: 'StepBackwardOutlined', exact: true }).click();
+    await expect(page.locator('.gallery .sr-only')).toHaveText('Copied: StepBackwardOutlined');
+    const written = await page.evaluate(() => (window as unknown as { __written: string[] }).__written);
+    expect(written).toEqual(['StepBackwardOutlined']);
+    if (browserName === 'chromium') expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('StepBackwardOutlined');
+  });
+
+  test('every drawn cell is painted: the drawing of a cell has a size', async ({ page }) => {
+    await open(page, 'components/icon/');
+    await expect(cells(page)).toHaveCount(848);
+    const unpainted = await cells(page).evaluateAll((items) =>
+      items.filter((item) => {
+        const path = item.querySelector('.drawing svg path') as SVGGraphicsElement | null;
+        return !path || path.getBBox().width < 1;
+      }).length
+    );
+    expect(unpainted).toBe(0);
+  });
+
+  test('on a phone the gallery stays inside the screen', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await open(page, 'components/icon/');
+    await page.locator('.gallery').scrollIntoViewIfNeeded();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    const box = (await cells(page).first().boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(390);
+  });
+
+  test('the texts and the group titles are translated, and the names of the components and of the themes are not', async ({ page }) => {
+    await open(page, rel('/components/icon/', 'ru'));
+    await expect(page.getByRole('textbox', { name: 'Поиск иконок' })).toBeVisible();
+    await expect(page.getByRole('radio', { name: 'Все' })).toBeChecked();
+    await expect(page.locator('.gallery .count')).toHaveText('Иконок: 848');
+    expect(await groups(page).locator('h3').evaluateAll((heads) => heads.map((head) => head.firstChild?.textContent))).toEqual([
+      'Иконки направлений', 'Иконки подсказок', 'Иконки редактора', 'Иконки данных', 'Бренды и логотипы', 'Иконки приложений'
+    ]);
+    await expect(page.getByRole('button', { name: 'StepBackwardOutlined', exact: true })).toBeVisible();
+    await open(page, rel('/components/icon/', 'zh'));
+    await expect(page.getByRole('textbox', { name: '搜索图标' })).toBeVisible();
+    await expect(page.locator('.gallery .count')).toHaveText('共 848 个图标');
+    expect(await groups(page).locator('h3').first().evaluate((head) => head.firstChild?.textContent)).toBe('方向性图标');
+  });
+
+  test('the server sends only the first chunk, and the rest comes with the page', async ({ page, request }) => {
+    const response = await request.get(rel('/components/icon/'));
+    const html = await response.text();
+    const sent = (html.match(/class="cell/g) ?? []).length;
+    expect(sent).toBeGreaterThanOrEqual(90);
+    expect(sent).toBeLessThanOrEqual(110);
+    await open(page, 'components/icon/');
+    await expect(cells(page)).toHaveCount(848);
+  });
+});
+
+test.describe('Icon page: the site around it', () => {
+  test('the left menu has the Icon link after Button, in General, and the page title names it', async ({ page }) => {
+    await open(page, 'components/icon/');
+    const side = page.getByRole('navigation', { name: 'Components' });
+    await expect(side.getByRole('link', { name: 'Icon', exact: true })).toHaveAttribute('href', /\/components\/icon\/$/);
+    const names = await side.getByRole('link').allTextContents();
+    expect(names.indexOf('Icon')).toBe(names.indexOf('Button') + 1);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Icon');
+    await expect(page).toHaveTitle(/Icon/);
+  });
+
+  test('the page has no accessibility violation of the serious kind in the light theme', async ({ page }) => {
+    await open(page, 'components/icon/');
+    await page.addScriptTag({ content: axeSource });
+    const violations = await page.evaluate(async () => {
+      const result = await (window as unknown as { axe: { run: (context: unknown, options: unknown) => Promise<{ violations: { id: string; impact: string | null }[] }> } }).axe.run(document, {
+        runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
+        rules: { 'color-contrast': { enabled: false } }
+      });
+      return result.violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical').map((violation) => violation.id);
+    });
+    expect(violations).toEqual([]);
   });
 });

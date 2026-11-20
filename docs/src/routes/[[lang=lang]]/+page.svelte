@@ -42,7 +42,8 @@
     Message: ['open', 'type', 'duration', 'key', 'closable', 'stack', 'classNames'],
     Modal: ['open', 'title', 'footer', 'closeOnOk', 'mask', 'centered', 'width', 'focusable', 'modal.confirm'],
     Notification: ['title', 'description', 'placement', 'duration', 'key', 'actions', 'stack', 'showProgress'],
-    Spin: ['spinning', 'delay', 'size', 'description', 'percent', 'fullscreen', 'classNames']
+    Spin: ['spinning', 'delay', 'size', 'description', 'percent', 'fullscreen', 'classNames'],
+    Icon: ['icon', 'spin', 'rotate', 'twoToneColor', 'label', 'component', 'createFromIconfontCN']
   };
 </script>
 

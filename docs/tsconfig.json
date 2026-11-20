@@ -5,6 +5,8 @@
     "paths": {
       "svelte-ant-design": ["../src/lib/index.ts"],
       "svelte-ant-design/tokens.css": ["../src/lib/tokens.css"],
+      "svelte-ant-design/icons": ["../src/lib/Icon/icons/index.ts"],
+      "svelte-ant-design/icons/*": ["../src/lib/Icon/icons/*.svelte"],
       "#docs/*": ["./src/docs/*"]
     }
   },

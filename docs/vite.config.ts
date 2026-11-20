@@ -20,6 +20,8 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: /^svelte-ant-design\/tokens\.css$/, replacement: `${lib}/tokens.css` },
+      { find: /^svelte-ant-design\/icons$/, replacement: `${lib}/Icon/icons/index.ts` },
+      { find: /^svelte-ant-design\/icons\/(.+)$/, replacement: `${lib}/Icon/icons/$1.svelte` },
       { find: /^svelte-ant-design$/, replacement: `${lib}/index.ts` }
     ],
     // One copy of Svelte for the site and for the library sources outside this folder.
