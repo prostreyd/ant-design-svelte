@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-20
+
 ### Added
 
 - `Icon`: the icons of the Ant Design set, 848 drawings, most of them in three themes (`Outlined`, `Filled`, `TwoTone`). Each is a component with the name it has in
