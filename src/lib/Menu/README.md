@@ -86,4 +86,4 @@ components, and the design tokens.
 - Icons are hidden from assistive technology. The labels of a collapsed menu stay in the page; its tips are visual only.
 - Three colors of the Ant Design token table are below 4.5:1 (the selected item, the group title, the danger item), and so are two
   fills of the dark menu. `tokens-accessible.css` darkens them; the dark theme of the page needs no file.
-- Not checked with a real screen reader or on a real touch device.
+- Checked with a real screen reader: Orca with Firefox reads the name of the menu, the items as radio menu items with "selected" or "not selected", the submenus as collapsed or expanded, and skips a disabled item and a divider. Not checked: NVDA, JAWS, VoiceOver, whether Orca says "menu bar" for the horizontal mode, and a real touch device.

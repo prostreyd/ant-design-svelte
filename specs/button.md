@@ -82,6 +82,7 @@ expires.
   (`--ads-motion-duration-spinner-reduced`).
 - Axe checks cover named button/link examples. Keyboard activation, disabled
   behavior, focus, and ARIA states have behavioral tests.
+- **Screen reader (Orca, 2026-11-20).** `screen-reader/button.spec.ts` drives Orca with Firefox through Guidepup (run in Docker; the whole suite of 13 files passed twice in a row). Orca says the name and then the role ("Primary. button"), the name of an icon-only button from its `aria-label` (the glyph is not read), a loading button as unavailable ("Loading. button grayed") while it stays a Tab stop, a native `disabled` button as unavailable that Tab skips and a screen reader still finds, and a link made of a Button ("Anchor. link"); a disabled link keeps its name and its role but Orca does not add "grayed" for a link, so its `aria-disabled` is asserted on the element. A change of `aria-busy` is not spoken by Orca. NVDA, JAWS and VoiceOver are not checked.
 
 ## Colors (decision of 2026-11-10)
 

@@ -403,7 +403,7 @@ Rule 6b of the rules for AI assistants: what this component uses besides its own
 | Touch | test | `e2e/tooltip.spec.ts` (emulated touch, three engines) and `e2e/tooltip-touch.chromium.spec.ts` (a real swipe through the DevTools protocol). A real touch device is **not checked**; the page and the README say so |
 | Browsers | test | `npm run test:e2e` (Chromium, Firefox and WebKit) |
 | Browser floor | test | `npm run test:floor`: six Tooltip checks in Chromium 90, Firefox 85 and WebKit 15.4, a disabled button included |
-| Screen reader | manual pending | not checked with a real screen reader (no `screen-reader/` test for the Tooltip yet; NVDA, JAWS and VoiceOver by hand). The page and the README say "not checked" |
+| Screen reader | test | `screen-reader/tooltip.spec.ts`: Orca with Firefox through Guidepup (one walk through the Tooltip lab at the address /#tooltip, run in Docker on 2026-11-20, three runs in a row passed alone and the whole suite of 13 files passed twice in a row) asserts what Orca says: after the name and the role of a trigger the text of the tip as its description ("A much wider trigger button. button. Wide trigger tip", a checkbox the same), the description the trigger already had first and the tip after it (the two ids are merged), a long tip read whole, only the name and the role for a `trigger="click"` tip that is not shown, and Escape that closes the tip with the focus kept and the trigger's own description back. **Not shown:** whether a tip that opens after Orca has spoken the focus is announced (the Switch of the lab was said without its tip in one run, so the walk leaves it out), NVDA, JAWS and VoiceOver. The page and the README say what was and was not checked |
 
 ## Страница на сайте
 

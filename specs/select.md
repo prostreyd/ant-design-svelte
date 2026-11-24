@@ -273,6 +273,7 @@ each other are marked.
 - `prefers-reduced-motion: reduce` removes the panel animation and the spinner speed-up (popup R11).
 - Axe checks every state: closed, open, searching, multiple with tags, groups, disabled, loading, error;
   an unnamed Select is reported (negative check).
+- **Screen reader (Orca, 2026-11-20).** `screen-reader/select.spec.ts` drives Orca with Firefox through Guidepup (run in Docker; the whole suite of 13 files passed twice in a row). Orca says the name of the field from its `<label for>`, "combo box" and "opens popup" ("editable combo box" for a searchable field), the list with its number of items, each option as "not selected" (a selected one by its name alone), a disabled option skipped by the arrows, the label of a group with its first option and again when the arrows enter the next group, the selected values of a searchable field ("Ada, Grace"), and "1 result" after a search. **Found by this test: Orca does not say the shown value of a field that is not searchable** (the `div` with `role="combobox"` holds the text "Sad" as its own text, as in the select-only example of the APG, and Orca says only the name, the role and "opens popup", on a Tab press and when it reads the line of the page); the chosen option is said as selected when the list opens again. Whether this is how Orca presents a `div` combobox or a gap to close (the searchable field exposes the value through `aria-describedby`) is for the maintainer to decide; NVDA, JAWS and VoiceOver are not checked.
 
 ## Colors, tokens and sizes
 

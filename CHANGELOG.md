@@ -9,6 +9,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Tests
+
+- Tests with a real screen reader (`screen-reader/`, Orca with Firefox through Guidepup) for `Button`, `Input`, `Select`, `Tooltip`, `Menu` and `Spin`, so every component that a screen reader reads now has one (`Icon` has its own from its release, `Grid` adds nothing to read). They assert what Orca says: the name and the role, the state (unavailable, invalid entry, selected, collapsed, expanded, pressed), the text of a tooltip as the description of its trigger, the list and the groups of a `Select`, the submenus and popups of a `Menu`, the status and the progress value of a `Spin`. The quality matrices of `Menu`, `Spin`, `Tooltip` and the overlay primitives say `test` for the screen reader, and the pages and the READMEs of `Menu`, `Spin` and `Tooltip` say what was checked and what was not. Found by the `Select` test: Orca does not say the shown value of a `Select` that is not searchable (see specs/select.md, A11y).
+
 ## [0.14.1] - 2026-11-20
 
 ### Tests
