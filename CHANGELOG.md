@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-11-25
+
 ### Added
 
 - `Typography`: text for articles and interfaces. `Typography` (an `<article>` that also styles headings, paragraphs, links, lists, quotes, `pre`, `code`, `kbd` and `mark`),
