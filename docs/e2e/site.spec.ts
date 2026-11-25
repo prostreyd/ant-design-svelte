@@ -3239,12 +3239,13 @@ test.describe('Icon page: the gallery', () => {
 });
 
 test.describe('Icon page: the site around it', () => {
-  test('the left menu has the Icon link after Button, in General, and the page title names it', async ({ page }) => {
+  test('the left menu has the Icon link after Button and Typography, in General, and the page title names it', async ({ page }) => {
     await open(page, 'components/icon/');
     const side = page.getByRole('navigation', { name: 'Components' });
     await expect(side.getByRole('link', { name: 'Icon', exact: true })).toHaveAttribute('href', /\/components\/icon\/$/);
     const names = await side.getByRole('link').allTextContents();
-    expect(names.indexOf('Icon')).toBe(names.indexOf('Button') + 1);
+    const first = names.indexOf('Button');
+    expect(names.slice(first, first + 3)).toEqual(['Button', 'Typography', 'Icon']);
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Icon');
     await expect(page).toHaveTitle(/Icon/);
   });

@@ -425,10 +425,10 @@ test.describe('focus and the page behind (R9, R10)', () => {
     const list = () => rect(page.getByRole('listbox'));
     const before = { field: await field(), list: await list() };
     await scroller.evaluate((element) => (element.scrollTop = 60));
-    await page.waitForTimeout(150);
-    const after = { field: await field(), list: await list() };
-    near(after.list.y - after.field.y, before.list.y - before.field.y, 2);
-    expect(Math.abs(after.field.y - before.field.y)).toBeGreaterThan(20);
+    expect(Math.abs((await field()).y - before.field.y)).toBeGreaterThan(20);
+    // The list moves in the next animation frame, which comes late on a busy machine (WebKit), so it is waited for.
+    const offset = async () => (await list()).y - (await field()).y;
+    await expect.poll(async () => Math.abs((await offset()) - (before.list.y - before.field.y))).toBeLessThanOrEqual(2);
   });
 
   test('the scroll lock: the wheel does not scroll the page, and it keeps its place after the close', async ({ page }) => {
