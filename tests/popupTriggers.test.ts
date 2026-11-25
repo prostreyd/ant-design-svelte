@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { popupTriggers, type PopupTriggerOptions } from '../src/lib/internal/popup/triggers';
 
+// Whether a DOM event arrives while Svelte runs an effect or a template (an `{#if}` taking the focused node out of the page).
+const reaction = vi.hoisted(() => ({ inside: false }));
+vi.mock('../src/lib/internal/popup/reaction.svelte.js', () => ({ insideReaction: () => reaction.inside }));
+
 let cleanup: (() => void) | undefined;
 let anchor: HTMLElement;
 let panel: HTMLElement;
@@ -19,6 +23,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  reaction.inside = false;
   cleanup?.();
   cleanup = undefined;
   document.body.innerHTML = '';
@@ -171,6 +176,26 @@ describe('popupTriggers: focus', () => {
     expect(setOpen).toHaveBeenCalledWith(true, { source: 'trigger' });
     fire(anchor, 'focusout');
     expect(setOpen).toHaveBeenLastCalledWith(false, { source: 'trigger' });
+  });
+
+  it('a focus lost during a teardown (inside a Svelte reaction) closes at the end of the task, not in the middle of it', async () => {
+    attach({ trigger: ['focus'] });
+    isOpen = true;
+    reaction.inside = true;
+    fire(anchor, 'focusout');
+    expect(setOpen).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(setOpen).toHaveBeenCalledWith(false, { source: 'trigger' });
+  });
+
+  it('a focus lost during a teardown changes nothing when the anchor has left the page', async () => {
+    attach({ trigger: ['focus'] });
+    isOpen = true;
+    reaction.inside = true;
+    fire(anchor, 'focusout');
+    anchor.remove();
+    await Promise.resolve();
+    expect(setOpen).not.toHaveBeenCalled();
   });
 
   it('focus moving into the panel keeps it open', () => {

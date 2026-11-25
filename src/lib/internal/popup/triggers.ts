@@ -6,6 +6,7 @@
  * It does not own the open state: it asks for the new state through `setOpen`.
  */
 import type { Attachment } from 'svelte/attachments';
+import { insideReaction } from './reaction.svelte.js';
 import type { PopupPoint, PopupSource, PopupTrigger } from './types.js';
 
 export interface PopupTriggerOptions {
@@ -90,6 +91,15 @@ export function popupTriggers(options: PopupTriggerOptions): Attachment<HTMLElem
       const next = event.relatedTarget;
       // Focus moving into the panel (a link in a Popover) keeps it open.
       if (next instanceof Node && options.panel?.()?.contains(next)) return;
+      // The browser also reports a lost focus while an `{#if}` takes the focused anchor out of the page, in the middle of the
+      // teardown, where the owner's state must not be written. The close then waits for the end of the task; an anchor that
+      // is gone by then has nothing left to close.
+      if (insideReaction()) {
+        queueMicrotask(() => {
+          if (anchor.isConnected) request(false, 0);
+        });
+        return;
+      }
       request(false, 0);
     };
     const onClick = () => request(!options.open(), 0);
