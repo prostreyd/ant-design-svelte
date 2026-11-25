@@ -45,7 +45,8 @@ export const componentPages: PageDef[] = [
   { path: '/components/select/', section: 'components', title: 'sel.title', description: 'seo.select' },
   { path: '/components/spin/', section: 'components', title: 'spn.title', description: 'seo.spin' },
   { path: '/components/switch/', section: 'components', title: 'sw.title', description: 'seo.switch' },
-  { path: '/components/tooltip/', section: 'components', title: 'tt.title', description: 'seo.tooltip' }
+  { path: '/components/tooltip/', section: 'components', title: 'tt.title', description: 'seo.tooltip' },
+  { path: '/components/typography/', section: 'components', title: 'typ.title', description: 'seo.typography' }
 ];
 
 export const allPages: PageDef[] = [homePage, ...docsPages, ...componentPages];
@@ -73,7 +74,7 @@ export const componentGroups: ComponentGroup[] = [
     title: 'g.general',
     items: [
       { name: 'Button', note: 'n.button', phase: 'now', path: '/components/button/' },
-      { name: 'Typography', note: 'n.typography', phase: 'next' },
+      { name: 'Typography', note: 'n.typography', phase: 'now', path: '/components/typography/' },
       { name: 'Icon', note: 'n.icon', phase: 'now', path: '/components/icon/' }
     ]
   },

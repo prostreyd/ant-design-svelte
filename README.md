@@ -18,7 +18,7 @@ Ant Design.
 
 ## Status
 
-Version `0.15.1`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Form` (with `FormItem`), `Grid` (`Row`, `Col` and `Breakpoints`), `Icon` (848 icons of the Ant Design set, from `svelte-ant-design/icons`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Menu` (with `MenuItem`, `MenuSubMenu`, `MenuItemGroup` and `MenuDivider`), `Radio` (with `RadioButton` and `RadioGroup`), `Select` (with `SelectOption` and `SelectOptGroup`), `Spin`, `Switch`, `Tooltip`, `Message` (the `message` calls and `MessageHost`), `Modal` (the `Modal` component, the `modal` calls and `ModalHost`), `Notification` (the `notification` calls and `NotificationHost`). More components are planned.
+Version `0.15.1`. Available components: `Button`, `Checkbox` (with `CheckboxGroup`), `Form` (with `FormItem`), `Grid` (`Row`, `Col` and `Breakpoints`), `Icon` (848 icons of the Ant Design set, from `svelte-ant-design/icons`), `Input` (with `InputTextArea`, `InputPassword`, `InputSearch` and `InputOTP`), `Menu` (with `MenuItem`, `MenuSubMenu`, `MenuItemGroup` and `MenuDivider`), `Radio` (with `RadioButton` and `RadioGroup`), `Select` (with `SelectOption` and `SelectOptGroup`), `Spin`, `Switch`, `Tooltip`, `Typography` (with `TypographyTitle`, `TypographyParagraph`, `TypographyText` and `TypographyLink`), `Message` (the `message` calls and `MessageHost`), `Modal` (the `Modal` component, the `modal` calls and `ModalHost`), `Notification` (the `notification` calls and `NotificationHost`). More components are planned.
 
 ## Browser support
 
@@ -71,6 +71,7 @@ See the [Button](https://prostreyd.github.io/ant-design-svelte/components/button
 [Spin](https://prostreyd.github.io/ant-design-svelte/components/spin/),
 [Switch](https://prostreyd.github.io/ant-design-svelte/components/switch/),
 [Tooltip](https://prostreyd.github.io/ant-design-svelte/components/tooltip/),
+[Typography](https://prostreyd.github.io/ant-design-svelte/components/typography/),
 [Message](https://prostreyd.github.io/ant-design-svelte/components/message/),
 [Modal](https://prostreyd.github.io/ant-design-svelte/components/modal/) and
 [Notification](https://prostreyd.github.io/ant-design-svelte/components/notification/) pages of the documentation site for
@@ -86,6 +87,7 @@ examples and the API tables, or [`src/lib/Button/README.md`](./src/lib/Button/RE
 [`src/lib/Spin/README.md`](./src/lib/Spin/README.md),
 [`src/lib/Switch/README.md`](./src/lib/Switch/README.md),
 [`src/lib/Tooltip/README.md`](./src/lib/Tooltip/README.md),
+[`src/lib/Typography/README.md`](./src/lib/Typography/README.md),
 [`src/lib/Message/README.md`](./src/lib/Message/README.md),
 [`src/lib/Modal/README.md`](./src/lib/Modal/README.md) and
 [`src/lib/Notification/README.md`](./src/lib/Notification/README.md) in the repository.
@@ -103,6 +105,7 @@ import 'svelte-ant-design/tokens-accessible.css';
 ```
 
 It darkens the fills, the link and text colors, the switch tracks, the checkbox border and the input border, placeholder and count, the selected item, the group title and the danger item of the menu, the green and amber icons of the `Message`, the `Notification` and the static dialogs of the `Modal`, the close button of the `Notification`, the description of a spin and the fullscreen mask of a spin; every text pair is then at least 4.5:1.
+It also darkens the typography: the type colors (secondary, success, warning, danger), links and the copy and edit buttons.
 The dark theme needs no extra file. The contrast tests run with the accessible file.
 
 ### Dark theme

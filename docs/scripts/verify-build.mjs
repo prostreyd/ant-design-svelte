@@ -162,8 +162,10 @@ for (const page of pages) {
 
   // --- leftovers of a broken template
   const text = html.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<style[\s\S]*?<\/style>/g, '');
+  // A code sample may show Svelte syntax (the example that inserts ready HTML), so `{@html` is looked for outside `<pre>`.
+  const outsideCode = text.replace(/<pre\b[\s\S]*?<\/pre>/g, '');
   for (const bad of ['{@html', '[object ', 'NaN', '$$']) {
-    if (text.includes(bad)) fail(name, `contains "${bad}"`);
+    if ((bad === '{@html' ? outsideCode : text).includes(bad)) fail(name, `contains "${bad}"`);
   }
   // The word may appear in prose ("the variables are undefined"); an element or attribute that is only it may not.
   if (/>\s*undefined\s*</.test(text) || /="undefined"/.test(text)) fail(name, 'an element or attribute shows "undefined"');

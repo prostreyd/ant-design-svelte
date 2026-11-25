@@ -9,6 +9,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- `Typography`: text for articles and interfaces. `Typography` (an `<article>` that also styles headings, paragraphs, links, lists, quotes, `pre`, `code`, `kbd` and `mark`),
+  `TypographyTitle` (`level` 1 to 5), `TypographyParagraph`, `TypographyText` and `TypographyLink`. Text styles (`type`, `disabled`, `strong`, `italic`,
+  `underline`, `delete`, `mark`, `code`, `keyboard`; a plain `<a href>` inside a part looks like a `TypographyLink`), `copyable` (a spinner while a promised text is awaited, which may take long, a fallback for plain HTTP, and no "Copied" after a failed copy), `editable` in place
+  (`bind:content`, `bind:editing`), `ellipsis` (rows, expand and collapse with `bind:expanded`, suffix, tooltip, `onellipsis`), `actions.placement`, `shimmer`,
+  `classNames` / `styles` and `--ads-typography-*` tokens, with darker colors in `tokens-accessible.css` and in the dark theme (where links are also underlined). The text is cut by CSS where CSS can,
+  and by a script only for a suffix, an expand button or several rows with buttons; the whole text stays readable by assistive technology. API inspired by Ant
+  Design (MIT); the implementation is original for Svelte.
+
+### Fixed
+
+- `Tooltip` (and the other components built on the popup): taking a focused trigger out of the page (for example replacing a button with an edit field) no
+  longer raises a Svelte `state_unsafe_mutation` error.
+- Documentation site: in the code of the examples an attribute without a value (`strong`, `disabled`, `bind:value`) and an attribute named `type` now have
+  the color of the other attributes, the words of the text between tags are no longer colored, the styles are colored as CSS (selectors, properties,
+  values) and the scripts as TypeScript (comments, strings, keywords), both instead of as expressions.
+
+### Tests
+
+- `Typography`: unit and accessibility tests, browser tests in three engines (including the Chromium IME composition and forced colors), the browser floor smoke,
+  and a test with a real screen reader (`screen-reader/typography.spec.ts`, Orca with Firefox).
+
+### Documentation
+
+- `Typography`: the page on the documentation site (en, ru, zh).
+
 ## [0.15.1] - 2026-11-20
 
 ### Tests

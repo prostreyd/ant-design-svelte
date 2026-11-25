@@ -17,6 +17,7 @@ import { demos as selectDemos } from '../src/docs/data/select.ts';
 import { demos as spinDemos } from '../src/docs/data/spin.ts';
 import { demos as switchDemos } from '../src/docs/data/switch.ts';
 import { demos as tooltipDemos } from '../src/docs/data/tooltip.ts';
+import { demos as typographyDemos } from '../src/docs/data/typography.ts';
 import { allPages, localize, type SitePath } from '../src/docs/pages.ts';
 
 const axeSource = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
@@ -58,7 +59,7 @@ async function accessibilityViolations(page: Page): Promise<Violation[]> {
         run: (context: Document | { exclude: string[][] }, options?: object) => Promise<AxeResult>;
       };
     }).axe;
-    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-radio', '.ads-radio-button', '.ads-radio-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-popup', '.ads-menu', '.ads-spin', '.ads-form'];
+    const library = ['.ads-btn', '.ads-switch', '.ads-checkbox', '.ads-checkbox-group', '.ads-radio', '.ads-radio-button', '.ads-radio-group', '.ads-input', '.ads-input-search', '.ads-input-otp', '.ads-select', '.ads-popup', '.ads-menu', '.ads-spin', '.ads-form', '.ads-typography'];
     const everything = await axe.run(document, { rules: { 'color-contrast': { enabled: false } } });
     const contrast = await axe.run(
       { exclude: library.map((selector) => [selector]) },
@@ -130,8 +131,8 @@ test.describe('navigation', () => {
       await expect(side.getByRole('link', { name: 'Button', exact: true })).toBeVisible();
       await expect(side.getByRole('link', { name: 'Radio', exact: true })).toBeVisible();
       // A component that is not ready shows its name and the "soon" mark, but no translation.
-      const typography = side.getByText('Typography').first();
-      await expect(typography).toBeVisible();
+      const dropdown = side.getByText('Dropdown').first();
+      await expect(dropdown).toBeVisible();
       for (const translated of ['Кнопка', 'Флажок', 'Радиокнопка', 'Выбор', '按钮', '多选框', '单选框', '选择器']) {
         await expect(side.getByText(translated)).toHaveCount(0);
       }
@@ -141,8 +142,8 @@ test.describe('navigation', () => {
   test('components that are not ready are listed but are not links', async ({ page }) => {
     await open(page, 'components/');
     const side = page.getByRole('navigation', { name: 'Components' });
-    await expect(side.getByText('Typography')).toBeVisible();
-    await expect(side.getByRole('link', { name: /Typography/ })).toHaveCount(0);
+    await expect(side.getByText('Dropdown')).toBeVisible();
+    await expect(side.getByRole('link', { name: /Dropdown/ })).toHaveCount(0);
   });
 
   test('switching the language keeps it on every page and updates <html lang> without a reload', async ({ page }) => {
@@ -287,8 +288,8 @@ for (const [label, viewport] of [['a phone', { width: 390, height: 844 }], ['a d
   test.describe(`components overview on ${label}`, () => {
     test.use({ viewport });
 
-    const READY = ['Button', 'Icon', 'Grid', 'Menu', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Form', 'Tooltip', 'Spin', 'Modal', 'Message', 'Notification'];
-    const PLANNED = ['Typography', 'Dropdown', 'DatePicker', 'Table', 'Drawer'];
+    const READY = ['Button', 'Typography', 'Icon', 'Grid', 'Menu', 'Input', 'Checkbox', 'Radio', 'Switch', 'Select', 'Form', 'Tooltip', 'Spin', 'Modal', 'Message', 'Notification'];
+    const PLANNED = ['Dropdown', 'DatePicker', 'Table', 'Drawer'];
 
     test('a ready card is a link with a blue silhouette and its name, and nothing else is written on it', async ({ page }) => {
       await open(page, 'components/');
@@ -428,25 +429,27 @@ test.describe('home page', () => {
     await expect(now).toContainText('Select');
     await expect(now).toContainText('Form');
     await expect(now).toContainText('Tooltip');
+    await expect(now).toContainText('Typography');
     await expect(now).toContainText('Form');
     await expect(now).toContainText('Spin');
     await expect(now).toContainText('Modal');
     await expect(now).toContainText('Message');
     await expect(now).toContainText('Notification');
-    // The ready components follow the order of the sidebar: Button, Icon, Grid, Menu, Input, Checkbox, Radio, Switch, Select, Form, Tooltip, Spin, Modal, Message, Notification.
-    await expect(now.locator('.chips').nth(1)).toContainText('twoToneColor');
-    await expect(now.locator('.chips').nth(2)).toContainText('gutter');
-    await expect(now.locator('.chips').nth(3)).toContainText('selectedKeys');
-    await expect(now.locator('.chips').nth(4)).toContainText('variant');
-    await expect(now.locator('.chips').nth(5)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(6)).toContainText('orientation');
-    await expect(now.locator('.chips').nth(7)).toContainText('classNames');
-    await expect(now.locator('.chips').nth(8)).toContainText('showSearch');
-    await expect(now.locator('.chips').nth(9)).toContainText('dependencies');
-    await expect(now.locator('.chips').nth(10)).toContainText('placement');
-    await expect(now.locator('.chips').nth(11)).toContainText('spinning');
-    await expect(now.locator('.chips').nth(12)).toContainText('closeOnOk');
-    await expect(now.locator('.chips').nth(13)).toContainText('stack');
+    // The ready components follow the order of the sidebar: Button, Typography, Icon, Grid, Menu, Input, Checkbox, Radio, Switch, Select, Form, Tooltip, Spin, Modal, Message, Notification.
+    await expect(now.locator('.chips').nth(1)).toContainText('ellipsis');
+    await expect(now.locator('.chips').nth(2)).toContainText('twoToneColor');
+    await expect(now.locator('.chips').nth(3)).toContainText('gutter');
+    await expect(now.locator('.chips').nth(4)).toContainText('selectedKeys');
+    await expect(now.locator('.chips').nth(5)).toContainText('variant');
+    await expect(now.locator('.chips').nth(6)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(7)).toContainText('orientation');
+    await expect(now.locator('.chips').nth(8)).toContainText('classNames');
+    await expect(now.locator('.chips').nth(9)).toContainText('showSearch');
+    await expect(now.locator('.chips').nth(10)).toContainText('dependencies');
+    await expect(now.locator('.chips').nth(11)).toContainText('placement');
+    await expect(now.locator('.chips').nth(12)).toContainText('spinning');
+    await expect(now.locator('.chips').nth(13)).toContainText('closeOnOk');
+    await expect(now.locator('.chips').nth(14)).toContainText('stack');
     // A version number such as 0.1.0-alpha.2 is not a label; only the word on its own counts.
     await expect(page.locator('body')).not.toContainText(/alpha(?!\.\d)/i);
   });
@@ -1783,6 +1786,187 @@ test.describe('Spin page', () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
     });
   });
+});
+
+test.describe('Typography page', () => {
+  const demoOf = (page: Page, title: string) => page.locator('section.demo').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+  const pre = (demo: ReturnType<typeof demoOf>) => demo.locator('.demo-pre');
+
+  test('every example is the real component and shows its own source', async ({ page }) => {
+    // A loop over every example with several browser commands each: WebKit needs about three times the default time.
+    test.slow();
+    const problems = collectProblems(page);
+    await open(page, 'components/typography/');
+    const examples = page.locator('section.demo');
+    await expect(examples).toHaveCount(typographyDemos.length);
+    for (let i = 0; i < typographyDemos.length; i++) {
+      const demo = examples.nth(i);
+      await expect(demo.locator('.demo-pre .ads-typography').first()).toBeVisible();
+      await demo.getByRole('button', { name: 'Show code' }).click();
+      const shown = (await demo.locator('.demo-code pre').textContent()) ?? '';
+      const file = new URL(`../src/docs/examples/typography/${String(i + 1).padStart(2, '0')}-${typographyDemos[i].slug}.svelte`, import.meta.url);
+      expect(shown.trimEnd()).toBe(readFileSync(file, 'utf8').trimEnd());
+    }
+    expect(problems).toEqual([]);
+  });
+
+  test('every caption stands above the component it names, and no loose element stands beside the units', async ({ page }) => {
+    await open(page, 'components/typography/');
+    const misplaced = await page.locator('.demo-pre .field').evaluateAll((fields) =>
+      fields.filter((field) => field.querySelector(':scope > .caption') && !field.firstElementChild?.classList.contains('caption')).length
+    );
+    expect(misplaced).toBe(0);
+    const loose = await page.locator('.demo-pre').evaluateAll((all) =>
+      all.flatMap((preview) => [...preview.children].filter((child) => !child.classList.contains('stack')).map((child) => child.className))
+    );
+    expect(loose).toEqual([]);
+  });
+
+  test('the two article demos: one is written with the four parts, the other styles ready HTML', async ({ page }) => {
+    await open(page, 'components/typography/');
+    const parts = pre(demoOf(page, 'Article')).locator('article');
+    expect(await parts.evaluate((article) => [...article.children].filter((child) => !child.classList.contains('ads-typography')).length)).toBe(0);
+    const ready = pre(demoOf(page, 'Ready HTML')).locator('article');
+    await expect(ready.locator('[class]')).toHaveCount(0);
+    await expect(ready.locator('h4')).toHaveCSS('font-size', '20px');
+    await expect(ready.locator('li').first()).toHaveCSS('list-style-type', 'circle');
+    await expect(ready.locator('code').first()).toHaveCSS('border-top-width', '1px');
+    await expect(ready.locator('blockquote')).toHaveCSS('border-left-width', '4px');
+    await expect(ready.locator('p')).toHaveCSS('margin-bottom', '14px');
+    await expect(ready.getByRole('link')).toHaveCSS('color', 'rgb(22, 119, 255)');
+    await expect(ready.getByRole('link')).toHaveCSS('text-decoration-line', 'none');
+    await page.getByRole('button', { name: 'Toggle theme' }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(ready.getByRole('link')).toHaveCSS('text-decoration-line', 'underline');
+    // The article is as wide as its demo (less the padding of the demo), so its block of code is too.
+    const [block, demo] = await ready.evaluate((article) => [article.querySelector('pre')!.getBoundingClientRect().width, article.closest('.demo-pre')!.getBoundingClientRect().width]);
+    expect(block).toBeGreaterThan(demo - 60);
+  });
+
+  test('links demo: a plain anchor inside a paragraph looks like the other links', async ({ page }) => {
+    await open(page, 'components/typography/');
+    const plain = pre(demoOf(page, 'Links')).getByRole('link', { name: 'table of properties' });
+    await expect(plain).toHaveCSS('color', 'rgb(22, 119, 255)');
+    await expect(plain).toHaveCSS('text-decoration-line', 'none');
+  });
+
+  test('the code of an example colors an attribute without a value like an attribute with one', async ({ page }) => {
+    await open(page, 'components/typography/');
+    const demo = demoOf(page, 'Article');
+    await demo.getByRole('button', { name: 'Show code' }).click();
+    const attribute = (name: string) => demo.locator('.demo-code pre .hl-attr').filter({ hasText: new RegExp(`^${name}$`) }).first();
+    const color = await attribute('level').evaluate((span) => getComputedStyle(span).color);
+    expect(color).not.toBe(await demo.locator('.demo-code pre').evaluate((code) => getComputedStyle(code).color));
+    for (const name of ['strong', 'code', 'keyboard', 'mark']) await expect(attribute(name)).toHaveCSS('color', color);
+    // The style block is read as CSS: a property has the color of an attribute, and no brace the one of an expression.
+    await expect(demo.locator('.demo-code pre .hl-attr').filter({ hasText: /^display$/ }).first()).toHaveCSS('color', color);
+    await expect(demo.locator('.demo-code pre .hl-tag').filter({ hasText: /^\.stack$/ })).toHaveCount(1);
+    await expect(demo.locator('.demo-code pre .hl-expr').filter({ hasText: 'display' })).toHaveCount(0);
+    // The script is read as TypeScript: the names of an import are not painted as an expression.
+    await expect(demo.locator('.demo-code pre .hl-expr').filter({ hasText: 'TypographyText' })).toHaveCount(0);
+    await expect(demo.locator('.demo-code pre .hl-key').filter({ hasText: /^import$/ })).toHaveCount(1);
+  });
+
+  test('titles demo: the headings keep their own margins', async ({ page }) => {
+    await open(page, 'components/typography/');
+    const titles = pre(demoOf(page, 'Titles')).locator('.ads-typography-title');
+    await expect(titles).toHaveCount(4);
+    await expect(titles.nth(0)).toHaveCSS('margin-top', '0px');
+    // 1.2em of 24 px; WebKit rounds it to its own sub-pixel grid.
+    await expect(titles.nth(1)).toHaveCSS('margin-top', /^28\.(8|79\d*)px$/);
+    await expect(titles.nth(2)).toHaveCSS('margin-top', '24px');
+  });
+
+  test('copy demo: the first copy changes only its own status', async ({ page }) => {
+    await open(page, 'components/typography/');
+    const demo = demoOf(page, 'Copy');
+    await expect(pre(demo)).toContainText('Nothing copied yet');
+    await pre(demo).getByRole('button', { name: 'Copy' }).first().click();
+    await expect(pre(demo)).toContainText('The sentence was copied');
+    await expect(pre(demo)).toContainText('Not requested yet');
+    const promised = pre(demo).locator('.field').nth(2);
+    await promised.getByRole('button', { name: 'Copy' }).click();
+    await expect(promised.locator('.ads-icon-loading')).toBeVisible();
+    await expect(pre(demo).locator('.ads-icon-loading')).toHaveCount(1);
+    await expect(pre(demo)).toContainText('The text was requested');
+    await expect(promised.getByRole('button', { name: 'Copied' })).toBeVisible();
+    await expect(promised.locator('.ads-icon-loading')).toHaveCount(0);
+  });
+
+  test('edit demo: every text has a state of its own, and editing one leaves the others', async ({ page }) => {
+    await open(page, 'components/typography/');
+    const demo = demoOf(page, 'Edit');
+    const fields = pre(demo).locator('.field');
+    const texts = async () => (await fields.locator('.ads-typography-paragraph .ads-typography-content').allInnerTexts()).map((text) => text.trim());
+    const before = await texts();
+    await fields.nth(0).getByRole('button', { name: 'Edit' }).click();
+    await page.keyboard.type(' Changed.');
+    await page.keyboard.press('Enter');
+    await expect(fields.nth(0)).toContainText('Changed.');
+    await expect(fields.nth(0)).toContainText('changed to');
+    expect((await texts()).slice(1)).toEqual(before.slice(1));
+    await fields.nth(4).getByRole('button', { name: 'Edit the sentence' }).click();
+    await expect(fields.nth(4).getByRole('textbox')).toBeFocused();
+    await expect(fields.nth(4)).toContainText('editing');
+    await page.keyboard.press('Escape');
+    await expect(fields.nth(4)).toContainText('reading');
+  });
+
+  test('ellipsis demo: the cut texts take their rows, the status says so, and the tip shows the whole text', async ({ page }) => {
+    await open(page, 'components/typography/');
+    const demo = demoOf(page, 'Ellipsis');
+    const fields = pre(demo).locator('.field');
+    const height = (index: number) => fields.nth(index).locator('.ads-typography').first().evaluate((e) => Math.round(e.getBoundingClientRect().height));
+    expect(await height(0)).toBe(22);
+    expect(await height(1)).toBe(66);
+    await expect(fields.nth(2)).toContainText('The text is cut');
+    await fields.nth(0).locator('.ads-typography-content').hover();
+    await expect(page.getByRole('tooltip')).toContainText('Ant Design, a design language');
+  });
+
+  test('expand demos: each paragraph expands on its own', async ({ page }) => {
+    await open(page, 'components/typography/');
+    const demo = demoOf(page, 'Expand and collapse');
+    const fields = pre(demo).locator('.field');
+    const height = (index: number) => fields.nth(index).locator('.ads-typography').first().evaluate((e) => e.getBoundingClientRect().height);
+    const before = [await height(0), await height(1), await height(2)];
+    expect(before.map(Math.round)).toEqual([44, 44, 44]);
+    await fields.nth(1).getByRole('button', { name: 'Expand' }).click();
+    await expect(fields.nth(1)).toContainText('Expanded');
+    expect(await height(1)).toBeGreaterThan(before[1]);
+    expect(Math.round(await height(0))).toBe(44);
+    expect(Math.round(await height(2))).toBe(44);
+    await expect(fields.nth(2).getByRole('button', { name: 'Read on' })).toBeVisible();
+  });
+
+  test('controlled demo: the switch changes only its paragraph, and the slider only the other', async ({ page }) => {
+    await open(page, 'components/typography/');
+    const demo = demoOf(page, 'Controlled');
+    const fields = pre(demo).locator('.field');
+    const height = (index: number) => fields.nth(index).locator('.ads-typography').first().evaluate((e) => Math.round(e.getBoundingClientRect().height));
+    await expect.poll(() => height(0)).toBe(44);
+    await fields.nth(0).getByRole('switch').click();
+    await expect.poll(() => height(0)).toBeGreaterThan(44);
+    expect(await height(1)).toBe(44);
+    await fields.nth(1).getByRole('slider').fill('4');
+    await expect.poll(() => height(1)).toBe(88);
+  });
+
+  test('on a phone nothing sticks out sideways', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await open(page, 'components/typography/');
+    await expect(page.locator('.demo-pre .ads-typography').first()).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
+  for (const lang of LANGS) {
+    test(`${lang}: the page has its texts and the API rows`, async ({ page }) => {
+      await open(page, rel('/components/typography/', lang));
+      await expect(page.locator('h1')).toContainText('Typography');
+      await expect(page.locator('section.demo')).toHaveCount(typographyDemos.length);
+      await expect(page.locator('table.api').first()).toContainText('ellipsis');
+    });
+  }
 });
 
 test.describe('demos of a component page: reading order', () => {
