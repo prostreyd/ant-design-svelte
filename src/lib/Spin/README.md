@@ -70,7 +70,7 @@ Native attributes go to the root `<div>`; `aria-label` and `aria-labelledby` go 
 - `fullscreen` blocks the pointer but has no focus trap and does not lock the scroll. Because it is `position: fixed` where the
   component stands, put it near the root of the application, not inside an element with a `transform`, `filter` or `contain`.
 - `prefers-reduced-motion` slows the turn instead of stopping it. In forced-colors modes the dots and the ring use system colors.
-- Not yet checked with a real screen reader (Orca, NVDA, JAWS, VoiceOver).
+- Checked with a real screen reader: Orca with Firefox reads `description` as a status, a Spin named by `aria-label`, the content an embedded Spin covers, the progress ring with its name and "40 percent" (and without a value when it is indeterminate), and a fullscreen Spin that hides nothing behind it. Not checked: whether Orca announces the status when it appears (a live region inserted into the page is not spoken in this setup), NVDA, JAWS and VoiceOver.
 
 ## Tokens
 

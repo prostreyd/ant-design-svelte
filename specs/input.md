@@ -236,6 +236,7 @@ v1.1). `focus()` goes to the first empty cell (the last one when all are filled)
   end, the addons mirror; e2e in right-to-left.
 - Keyboard of `InputOTP` as in Behavior; `InputSearch`: Enter searches; `InputPassword`: the toggle is a button
   (Enter and Space).
+- **Screen reader (Orca, 2026-11-20).** `screen-reader/input.spec.ts` drives Orca with Firefox through Guidepup (run in Docker; the whole suite of 13 files passed twice in a row). Orca says the name from the consumer's `aria-label` and "entry", `status="error"` as "invalid entry" and a warning without it, the count read with the field (`aria-describedby`), a number field as a "spin button", a password field as "password text", the clear, toggle ("not pressed", then "pressed") and search buttons by name, the group of an `InputOTP` with each cell named by its place, and, after a few keys, "invalid entry" with "7 / 5" when a soft limit is passed, the focus back in a cleared field, and the next cell of an `InputOTP`. A native `disabled` or `readonly` field was not reached by the structural navigation and is the browser's, not asserted. NVDA, JAWS and VoiceOver are not checked.
 
 ## Colors and dimensions
 

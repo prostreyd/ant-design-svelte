@@ -40,16 +40,21 @@ type Orca = {
 };
 
 /**
- * Moves through the form fields the way a screen reader user does (the structural navigation of Orca) until what Orca
- * says matches; returns what it said. The fixture page has about 30 buttons before the first switch, so this takes a while.
+ * Moves through the page with one structural command of Orca (`NextFormField`, `NextButton`, `NextLink`, `NextCombobox`,
+ * `NextEntry`, ...) until what Orca says matches; returns what it said. The page has many controls before the one a test wants,
+ * so this takes a while.
  */
-export async function reach(orca: Orca, matcher: RegExp, max = 75): Promise<string> {
+export async function reachBy(orca: Orca, command: unknown, matcher: RegExp, max = 75): Promise<string> {
   const heard: string[] = [];
   for (let step = 0; step < max; step++) {
-    await orca.perform(orcaKeyCodeCommands.StructuralNavigator.NextFormField, { capture: true });
+    await orca.perform(command, { capture: true });
     const said = await orca.lastSpokenPhrase();
     heard.push(said);
     if (matcher.test(said)) return said;
   }
   throw new Error(`Orca never said ${matcher} in ${max} steps; it said: ${heard.join(' | ')}`);
 }
+
+/** The next form field (the structural navigation of Orca) until what Orca says matches; see `reachBy`. */
+export const reach = (orca: Orca, matcher: RegExp, max = 75): Promise<string> =>
+  reachBy(orca, orcaKeyCodeCommands.StructuralNavigator.NextFormField, matcher, max);

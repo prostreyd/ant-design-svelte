@@ -106,8 +106,12 @@ default box (white on `#262626`, which is the 85% black of Ant Design over a whi
   swallows pointer events by itself is the safe form.
 - On a touch screen a tap shows the tip and runs the action, and a tap elsewhere closes it. The mouse events that a
   browser sends after a tap (`mouseenter`, then at once `mouseleave`) do not close it.
-- **Not checked:** with a real screen reader, and on a real touch device (touch is tested with emulated touch and a
-  swipe in Chromium only).
+- Checked with a real screen reader: Orca with Firefox reads the text of the tip after the name and the role of its trigger
+  (as its description), the description the trigger already had before it, a long tip whole, and says nothing extra for a
+  `trigger="click"` tip that is not shown.
+- **Not checked:** NVDA, JAWS and VoiceOver; whether a tip that opens after the screen reader has spoken the focus is
+  announced (Orca did not read the tip of a Switch in one run, it depends on timing); and a real touch device (touch is
+  tested with emulated touch and a swipe in Chromium only).
 
 ## Scope decisions and differences from Ant Design
 
