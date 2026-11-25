@@ -3,7 +3,10 @@
 Tests that drive a real screen reader, Orca with Firefox, through [Guidepup](https://www.guidepup.dev/) and assert on
 what it says: the name and the state of a control and how the state changes after Space. They cover the Switch and the
 Checkbox on the e2e fixtures (`e2e/fixtures`), the Radio on its lab (`/#radio`): one test, because Orca keeps its state
-from one test to the next, the Modal on its lab (`/#modal`), the Form on its lab (`/#form`), the Message (`/#message`), the Notification (`/#notification`) and the Icon (`/#icon`): one test each. Orca says nothing for a one-letter name, so the lab uses words. This folder has its own `package.json`; it is not part of `npm test`.
+from one test to the next, the Modal on its lab (`/#modal`), the Form on its lab (`/#form`), the Message (`/#message`), the Notification (`/#notification`), the Icon (`/#icon`) and the Typography (`/#typography`): one test each. Orca says nothing for a one-letter name, so the lab uses words. This folder has its own `package.json`; it is not part of `npm test`.
+
+A change of a live region (`role="status"`) was spoken in this setup only right after a key press: 4 s after it, even a plain status on a bare page stays
+silent (checked 2026-11-25), so such a silence says nothing about a component.
 
 Orca runs on Linux only. Guidepup tests it with Firefox: in our attempt Chromium did not register with the accessibility
 bus. The log is what Orca sends to speech, not what a person hears.
