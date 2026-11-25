@@ -374,3 +374,58 @@ test.describe('Forced colors: Spin (specs/spin.md)', () => {
     expect(await computed(page.locator('.ads-spin-description'), 'color')).not.toBe(backdrop);
   });
 });
+
+test.describe('Forced colors: Typography (specs/typography.md)', () => {
+  type TypographyLab = { set(config: { kind: string; text: string; props: Record<string, unknown> }): void };
+  const mountPart = (page: Page, props: Record<string, unknown> = {}, kind = 'paragraph') =>
+    page.evaluate((args) => (window as unknown as { __typographyLab: TypographyLab }).__typographyLab.set(args), { kind, text: 'Highlighted', props });
+  const canvas = (page: Page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/#typography');
+    await page.waitForFunction(() => Boolean((window as unknown as { __typographyLab?: unknown }).__typographyLab));
+    await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+    expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
+  });
+
+  test('mark keeps a highlight that differs from the page and from its text', async ({ page }) => {
+    await mountPart(page, { mark: true });
+    const mark = page.locator('#host mark');
+    const background = await computed(mark, 'background-color');
+    expect(background).not.toBe(await canvas(page));
+    expect(await computed(mark, 'color')).not.toBe(background);
+  });
+
+  test('code and kbd keep a border that differs from the page', async ({ page }) => {
+    for (const [props, tag] of [[{ code: true }, 'code'], [{ keyboard: true }, 'kbd']] as const) {
+      await mountPart(page, props);
+      const element = page.locator(`#host ${tag}`);
+      expect(await computed(element, 'border-top-width'), tag).toBe('1px');
+      expect(await computed(element, 'border-top-color'), tag).not.toBe(await canvas(page));
+    }
+  });
+
+  test('disabled text, a link and a button stay readable against the page', async ({ page }) => {
+    await mountPart(page, { disabled: true, copyable: true });
+    expect(await computed(page.locator('#host > .ads-typography'), 'color')).not.toBe(await canvas(page));
+    expect(await computed(page.getByRole('button', { name: 'Copy' }), 'color')).not.toBe(await canvas(page));
+    await mountPart(page, {}, 'link');
+    expect(await computed(page.locator('#host > a'), 'color')).not.toBe(await canvas(page));
+  });
+
+  test('a plain link of the article has the color of a TypographyLink, the one the system gives to links', async ({ page }) => {
+    await mountPart(page, {}, 'article');
+    const own = await computed(page.locator('#in a.ads-typography-link[href]'), 'color');
+    expect(own).not.toBe(await canvas(page));
+    await expect(page.locator('#in .links a[href]')).toHaveCSS('color', own);
+    await expect(page.locator('#out a.in-part')).toHaveCSS('color', own);
+  });
+
+  test('the shimmer is dropped: the text is painted, not filled with a transparent color', async ({ page }) => {
+    await mountPart(page, { shimmer: true }, 'text');
+    const part = page.locator('#host > .ads-typography');
+    expect(await computed(part, '-webkit-text-fill-color')).not.toBe('rgba(0, 0, 0, 0)');
+    expect(await computed(part, 'color')).not.toBe(await canvas(page));
+    expect(await computed(part, 'animation-name')).toBe('none');
+  });
+});

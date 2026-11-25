@@ -17,6 +17,7 @@ import RadioLab from './RadioLab.svelte';
 import SelectLab from './SelectLab.svelte';
 import SpinLab from './SpinLab.svelte';
 import TooltipLab from './TooltipLab.svelte';
+import TypographyLab from './TypographyLab.svelte';
 
 const target = document.getElementById('app');
 if (!target) {
@@ -25,7 +26,7 @@ if (!target) {
 
 // `/#popup` opens the lab of the popup primitive, `/#select` the one of the Select, `/#tooltip` the one of the
 // Tooltip, `/#radio` the one of the Radio, `/#grid` the one of the Row and Col, `/#menu` the one of the Menu, `/#message` the one of the
-// Message, `/#spin` the one of the Spin and `/#overlay` the one of the overlay primitives, `/#modal` the one of the Modal, `/#form` the one of the Form, `/#notification` the one of the Notification, `/#icon` the one of the public Icon; every other URL is the component page.
+// Message, `/#spin` the one of the Spin and `/#overlay` the one of the overlay primitives, `/#modal` the one of the Modal, `/#form` the one of the Form, `/#notification` the one of the Notification, `/#icon` the one of the public Icon, `/#typography` the one of the Typography; every other URL is the component page.
 const pages: Record<string, typeof App> = {
   '#popup': PopupLab,
   '#select': SelectLab,
@@ -39,6 +40,7 @@ const pages: Record<string, typeof App> = {
   '#modal': ModalLab,
   '#form': FormLab,
   '#notification': NotificationLab,
-  '#icon': IconLab
+  '#icon': IconLab,
+  '#typography': TypographyLab
 };
 mount(pages[location.hash] ?? App, { target });

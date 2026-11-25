@@ -5,7 +5,7 @@
 //   node smoke.cjs <chromium|firefox|webkit> <base url> <output dir>
 //
 // It opens the e2e fixtures built for the floor (the Button / Switch / Checkbox / Input page, the Select lab, the
-// Tooltip lab, the Radio lab, the grid lab, the Message lab, the Notification lab, the Spin lab, the Icon lab, the Menu lab, the overlay lab, the Modal lab and the Form lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
+// Tooltip lab, the Radio lab, the grid lab, the Message lab, the Notification lab, the Spin lab, the Icon lab, the Menu lab, the overlay lab, the Modal lab, the Form lab and the Typography lab), drives them with real clicks and keys and checks what only a real engine can show: that nothing throws
 // (an API missing in the old engine), that sizes are the designed ones, that a panel opens where it should and
 // stays in the viewport, and that `:focus-visible` works (the reason of the Safari 15.4 floor).
 /* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: it runs in the old Node of the old images, where `NODE_PATH` finds the `playwright` package only for `require` */
@@ -1075,6 +1075,112 @@ async function notificationPage(context) {
   await page.close();
 }
 
+async function typographyPage(context) {
+  const page = await newPage(context, base + '/#typography');
+  await page.waitForFunction(() => Boolean(window.__typographyLab));
+  const mount = (config) => page.evaluate((args) => window.__typographyLab.set(args), Object.assign({ props: {}, text: 'Hello' }, config));
+  const rect = (selector) => rectOf(page, selector);
+  const near = (a, b, tolerance) => Math.abs(a - b) <= (tolerance === undefined ? 1 : tolerance);
+  const long = 'Ant Design, a design language for background applications, is refined by Ant UED Team. '.repeat(6);
+
+  await check('typography: a level 2 title is 30 px on a 38 px line and a paragraph is 14 on 22', async () => {
+    await mount({ kind: 'title', props: { level: 2 } });
+    const title = await page.evaluate(() => {
+      const s = getComputedStyle(document.querySelector('#host > h2'));
+      return [s.fontSize, s.lineHeight, s.fontWeight];
+    });
+    await mount({ kind: 'paragraph' });
+    const text = await page.evaluate(() => {
+      const s = getComputedStyle(document.querySelector('#host > div'));
+      return [s.fontSize, s.lineHeight];
+    });
+    return [title.join() === '30px,38px,600' && text.join() === '14px,22px', `${title} / ${text}`];
+  });
+  await check('typography: copy: the button says Copied, the box does not change', async () => {
+    await mount({ kind: 'paragraph', props: { copyable: true } });
+    const before = await rect('.ads-typography-copy');
+    await page.click('.ads-typography-copy');
+    await page.waitForFunction(() => document.querySelector('.ads-typography-copy').getAttribute('aria-label') === 'Copied');
+    const after = await rect('.ads-typography-copy');
+    return [near(before.width, after.width, 0.5) && near(before.height, after.height, 0.5), `${before.width}x${before.height} -> ${after.width}x${after.height}`];
+  });
+  await check('typography: a promised text is copied, with a spinner while it is on its way', async () => {
+    // The engines of the floor take no promise in a `ClipboardItem` (or have none): the text is awaited and written the usual way.
+    await mount({ kind: 'paragraph', props: { copyable: { text: 'Later', pending: 700 } } });
+    await page.click('.ads-typography-copy');
+    await page.waitForSelector('.ads-typography-copy .ads-icon-loading');
+    await page.waitForFunction(() => document.querySelector('.ads-typography-copy').getAttribute('aria-label') === 'Copied');
+    return true;
+  });
+  await check('typography: copy without the Clipboard API goes through execCommand', async () => {
+    await mount({ kind: 'paragraph', props: { copyable: true } });
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+    });
+    await page.click('.ads-typography-copy');
+    await page.waitForFunction(() => document.querySelector('.ads-typography-copy').getAttribute('aria-label') === 'Copied');
+    return true;
+  });
+  await check('typography: the edit field is 32 px, takes the focus and moves nothing; Enter keeps the text', async () => {
+    await mount({ kind: 'paragraph', asContent: true, props: { editable: true } });
+    const next = await rect('#after');
+    await page.click('.ads-typography-edit');
+    await page.waitForFunction(() => document.activeElement && document.activeElement.tagName === 'TEXTAREA');
+    const field = await rect('.ads-typography-edit-content .ads-input');
+    const moved = await rect('#after');
+    await page.keyboard.type('!');
+    await page.keyboard.press('Enter');
+    const text = await textOf(page, '.ads-typography-content');
+    return [near(field.height, 32) && near(next.y, moved.y, 0.5) && text === 'Hello!', `field ${field.height}, neighbour ${next.y} -> ${moved.y}, ${text}`];
+  });
+  await check('typography: one row is clipped in CSS and two rows are clamped to 44 px', async () => {
+    await mount({ kind: 'paragraph', text: long, width: 400, props: { ellipsis: true } });
+    const one = await rect('#host > div');
+    const clipped = await page.evaluate(() => {
+      const e = document.querySelector('.ads-typography-content');
+      return e.scrollWidth > e.clientWidth;
+    });
+    await mount({ kind: 'paragraph', text: long, width: 400, props: { ellipsis: { rows: 2 } } });
+    const two = await rect('#host > div');
+    // WebKit 15.4 ends a clamped box at the last glyph, 3 px short of the line (41 for two rows, 63 for three): two whole rows
+    // show, the box is a hair lower. Ant Design uses the same CSS and gets the same.
+    return [near(one.height, 22) && clipped && two.height >= 40 && two.height <= 45, `${one.height} ${clipped} ${two.height}`];
+  });
+  await check('typography: the script cut fits two rows with its button at the end and cuts again at another width', async () => {
+    await mount({ kind: 'paragraph', text: long, width: 500, props: { ellipsis: { rows: 2, expandable: true, suffix: '--Ant' } } });
+    await settle(page);
+    const shown = () => page.evaluate(() => document.querySelector('.ads-typography-host > span[aria-hidden="true"]').textContent.length);
+    const wide = await shown();
+    const root = await rect('#host > div');
+    const button = await rect('.ads-typography-expand');
+    await page.evaluate(() => {
+      document.getElementById('host').style.width = '300px';
+    });
+    await settle(page);
+    const narrow = await shown();
+    const after = await rect('#host > div');
+    return [near(root.height, 44) && near(after.height, 44) && button.bottom <= root.bottom + 0.5 && narrow < wide, `${root.height} ${after.height} ${wide} ${narrow}`];
+  });
+  await check('typography: expand shows the whole text', async () => {
+    await mount({ kind: 'paragraph', text: long, width: 500, props: { ellipsis: { rows: 2, expandable: true } } });
+    await settle(page);
+    await page.click('.ads-typography-expand');
+    const root = await rect('#host > div');
+    return [root.height > 44, root.height];
+  });
+  await check('typography: a clipped text shows its tip', async () => {
+    await mount({ kind: 'paragraph', text: long, width: 400, props: { ellipsis: { tooltip: true } } });
+    await page.hover('.ads-typography-content');
+    await page.waitForSelector(`${PANEL} .ads-tooltip`);
+    return true;
+  });
+  await check('typography: the shimmer runs', async () => {
+    await mount({ kind: 'text', props: { shimmer: true } });
+    const name = await page.evaluate(() => getComputedStyle(document.querySelector('#host > span')).animationName);
+    return [name !== 'none', name];
+  });
+}
+
 async function iconPage(context) {
   const page = await newPage(context, base + '/#icon');
   await page.waitForFunction(() => Boolean(window.__iconLab));
@@ -1438,6 +1544,7 @@ async function modalPage(context) {
     await messagePage(context);
     await notificationPage(context);
     await spinPage(context);
+    await typographyPage(context);
     await iconPage(context);
     await menuPage(context);
     await overlayPage(context);

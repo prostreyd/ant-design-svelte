@@ -587,6 +587,56 @@
   --ads-modal-confirm-icon-success: #52c41a;
   --ads-modal-confirm-icon-warning: #faad14;
   --ads-modal-confirm-icon-error: #ff4d4f;
+
+  /*
+   * Typography: sizes, margins and decorations follow the public demo of Ant Design (measured on 2026-11-20, see
+   * specs/typography.md). The type colors, `secondary` and the link do not reach 4.5:1 on a white page (success 2.3:1,
+   * warning 1.9:1, danger 3.3:1, secondary 3.4:1, link 4.1:1): tokens-accessible.css darkens them, the dark theme keeps the ratios.
+   */
+  --ads-typography-font-size: var(--ads-font-size);
+  --ads-typography-line-height: 22px;
+  --ads-typography-color: var(--ads-color-text);
+  --ads-typography-paragraph-margin-bottom: 1em;
+  --ads-typography-title-weight: 600;
+  --ads-typography-title-margin-top: 1.2em;
+  --ads-typography-title-margin-bottom: 0.5em;
+  --ads-typography-h1-font-size: 38px;
+  --ads-typography-h1-line-height: 46px;
+  --ads-typography-h2-font-size: 30px;
+  --ads-typography-h2-line-height: 38px;
+  --ads-typography-h3-font-size: 24px;
+  --ads-typography-h3-line-height: 32px;
+  --ads-typography-h4-font-size: 20px;
+  --ads-typography-h4-line-height: 28px;
+  --ads-typography-h5-font-size: 16px;
+  --ads-typography-h5-line-height: 24px;
+  --ads-typography-secondary-color: var(--ads-color-text-tertiary);
+  --ads-typography-success-color: #52c41a;
+  --ads-typography-warning-color: #faad14;
+  --ads-typography-danger-color: var(--ads-color-danger);
+  --ads-typography-disabled-color: var(--ads-color-text-disabled);
+  --ads-typography-link-color: var(--ads-color-link);
+  --ads-typography-link-hover-color: var(--ads-color-link-hover);
+  --ads-typography-link-active-color: var(--ads-color-link-active);
+  --ads-typography-link-decoration: none;
+  --ads-typography-action-color: var(--ads-color-link);
+  --ads-typography-action-hover-color: var(--ads-color-link-hover);
+  --ads-typography-action-active-color: var(--ads-color-link-active);
+  --ads-typography-actions-gap: 4px;
+  --ads-typography-mark-bg: #ffe58f;
+  --ads-typography-mark-color: #000000;
+  --ads-typography-code-bg: rgba(150, 150, 150, 0.1);
+  --ads-typography-code-border: rgba(100, 100, 100, 0.2);
+  --ads-typography-kbd-bg: rgba(150, 150, 150, 0.06);
+  --ads-typography-code-font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  --ads-typography-blockquote-border: rgba(100, 100, 100, 0.2);
+  --ads-typography-edit-offset-inline: 12px;
+  --ads-typography-edit-offset-block: 5px;
+  --ads-typography-enter-color: var(--ads-color-text-tertiary);
+  --ads-typography-shimmer-motion: 1;
+  --ads-typography-shimmer-wait: 1;
+  --ads-typography-shimmer-highlight: var(--ads-color-bg-container);
+  --ads-typography-transition: 0.3s;
 }
 
 :root[data-theme='dark'] {
@@ -835,4 +885,13 @@
   --ads-modal-confirm-icon-success: #49aa19;
   --ads-modal-confirm-icon-warning: #d89614;
   --ads-modal-confirm-icon-error: #dc4446;
+  /* Typography in the dark theme: the dark status colors of Ant Design, `secondary` raised to 4.5:1, a pale enter mark. */
+  --ads-typography-secondary-color: var(--ads-color-text-secondary);
+  --ads-typography-success-color: #49aa19;
+  --ads-typography-warning-color: #d89614;
+  --ads-typography-danger-color: var(--ads-color-danger);
+  --ads-typography-link-color: var(--ads-color-link);
+  /* Here a link is less than 3:1 from the text around it, so the color is not left as its only sign (WCAG 1.4.1). */
+  --ads-typography-link-decoration: underline;
+  --ads-typography-enter-color: var(--ads-color-text-tertiary);
 }

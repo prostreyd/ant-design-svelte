@@ -260,8 +260,8 @@ describe('accessible tokens (tokens-accessible.css)', () => {
     for (const token of accessible.keys()) expect(light.has(token), token).toBe(true);
   });
 
-  it('changes the -solid, -text, link, switch, checkbox, radio, input, select, form, message, notification, modal, spin and menu tokens, and nothing else', () => {
-    const allowed = /^--ads-(color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color)|form-(help-color|extra-color|warning-text|success-icon|warning-icon|tooltip-icon-color)|message-icon-(success|warning)|notification-(icon-(success|warning)|close-color)|modal-confirm-icon-(success|warning)|spin-(description-color|mask-bg)|menu-(item-selected-color|submenu-selected-color|horizontal-(hover|selected)-color|group-title-color|danger-(color|hover-color|selected-color)|dark-(item-selected-bg|danger-selected-bg|danger-active-bg)))$/;
+  it('changes the -solid, -text, link, switch, checkbox, radio, input, select, form, message, notification, modal, spin, menu and typography tokens, and nothing else', () => {
+    const allowed = /^--ads-(typography-(secondary|success|warning|danger|link|action)(-hover|-active)?-color|color-(primary|danger)-(solid|text)(-hover|-active)?|color-link(-hover|-active)?|switch-track-(on|off)(-hover|-active)?|switch-loading-opacity|checkbox-border|checkbox-checked-bg-hover|radio-(border|checked-bg-hover|button-border)|input-(border|border-hover|border-active|placeholder|icon-color|icon-color-hover|count-color|error-hover|warning|warning-hover)|select-(group-label-color|empty-color)|form-(help-color|extra-color|warning-text|success-icon|warning-icon|tooltip-icon-color)|message-icon-(success|warning)|notification-(icon-(success|warning)|close-color)|modal-confirm-icon-(success|warning)|spin-(description-color|mask-bg)|menu-(item-selected-color|submenu-selected-color|horizontal-(hover|selected)-color|group-title-color|danger-(color|hover-color|selected-color)|dark-(item-selected-bg|danger-selected-bg|danger-active-bg)))$/;
     for (const token of accessible.keys()) expect(token, token).toMatch(allowed);
   });
 
@@ -683,6 +683,87 @@ describe('spin tokens', () => {
   it('fullscreen: the accessible mask gives the white text 4.5:1 over a white page, and the dark theme over its page', () => {
     expect(whiteOnMask(lightAccessible)).toBeGreaterThanOrEqual(4.5);
     expect(whiteOnMask(darkTheme)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('typography tokens (specs/typography.md)', () => {
+  // Measured on the public demo of Ant Design (React 6.7, 2026-11-20, Chromium, light theme).
+  /** A token with its `var()` references followed, so the contrast of a token that points at another can be measured. */
+  const resolve = (tokens: Map<string, string>, name: string): string => {
+    let value = tokens.get(name) ?? '';
+    for (let depth = 0; depth < 6; depth += 1) {
+      const reference = /^var\((--[\w-]+)\)$/.exec(value);
+      if (!reference) break;
+      value = tokens.get(reference[1]) ?? '';
+    }
+    return value;
+  };
+  const TEXT = ['--ads-typography-secondary-color', '--ads-typography-success-color', '--ads-typography-warning-color', '--ads-typography-danger-color', '--ads-typography-link-color', '--ads-typography-action-color', '--ads-typography-color'];
+  const withResolved = (tokens: Map<string, string>) => new Map([...tokens, ...TEXT.map((name) => [name, resolve(tokens, name)] as const)]);
+
+  it('default light: the sizes, the margins and the decorations of the Ant Design demo', () => {
+    const measured: Record<string, string> = {
+      '--ads-typography-h1-font-size': '38px',
+      '--ads-typography-h1-line-height': '46px',
+      '--ads-typography-h2-font-size': '30px',
+      '--ads-typography-h2-line-height': '38px',
+      '--ads-typography-h3-font-size': '24px',
+      '--ads-typography-h3-line-height': '32px',
+      '--ads-typography-h4-font-size': '20px',
+      '--ads-typography-h4-line-height': '28px',
+      '--ads-typography-h5-font-size': '16px',
+      '--ads-typography-h5-line-height': '24px',
+      '--ads-typography-title-weight': '600',
+      '--ads-typography-title-margin-top': '1.2em',
+      '--ads-typography-title-margin-bottom': '0.5em',
+      '--ads-typography-paragraph-margin-bottom': '1em',
+      '--ads-typography-line-height': '22px',
+      '--ads-typography-success-color': '#52c41a',
+      '--ads-typography-warning-color': '#faad14',
+      '--ads-typography-mark-bg': '#ffe58f',
+      '--ads-typography-code-bg': 'rgba(150, 150, 150, 0.1)',
+      '--ads-typography-code-border': 'rgba(100, 100, 100, 0.2)',
+      '--ads-typography-kbd-bg': 'rgba(150, 150, 150, 0.06)',
+      '--ads-typography-actions-gap': '4px',
+      '--ads-typography-edit-offset-inline': '12px',
+      '--ads-typography-edit-offset-block': '5px',
+      '--ads-typography-link-decoration': 'none'
+    };
+    for (const [token, value] of Object.entries(measured)) expect(normalize(light.get(token) ?? ''), token).toBe(normalize(value));
+    expect(resolve(light, '--ads-typography-secondary-color')).toBe('rgba(0, 0, 0, 0.45)');
+    expect(resolve(light, '--ads-typography-link-color')).toBe('#1677ff');
+  });
+
+  it('a link is underlined only in the dark theme, where its color is less than 3:1 from the text around it', () => {
+    expect(normalize(dark.get('--ads-typography-link-decoration') ?? '')).toBe('underline');
+    expect(accessible.get('--ads-typography-link-decoration')).toBeUndefined();
+  });
+
+  it('the default light type colors and the link are below 4.5:1 on the page, which is why the accessible file darkens them', () => {
+    const tokens = withResolved(light);
+    for (const name of ['--ads-typography-secondary-color', '--ads-typography-success-color', '--ads-typography-warning-color', '--ads-typography-danger-color', '--ads-typography-link-color']) {
+      expect(ratio(tokens, name, '--ads-color-bg-container'), name).toBeLessThan(4.5);
+    }
+  });
+
+  for (const [theme, tokens] of [['light with the accessible file', lightAccessible], ['dark', darkTheme]] as const) {
+    it(`${theme}: the text of every type, the link, the actions and the body reach 4.5:1 on the page`, () => {
+      const resolved = withResolved(tokens);
+      for (const name of TEXT) expect(ratio(resolved, name, '--ads-color-bg-container'), `${theme} ${name}`).toBeGreaterThanOrEqual(4.5);
+    });
+  }
+
+  it('the highlight of mark is black on a pale yellow, far above 7:1 in both themes (it does not follow the theme)', () => {
+    for (const tokens of [light, darkTheme]) {
+      const both = new Map(tokens);
+      both.set('--ads-typography-mark-color', resolve(tokens, '--ads-typography-mark-color'));
+      expect(ratio(both, '--ads-typography-mark-color', '--ads-typography-mark-bg')).toBeGreaterThanOrEqual(7);
+    }
+  });
+
+  it('every typography token of the light theme is used by a component', () => {
+    const used = ['TextBase.svelte', 'Typography.svelte', 'Decorations.svelte'].map((file) => read(`Typography/${file}`)).join('\n');
+    for (const name of light.keys()) if (name.startsWith('--ads-typography-')) expect(used, name).toContain(name);
   });
 });
 

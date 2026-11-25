@@ -7,8 +7,9 @@
 //   node scripts/check-architecture.mjs
 //
 //  1. `internal/` imports no component.
-//  2. A component imports another component only through a file that `src/lib/index.ts` exports (its public surface),
-//     never through its private files, and never through the package entry itself.
+//  2. A component imports another component only through a file that `src/lib/index.ts` exports (its public surface), or
+//     that the `exports` map of `package.json` exposes to users (the ready icons, `./icons/*`), never through its private
+//     files, and never through the package entry itself.
 //  3. Every such import is listed in DEPENDENCIES below with the reason, and every listed dependency is still in the
 //     code (a stale entry fails).
 //  4. The components make no cycle.
@@ -36,7 +37,10 @@ export const DEPENDENCIES = [
   { from: 'Form', to: 'Grid', why: 'FormItem is a Row with a label Col and a control Col; labelCol and wrapperCol are Col props' },
   { from: 'Form', to: 'Tooltip', why: 'the tooltip of a label is the Tooltip the user sees elsewhere, set with the same props' },
   { from: 'Input', to: 'Button', why: 'InputSearch draws the same button the user sees for `enterButton`' },
-  { from: 'Modal', to: 'Button', why: 'the OK and Cancel buttons are the same element the user sees elsewhere, set with the same props (`okButtonProps`)' }
+  { from: 'Modal', to: 'Button', why: 'the OK and Cancel buttons are the same element the user sees elsewhere, set with the same props (`okButtonProps`)' },
+  { from: 'Typography', to: 'Icon', why: 'the copy, check, edit and enter marks are the ready icons of the Icon family, the same drawings the user sees elsewhere' },
+  { from: 'Typography', to: 'Input', why: 'the edit field is the InputTextArea the user sees elsewhere, set with the same props (`autoSize`, `maxLength`)' },
+  { from: 'Typography', to: 'Tooltip', why: 'the tips of the copy and edit buttons and of a cut text are the Tooltip the user sees elsewhere, set with the same props' }
 ];
 
 /** Specifications that predate rule 6b (2026-11-17) and have no dependencies section yet. */
@@ -97,6 +101,26 @@ export function publicFiles(indexSource) {
   );
 }
 
+/**
+ * The files that the `exports` map of `package.json` exposes by path (`./icons/*` is `dist/Icon/icons/*.svelte`): users import them
+ * directly, so they are public surface like the files of `src/lib/index.ts`. A target under `dist/` is the same path under `src/lib/`.
+ * @param {Record<string, unknown> | undefined} packageExports
+ * @returns {{ exact: Set<string>, patterns: RegExp[] }}
+ */
+export function exportedFiles(packageExports) {
+  const exact = new Set();
+  const patterns = [];
+  for (const [key, value] of Object.entries(packageExports ?? {})) {
+    if (key === '.') continue;
+    const target = typeof value === 'string' ? value : (value?.svelte ?? value?.default);
+    if (typeof target !== 'string' || !target.startsWith('./dist/')) continue;
+    const path = normalize(target.slice('./dist/'.length));
+    if (path.includes('*')) patterns.push(new RegExp(`^${path.split('*').map((part) => part.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('[^/]+')}$`));
+    else exact.add(path);
+  }
+  return { exact, patterns };
+}
+
 /** The first cycle among the runtime edges between components, as a list of names, or null. */
 export function findCycle(edges) {
   const graph = new Map();
@@ -144,14 +168,17 @@ export function dependenciesSection(markdown) {
  *   indexSource: string,
  *   specs: Record<string, string>,
  *   dependencies?: { from: string, to: string, why: string }[],
- *   legacy?: string[]
- * }} input `specs` is keyed by the name of the file without `.md`
+ *   legacy?: string[],
+ *   packageExports?: Record<string, unknown>
+ * }} input `specs` is keyed by the name of the file without `.md`; `packageExports` is the `exports` map of `package.json`
  * @returns {{ errors: string[], legacy: string[], components: string[] }}
  */
-export function checkArchitecture({ files, indexSource, specs, dependencies = DEPENDENCIES, legacy = LEGACY }) {
+export function checkArchitecture({ files, indexSource, specs, dependencies = DEPENDENCIES, legacy = LEGACY, packageExports }) {
   const errors = [];
   const edges = importsBetweenFolders(files);
   const publics = publicFiles(indexSource);
+  const exposed = exportedFiles(packageExports);
+  const isPublic = (target) => publics.has(target) || exposed.exact.has(target) || exposed.patterns.some((pattern) => pattern.test(target));
   const components = [...new Set(Object.keys(files).filter((file) => file.includes('/')).map((file) => file.split('/')[0]))]
     .filter((folder) => folder !== INTERNAL)
     .sort();
@@ -163,8 +190,8 @@ export function checkArchitecture({ files, indexSource, specs, dependencies = DE
     } else if (edge.from === INTERNAL && edge.to !== INTERNAL) {
       errors.push(`${at}: \`internal/\` imports the component ${edge.to} (${edge.target}); shared parts must not depend on components`);
     } else if (edge.from !== INTERNAL && edge.to !== INTERNAL) {
-      if (!publics.has(edge.target)) {
-        errors.push(`${at}: imports ${edge.target}, a private file of ${edge.to}; use a file that src/lib/index.ts exports`);
+      if (!isPublic(edge.target)) {
+        errors.push(`${at}: imports ${edge.target}, a private file of ${edge.to}; use a file that src/lib/index.ts exports or that the exports map of package.json exposes`);
       }
       if (!edge.type && !dependencies.some((entry) => entry.from === edge.from && entry.to === edge.to)) {
         errors.push(
@@ -220,7 +247,7 @@ export function checkArchitecture({ files, indexSource, specs, dependencies = DE
 /**
  * Reads `src/lib/`, its entry and the specifications of a checkout.
  * @param {string} root
- * @returns {{ files: Record<string, string>, indexSource: string, specs: Record<string, string> }}
+ * @returns {{ files: Record<string, string>, indexSource: string, specs: Record<string, string>, packageExports: Record<string, unknown> }}
  */
 export function readRepository(root) {
   /** @type {Record<string, string>} */
@@ -240,7 +267,8 @@ export function readRepository(root) {
       specs[file.slice(0, -3)] = readFileSync(`${root}/specs/${file}`, 'utf8');
     }
   }
-  return { files, indexSource: files['index.ts'] ?? '', specs };
+  const packageExports = JSON.parse(readFileSync(`${root}/package.json`, 'utf8')).exports ?? {};
+  return { files, indexSource: files['index.ts'] ?? '', specs, packageExports };
 }
 
 function main() {

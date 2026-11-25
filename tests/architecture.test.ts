@@ -6,6 +6,7 @@ import {
   checkArchitecture,
   DEPENDENCIES,
   dependenciesSection,
+  exportedFiles,
   findCycle,
   importsBetweenFolders,
   parseImports,
@@ -23,7 +24,11 @@ const NONE = '## Dependencies\n\nNone.\n';
 const section = (text: string) => `# Spec\n\n## Dependencies\n\n${text}\n\n## Next\n`;
 
 /** A library of three components and the specifications that go with it; `files` and `specs` replace or add entries. */
-function library(files: Record<string, string> = {}, specs: Record<string, string> = {}, extra: { dependencies?: typeof DEPENDENCIES; legacy?: string[] } = {}) {
+function library(
+  files: Record<string, string> = {},
+  specs: Record<string, string> = {},
+  extra: { dependencies?: typeof DEPENDENCIES; legacy?: string[]; packageExports?: Record<string, unknown> } = {}
+) {
   const allFiles: Record<string, string> = {
     'index.ts': entry('Button/Button.svelte', 'Select/Select.svelte', 'Input/Input.svelte'),
     'Button/Button.svelte': '<script lang="ts">import { classList } from "../internal/semantic.js";</script>',
@@ -40,7 +45,14 @@ function library(files: Record<string, string> = {}, specs: Record<string, strin
     input: NONE,
     ...specs
   };
-  return checkArchitecture({ files: allFiles, indexSource: allFiles['index.ts'], specs: allSpecs, dependencies: extra.dependencies ?? [], legacy: extra.legacy ?? [] });
+  return checkArchitecture({
+    files: allFiles,
+    indexSource: allFiles['index.ts'],
+    specs: allSpecs,
+    dependencies: extra.dependencies ?? [],
+    legacy: extra.legacy ?? [],
+    packageExports: extra.packageExports
+  });
 }
 
 describe('architecture: reading the imports', () => {
@@ -215,6 +227,48 @@ describe('architecture: the rules', () => {
   it('LEGACY naming a specification that does not exist fails', () => {
     const { errors } = library({}, {}, { legacy: ['nothing'] });
     expect(errors.join('\n')).toMatch(/LEGACY lists "nothing", but specs\/nothing\.md does not exist/);
+  });
+});
+
+describe('architecture: the files that the exports map exposes', () => {
+  const ICONS_EXPORTS = { '.': { default: './dist/index.js' }, './icons/*': { svelte: './dist/Icon/icons/*.svelte' }, './tokens.css': './dist/tokens.css' };
+  const files = {
+    'Icon/Icon.svelte': '<script lang="ts">export {};</script>',
+    'Icon/icons/Star.svelte': '<script lang="ts">import Icon from "../Icon.svelte";</script>',
+    'Button/Button.svelte': '<script lang="ts">import Star from "../Icon/icons/Star.svelte";</script>'
+  };
+  const specs = { icon: NONE, button: section('| Icon | whole | the star |') };
+  const dependencies = [{ from: 'Button', to: 'Icon', why: 'the button draws a ready icon of the Icon family' }];
+
+  it('a ready icon is public surface when the exports map exposes it by path', () => {
+    expect(library(files, specs, { dependencies, packageExports: ICONS_EXPORTS }).errors).toEqual([]);
+  });
+
+  it('without that entry the same import is a private file of Icon', () => {
+    const { errors } = library(files, specs, { dependencies });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('a private file of Icon');
+    expect(errors[0]).toContain('exports map of package.json');
+  });
+
+  it('a file the map does not expose stays private, also next to an exposed folder', () => {
+    const { errors } = library({ ...files, 'Button/Button.svelte': '<script lang="ts">import X from "../Icon/internal.svelte";</script>', 'Icon/internal.svelte': '' }, specs, {
+      dependencies,
+      packageExports: ICONS_EXPORTS
+    });
+    expect(errors.some((message) => message.includes('a private file of Icon'))).toBe(true);
+  });
+
+  it('exportedFiles: a wildcard becomes a pattern for one folder level, an exact path stays exact, the root and other files are skipped', () => {
+    const { exact, patterns } = exportedFiles({ ...ICONS_EXPORTS, './icons': { svelte: './dist/Icon/icons/index.js' } });
+    expect([...exact].sort()).toEqual(['Icon/icons/index.ts', 'tokens.css']);
+    expect(patterns).toHaveLength(1);
+    expect(patterns[0].test('Icon/icons/CopyOutlined.svelte')).toBe(true);
+    expect(patterns[0].test('Icon/Icon.svelte')).toBe(false);
+    expect(patterns[0].test('Icon/icons/deep/Star.svelte')).toBe(false);
+    expect(patterns[0].test('Icon/icons/Star.js')).toBe(false);
+    expect(exportedFiles(undefined)).toEqual({ exact: new Set(), patterns: [] });
+    expect(exportedFiles({ './x': { types: './dist/x.d.ts' }, './y': './other/y.js' })).toEqual({ exact: new Set(), patterns: [] });
   });
 });
 

@@ -130,4 +130,19 @@
   --ads-form-success-icon: #389e0d;
   --ads-form-warning-icon: #ad6800;
   --ads-form-tooltip-icon-color: #737373;
+
+  /*
+   * Typography: the type colors, `secondary` and the link are 4.5:1 or more against a white page (success 5.6:1, warning 6.8:1,
+   * danger 5.6:1, secondary 7:1, link 5.2:1).
+   */
+  --ads-typography-secondary-color: rgba(0, 0, 0, 0.65);
+  --ads-typography-success-color: #237804;
+  --ads-typography-warning-color: #874d00;
+  --ads-typography-danger-color: #cf1322;
+  --ads-typography-link-color: #1668dc;
+  --ads-typography-link-hover-color: #0958d9;
+  --ads-typography-link-active-color: #003eb3;
+  --ads-typography-action-color: #1668dc;
+  --ads-typography-action-hover-color: #0958d9;
+  --ads-typography-action-active-color: #003eb3;
 }

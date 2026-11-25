@@ -79,6 +79,32 @@ export { default as MenuSubMenu } from './Menu/MenuSubMenu.svelte';
 export { default as MenuItemGroup } from './Menu/MenuItemGroup.svelte';
 export { default as MenuDivider } from './Menu/MenuDivider.svelte';
 export { default as Input } from './Input/Input.svelte';
+export { default as Typography } from './Typography/Typography.svelte';
+export { default as TypographyTitle } from './Typography/TypographyTitle.svelte';
+export { default as TypographyParagraph } from './Typography/TypographyParagraph.svelte';
+export { default as TypographyText } from './Typography/TypographyText.svelte';
+export { default as TypographyLink } from './Typography/TypographyLink.svelte';
+export { TYPOGRAPHY_LEVELS, TYPOGRAPHY_TYPES } from './Typography/types.js';
+export type {
+  TypographyActions,
+  TypographyBaseProps,
+  TypographyClassNames,
+  TypographyCopyable,
+  TypographyEditable,
+  TypographyEllipsis,
+  TypographyLevel,
+  TypographyLinkProps,
+  TypographyParagraphProps,
+  TypographyProps,
+  TypographySemanticName,
+  TypographyShimmer,
+  TypographyStyles,
+  TypographyTextEllipsis,
+  TypographyTextProps,
+  TypographyTitleProps,
+  TypographyTooltipProps,
+  TypographyType
+} from './Typography/types.js';
 export { message } from './Message/message.js';
 export { default as MessageHost } from './Message/MessageHost.svelte';
 export { notification } from './Notification/notification.js';
